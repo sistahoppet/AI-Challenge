@@ -41,7 +41,7 @@ function fwChart(k){ const r=rp(),dataSrc=isDemo?'DEMO DATA':'Data: EFAS, GHS-PO
       rows,aName:'Time available (water arrives)',bName:'Clearance time',xTitle:'minutes',src:dataSrc+' · mobilisation and delay are assumptions (Evacuate tab)',
       csv:[['group','available_min','clearance_min','people'],...rows.map(x=>[x.label,Math.round(x.a),Math.round(x.b),Math.round(x.people)])]}; }
   if(k==='fwG6'){ const rows=D.rps.map(rr=>{const P=planFor(rr),prot=P.routes.filter(x=>FW.mob+x.min+FW.delay<=(P.groups.find(g=>mDist(g.c,x.pts[0])<1)?.ts??0)*SC.mins).reduce((s,x)=>s+x.people,0);
-      return {label:`${sizeWord(rr)} (1-in-${rr})`,value:Math.round(P.total?prot/P.total*100:0),people:prot,total:P.total,color:css('--c-mod')};});
+      const v=Math.round(P.total?prot/P.total*100:0); return {label:`${sizeWord(rr)} (1-in-${rr})`,value:v,txt:`${v}% (${fmt(prot)} of ${fmt(P.total)})`,people:prot,total:P.total,color:css('--c-mod')};});
     return {kind:'bar',title:'UNDRR G-6: share of at-risk residents protected by pre-emptive evacuation (%)',sub:'Protected = has a shelter place and can clear before the water arrives (same assumptions as the clearance chart).',rows,src:dataSrc+' · estimate from the evacuation plan, not HEC-FIA',
       csv:[['flood_size','protected','at_risk','G6_percent'],...rows.map(x=>[x.label,Math.round(x.people),Math.round(x.total),x.value])]}; }
   if(k==='fwAAL'){ const pts=D.rps.map(rr=>({r:rr,p:100/rr,n:peak(rr).people})).sort((a,b)=>b.p-a.p);
@@ -52,11 +52,11 @@ function fwChart(k){ const r=rp(),dataSrc=isDemo?'DEMO DATA':'Data: EFAS, GHS-PO
     return {kind:'line',title:'ECMWF cost–loss model: when is acting worth it?',sub:`Act: pay C = €${IM.C}M. Don't act: expect p × L = p × €${L}M avoidable loss. Lines cross at p* = C / L = ${pstar!=null?pstar.toFixed(1)+'%':'–'}.`,
       x:ps.map(p=>p+'%'),yTitle:'€M expected',series:[{name:'Act (cost C)',color:css('--c-mod'),values:ps.map(()=>IM.C)},{name:"Don't act (p × L)",color:css('--c-obs'),values:ps.map(p=>p/100*L)}],
       vref:pstar!=null?{i:pstar/5,label:`p* = ${pstar.toFixed(1)}%`}:null,src:HYPO,csv:[['probability_percent','act_cost_EURm','no_action_expected_loss_EURm'],...ps.map(p=>[p,IM.C,(p/100*L).toFixed(2)])]}; }
-  if(k==='fwBCR'){ const av=FW.p/100*(IM.D0-IM.D1),rows=[{label:'Expected avoided damage',value:av,color:css('--c-mod')},{label:'Cost of the intervention',value:IM.C,color:css('--c-obs')},{label:'Net expected benefit',value:Math.max(0,av-IM.C),color:css('--c-both')}];
+  if(k==='fwBCR'){ const av=FW.p/100*(IM.D0-IM.D1),rows=[{label:'Expected avoided damage',value:av,color:css('--c-mod')},{label:'Cost of the intervention',value:IM.C,color:css('--c-obs')},{label:'Net expected benefit',value:Math.max(0,av-IM.C),color:css('--c-both')}].map(x=>({...x,txt:`€${x.value.toFixed(1)}M`}));
     return {kind:'bar',title:`Benefit–cost: BCR = ${(av/(IM.C||1)).toFixed(2)} (€ million)`,sub:`Forecast chance ${FW.p}% × (D0 €${IM.D0}M − D1 €${IM.D1}M) vs cost €${IM.C}M. Single intervention, not a discounted multi-year appraisal.`,rows,src:HYPO,
       csv:[['item','EUR_million'],...rows.map(x=>[x.label,x.value.toFixed(2)]),['BCR',(av/(IM.C||1)).toFixed(2)]]}; }
   if(k==='fwFill'){ const C=RS.cmp; if(!C) return {kind:'empty',title:'Fill rate of emergency teams',sub:'Run "Dispatch now" in the Alert tab first.',src:dataSrc,csv:[['note'],['no dispatch']]};
-    const rows=[];['nearest','priority'].forEach(m=>{const o=C[m],n=o.I.length; [[Infinity,'reached at all'],[30,'reached within 30 min']].forEach(([lim,t])=>rows.push({label:`${m==='nearest'?'Nearest':'Priority'} first · ${t}`,value:Math.round(n?o.I.filter(x=>x.a!=null&&x.a<=lim).length/n*100:0),color:css(m==='nearest'?'--c-mod':'--c-both')}));});
+    const rows=[];['nearest','priority'].forEach(m=>{const o=C[m],n=o.I.length; [[Infinity,'reached at all'],[30,'reached within 30 min']].forEach(([lim,t])=>{const v=Math.round(n?o.I.filter(x=>x.a!=null&&x.a<=lim).length/n*100:0); rows.push({label:`${m==='nearest'?'Nearest':'Priority'} first · ${t}`,value:v,txt:v+'%',color:css(m==='nearest'?'--c-mod':'--c-both')});}));});
     return {kind:'bar',title:'Fill rate: requests for help that get a team (%)',sub:'Requests = flooded critical sites and groups who cannot reach a shelter in time; one team each. Team numbers and speed are assumptions.',rows,src:dataSrc+' · dispatch at the moment chosen in the Alert tab',
       csv:[['rule','fill_rate_percent'],...rows.map(x=>[x.label,x.value])]}; }
 }
