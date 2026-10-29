@@ -1,0 +1,4 @@
+# Windows download markers
+*:Zone.Identifier
+__pycache__/
+*.pyc

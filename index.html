@@ -1,0 +1,364 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Flood Scenario Explorer</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Source+Sans+3:wght@400;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="app">
+  <header class="top">
+    <h1 class="brand">Flood Scenario Explorer<small>Learning from the July 2021 floods</small></h1>
+    <span id="dataBadge" class="badge">DEMO DATA</span>
+    <span class="spacer"></span>
+    <button class="btn" id="helpBtn">How to use</button>
+    <button class="btn primary" id="openData">Load team data</button>
+  </header>
+  <div class="layout">
+    <div class="mapside">
+      <section class="mapwrap" aria-label="Map">
+        <div id="map"></div>
+        <div class="ov notice" id="notice" hidden></div>
+        <div class="ov legend" id="legend" aria-label="Legend"></div>
+        <div class="ov guide" id="guide" hidden>
+          <h3>How to use</h3>
+          <ol>
+            <li>Pick <b>how big the flood is</b> on the right.</li>
+            <li>Press <b>▶</b> below the map to watch the water rise and fall. Change the speed if you like.</li>
+            <li>Press <b>3D</b> to see it in 3D. Scroll or use <b>+ / −</b> to zoom.</li>
+            <li><b>Pause</b> (space bar) and <b>click the map</b>: water here, zone, and the safe walking route to the nearest shelter at that moment.</li>
+            <li>Open <b>Evacuate</b> to plan shelters and routes, <b>Alert</b> to prepare messages and files for emergency services.</li>
+          </ol>
+          <button class="btn primary sm" id="guideOk" style="justify-self:start">Got it</button>
+        </div>
+        <div class="ctrls ov">
+          <div class="grp">
+            <button id="zin" title="Zoom in (+)" aria-label="Zoom in">+</button>
+            <button id="zout" title="Zoom out (−)" aria-label="Zoom out">−</button>
+            <button id="zfit" title="Show whole area" aria-label="Show whole area">⤢</button>
+          </div>
+          <div class="grp"><button id="v3d" class="txt" title="Switch to 3D view" aria-pressed="false">3D</button></div>
+          <div class="grp" id="grp3d" hidden>
+            <button id="rotL" title="Turn left" aria-label="Turn left">⟲</button>
+            <button id="rotR" title="Turn right" aria-label="Turn right">⟳</button>
+            <button id="tiltU" title="Tilt more" aria-label="Tilt more">⤒</button>
+            <button id="tiltD" title="Tilt less" aria-label="Tilt less">⤓</button>
+            <button id="orbit" title="Fly around automatically" aria-label="Fly around" aria-pressed="false">↻</button>
+          </div>
+        </div>
+        <div class="ov basemap" aria-label="Background map">
+          <div class="seg" role="group">
+            <button data-b="detail" aria-pressed="true">Detailed</button><button data-b="streets" aria-pressed="false">Streets</button><button data-b="satellite" aria-pressed="false">Satellite</button><button data-b="none" aria-pressed="false">Plain</button>
+          </div>
+          <label id="hillsRow" hidden><input type="checkbox" id="tHills" checked> Real hills</label>
+        </div>
+        <div class="ov hint3d" id="hint3d" hidden>Drag to move · Right-drag or Ctrl+drag to turn · Scroll to zoom</div>
+        <div class="ov attr" id="attr"></div>
+        <div class="ov tip" id="tip" hidden></div>
+        <div class="ov stage" id="stage" hidden>
+          <div class="head">
+            <b id="stageTitle" style="font-family:var(--f-display);font-size:18px;text-transform:uppercase;letter-spacing:.04em">Diagram</b>
+            <span class="spacer"></span>
+            <div class="seg" id="metricSeg" role="group" aria-label="Measure">
+              <button data-m="people" aria-pressed="true">Residents</button><button data-m="bld" aria-pressed="false">Buildings</button>
+            </div>
+            <button class="btn sm" id="stageClose">Back to map</button>
+          </div>
+          <div class="chartbox" id="chartbox"></div>
+          <div class="dl">
+            <button class="btn primary sm" id="dlPng">Download image (PNG)</button>
+            <button class="btn sm" id="dlSvg">Download vector (SVG)</button>
+            <button class="btn sm" id="dlCsv">Download data (CSV)</button>
+          </div>
+        </div>
+      </section>
+      <div class="player" aria-label="Simulation player">
+        <button class="pbtn" id="restart" title="Back to start" aria-label="Back to start">⏮</button>
+        <button class="pbtn main" id="play" aria-label="Play">▶</button>
+        <div class="track">
+          <input type="range" id="time" min="0" max="1000" value="500" aria-label="Simulation time">
+          <div class="phases"><span id="ph0">Water rising</span><span id="ph1">Peak</span><span id="ph2">Water going down</span></div>
+        </div>
+        <div class="pright">
+          <span class="now" id="nowLbl">Peak</span>
+          <select class="btn" id="speed" aria-label="Speed">
+            <option value="0.25">0.25×</option><option value="0.5">0.5×</option><option value="1" selected>1× speed</option><option value="2">2×</option><option value="4">4×</option>
+          </select>
+          <label style="font-size:13.5px;display:flex;gap:4px;align-items:center"><input type="checkbox" id="loop"> Loop</label>
+        </div>
+      </div>
+    </div>
+
+    <aside class="panel">
+      <div class="tabs" role="tablist">
+        <button role="tab" aria-selected="true" data-t="sim">Simulate</button>
+        <button role="tab" aria-selected="false" data-t="safety">Evacuate</button>
+        <button role="tab" aria-selected="false" data-t="coord">Alert</button>
+        <button role="tab" aria-selected="false" data-t="diag">Diagrams</button>
+        <button role="tab" aria-selected="false" data-t="policy">Policy</button>
+      </div>
+
+      <div class="tabbody" id="tab-sim">
+        <div class="sizebox">
+          <h2><span class="step">1</span>How big is the flood?</h2>
+          <div class="big-word" id="sizeWord">Rare</div>
+          <div class="hint" id="sizeHint" style="margin-top:4px"></div>
+          <input type="range" id="size" min="0" max="2" step="1" value="1" aria-label="Flood size">
+          <div class="ticks" id="sizeTicks"></div>
+        </div>
+        <div>
+          <h2><span class="step">2</span>Press ▶ under the map</h2>
+          <p class="hint" style="margin:0">Each valley section fills from its riverbed, and upstream sections rise first (real terrain heights). The order is from the data; the timing is illustrative.</p>
+        </div>
+        <div>
+          <h2 id="expTitle">On the map right now</h2>
+          <div class="stats">
+            <div class="stat"><b id="sPeople">–</b><span>people live in flooded areas</span></div>
+            <div class="stat"><b id="sBld">–</b><span>buildings in the water</span></div>
+            <div class="stat"><b id="sArea">–</b><span>km² under water</span></div>
+          </div>
+          <div class="rows" id="classes"></div>
+        </div>
+        <div>
+          <h2>Model or real 2021?</h2>
+          <div class="seg" id="cmpSeg" role="group" aria-label="What to show">
+            <button data-c="model" aria-pressed="false">Model</button><button data-c="obs" aria-pressed="false">July 2021 satellite</button><button data-c="both" aria-pressed="true">Both</button>
+          </div>
+          <div id="cmpBox" class="cmp"></div>
+        </div>
+        <div>
+          <h2>Show on map</h2>
+          <div class="toggles">
+            <label><input type="checkbox" id="tZones"> <span class="sw" style="background:linear-gradient(90deg,var(--zr),var(--zy),var(--zg))"></span> Safety zones (red / yellow / green)</label>
+            <label><input type="checkbox" id="tBld" checked> Buildings (GHS-OBAT data, coloured when in water)</label>
+            <label><input type="checkbox" id="tPlaces" checked> <span class="sw dot" style="background:var(--crit)"></span> Hospitals, schools &amp; key sites (OpenStreetMap)</label>
+            <label><input type="checkbox" id="tPeople" checked> <span class="sw dot" style="background:var(--people)"></span> People (where residents live, GHS-POP)</label>
+            <div id="exagRow" class="toggles" hidden><label><input type="checkbox" id="tCols"> Depth columns in 3D (1× = real height)</label>
+              <label>Column height ×<input type="range" id="exag" min="1" max="10" value="1" style="flex:1"><span class="mono" id="exagV">1×</span></label></div>
+          </div>
+        </div>
+        <div>
+          <h2>Map details (OpenStreetMap)</h2>
+          <div class="toggles two">
+            <label><input type="checkbox" id="tRiv" checked> <span class="sw" style="background:var(--osm-river)"></span> Rivers &amp; lakes</label>
+            <label><input type="checkbox" id="tRoad" checked> <span class="sw" style="background:var(--osm-major)"></span> Streets</label>
+            <label><input type="checkbox" id="tTree" checked> <span class="sw" style="background:var(--osm-wood)"></span> Trees &amp; parks</label>
+            <label><input type="checkbox" id="tOsmB" checked> <span class="sw" style="background:var(--osm-bld)"></span> All buildings</label>
+            <label><input type="checkbox" id="tNames" checked> Place names</label>
+            <label><input type="checkbox" id="tCars" checked> <span class="sw dot" style="background:var(--car)"></span> Cars (illustration)</label>
+          </div>
+        </div>
+      </div>
+
+      <div class="tabbody" id="tab-safety" hidden>
+        <div>
+          <h2>Safety zones</h2>
+          <p class="hint" style="margin:0 0 8px">Based on all flood sizes together, not only the one you picked.</p>
+          <div class="rows" id="zoneLegend"></div>
+        </div>
+        <div>
+          <h2>Shelters</h2>
+          <ul class="safe" id="safeList"></ul>
+          <details id="candList" class="cands"></details>
+          <div class="row" style="justify-content:flex-start;margin-top:8px"><button class="btn sm" id="evAdd" aria-pressed="false">＋ Add a shelter on the map</button><button class="btn sm" id="evResetS">Reset</button></div>
+          <p class="hint">Chosen from real schools, sports halls and community centres (overnight shelters) and stadiums and parks (assembly points only). Must be dry in every flood size, not flooded in 2021, at least 150 m from flood water. Ranked with equal weight on: at-risk residents within 1.5 km, capacity, height above flood water, distance to water; no dry road access halves the score. Capacity = floor area × floors ÷ 3.5 m² per person (Sphere minimum); type your own number to override. Check kitchens, toilets, accessibility and the building owner on site.</p>
+        </div>
+        <div>
+          <h2>Critical sites in the water</h2>
+          <p class="hint" style="margin:0 0 8px">Hospitals, clinics, fire stations, police, town halls flooded in this flood size: evacuate or protect them first.</p>
+          <ul class="safe" id="critList"></ul>
+        </div>
+        <div>
+          <h2>Safe route A → B</h2>
+          <div class="row" style="justify-content:flex-start">
+            <button class="btn sm" id="abA" aria-pressed="false">Set A</button><button class="btn sm" id="abB" aria-pressed="false">Set B</button>
+            <button class="btn sm" id="abShelter">A → nearest shelter</button>
+            <select class="btn" id="abMode" aria-label="Travel mode"><option value="car">By car</option><option value="foot">On foot</option></select>
+          </div>
+          <p id="abOut" style="font-size:14px;margin:8px 0 0">Click "Set A" and "Set B", then click the map. The route uses real roads and avoids the water at the moment shown in the video (try "water rising").</p>
+        </div>
+        <div>
+          <h2>Evacuation plan</h2>
+          <p class="hint" style="margin:0 0 8px" id="evScen"></p>
+          <div class="form">
+            <label>Who leaves<select class="btn" id="evWho"><option value="water">Everyone in the water at this flood size</option><option value="red">Red-zone residents only</option></select></label>
+            <label>Places when size unknown <span class="tag">your assumption</span><input class="btn" type="number" id="evCap" min="10" step="10" value="500"></label>
+            <label>Walking speed, km/h <span class="tag">your assumption</span><input class="btn" type="number" id="evSpeed" min="0.5" max="8" step="0.5" value="4"></label>
+            <label>Warning time, hours <span class="tag">your assumption</span><input class="btn" type="number" id="evLead" min="0.25" max="72" step="0.25" value="3"></label>
+          </div>
+          <div class="stats" id="evStats" style="margin-top:12px"></div>
+          <ol class="safe groups" id="evGroups" style="margin-top:10px"></ol>
+          <p class="hint" id="evNote"></p>
+        </div>
+      </div>
+
+      <div class="tabbody" id="tab-coord" hidden>
+        <div>
+          <h2>Forecast: which plan?</h2>
+          <div class="row" style="justify-content:flex-start;margin-bottom:8px">
+            <div class="seg" id="wxMode" role="group" aria-label="Forecast mode"><button data-w="replay" aria-pressed="true">July 2021 replay</button><button data-w="live" aria-pressed="false">Live forecast</button></div>
+            <button class="btn sm" id="wxLoad">Load</button><button class="btn sm" id="wxSave" title="Save for an offline demo: put the file in data/">Save</button>
+          </div>
+          <label class="hint" style="display:flex;gap:6px;align-items:center;margin:0 0 6px"><input type="checkbox" id="wxWorst"> Live: use the highest forecast, not the median (more cautious)</label>
+          <div class="wxbox"><div id="wxChart"></div><div class="ov tip" id="wxTip" hidden></div></div>
+          <div id="wxPlan" style="margin-top:6px"></div>
+          <p class="hint" id="wxStatus"></p>
+          <p class="hint">Rain and river flow from Open-Meteo (external source: GloFAS river model ~5 km, ERA5 / forecast models). A small river like the Vesdre is only roughly captured: check the official river gauges (SPW hydrometry) before acting.</p>
+        </div>
+        <div>
+          <h2>Emergency teams: who goes where</h2>
+          <p class="hint" style="margin:0 0 8px">Real fire stations, police stations and hospitals send teams to flooded hospitals and key sites, and to residents who cannot reach a shelter in time. Teams drive on roads that are passable at the moment shown in the video: pause at "water rising" or at the peak, then dispatch.</p>
+          <div class="row" style="justify-content:flex-start;margin-bottom:8px">
+            <div class="seg" id="rsMode" role="group" aria-label="Dispatch rule"><button data-m="nearest" aria-pressed="false">Nearest first</button><button data-m="priority" aria-pressed="true">Priority first</button></div>
+            <button class="btn primary sm" id="rsGo">Dispatch now</button>
+          </div>
+          <div id="rsOut"></div>
+          <details class="cands"><summary>Team assumptions</summary><div class="form" id="rsIn" style="margin-top:8px"></div></details>
+          <p class="hint">Priority: hospitals and clinics first, then fire, police and town halls in the water, then groups of residents (more people and earlier waves first). Team numbers, speed and time on scene are assumptions: replace them with the real figures of the emergency zone.</p>
+        </div>
+        <div>
+          <h2>Be ready before the water comes</h2>
+          <p class="hint" style="margin:0 0 8px">Agree in advance which plan starts when a river forecast says a flood size is likely. Figures come from the flood maps and the plan in Evacuate.</p>
+          <div id="trig"></div>
+        </div>
+        <div>
+          <h2>Who does what</h2>
+          <p class="hint" style="margin:0 0 8px">A starting checklist, not an official plan. Click any box to adapt it to your town.</p>
+          <div id="roles" class="scrollx"></div>
+        </div>
+        <div>
+          <h2>Message to residents</h2>
+          <div class="row" style="justify-content:flex-start;margin-bottom:6px">
+            <select class="btn" id="msgLang" aria-label="Language"><option value="en">English</option><option value="fr">Français</option><option value="nl">Nederlands</option><option value="de">Deutsch</option></select>
+            <select class="btn" id="msgWave" aria-label="Wave"><option value="1">Wave 1: leave now</option><option value="2">Wave 2: get ready</option><option value="3">Wave 3: get ready</option></select>
+            <button class="btn sm" id="msgCopy">Copy</button>
+          </div>
+          <textarea id="msgText" class="btn" rows="6" aria-label="Message text"></textarea>
+        </div>
+        <div>
+          <h2>Share with emergency services</h2>
+          <div class="dl">
+            <button class="btn primary sm" id="shReport">Situation report (.md)</button>
+            <button class="btn sm" id="shGeo">Plan for GIS (.geojson)</button>
+            <button class="btn sm" id="shCap">Alert draft (CAP .xml)</button>
+            <button class="btn sm" id="shCopy">Copy short summary</button>
+          </div>
+          <p class="hint">Nothing is sent automatically. The files are drafts for exercises: the report for people, the GeoJSON for map tools (QGIS, ArcGIS), the CAP file in the standard alert format, marked "Exercise".</p>
+        </div>
+        <div>
+          <h2>Check a place</h2>
+          <p class="hint" style="margin:0 0 6px">Click anywhere on the map: zone, water depth, wave and nearest shelter.</p>
+          <div id="placeInfo"></div>
+        </div>
+      </div>
+
+      <div class="tabbody" id="tab-diag" hidden>
+        <div>
+          <h2>Pick a diagram</h2>
+          <div class="dlist" id="dlist"></div>
+          <p class="hint">Each diagram can be downloaded as an image for the brief, as a vector file for editing, or as a data table (CSV) for Excel.</p>
+        </div>
+      </div>
+
+      <div class="tabbody" id="tab-policy" hidden>
+        <div>
+          <h2>Impact for the mayor</h2>
+          <p class="hint" style="margin:0 0 8px">Three stages: anticipation, coordination, institutions. Uses the flood size and plan from Evacuate. Change the assumptions below.</p>
+          <div id="impOut"></div>
+          <details class="cands"><summary>Assumptions (illustrative)</summary><div class="form" id="impIn" style="margin-top:8px"></div></details>
+        </div>
+        <div class="actor">
+          <h2>What it means for</h2>
+          <select class="btn" id="actorSel" style="margin-bottom:10px;width:100%">
+            <option value="muni">Municipality / mayor</option><option value="region">Regional government</option><option value="cp">Civil protection</option><option value="eu">EU level</option>
+          </select>
+          <ul id="actorText"></ul>
+        </div>
+        <div>
+          <h2>Model vs the real 2021 flood</h2>
+          <div id="agree" style="font-size:14px"></div>
+        </div>
+        <div>
+          <h2>Read with care</h2>
+          <ul class="limits">
+            <li>Flood-size maps are model results, not forecasts of a specific day. Check resolution and flood type in Annex 2.</li>
+            <li>Satellite maps miss water under trees, in narrow streets, and water that drained before the satellite passed.</li>
+            <li>"People" means residents: where people live, not where they are during the day.</li>
+            <li>A building counts when its centre is in a flooded cell. It says nothing about damage.</li>
+            <li>The video shows the order in which water arrives, not real hours. Each section fills from its riverbed (water level flat across the valley) and the wave moves downstream using Copernicus DEM ground heights. It is not a hydraulic model: no flow speeds, no blocked bridges, no dam effects. The ripples run downhill; their speed is visual only.</li>
+            <li>Streets, rivers, trees and buildings come from OpenStreetMap. Cars are an illustration, not traffic data.</li>
+            <li>Evacuation routes, waves and "in time" use your assumptions (capacity, walking speed, warning time) and the flood maps. Check them with local services.</li>
+          </ul>
+        </div>
+      </div>
+    </aside>
+  </div>
+</div>
+
+<div class="modal" id="modal" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="mTitle">
+    <h3 id="mTitle">Load your team's data</h3>
+    <p style="margin:0">Your data person makes three GeoJSON files with the Colab script. All coordinates in <code>EPSG:4326</code> (longitude, latitude). Only the grid file is required.</p>
+    <div class="slots">
+      <label class="slot" id="slotGrid"><b>1 · grid.geojson (required)</b>
+        Square cells with water depth per flood size and residents.
+        <code>depth_rp10, depth_rp100, … , pop</code>
+        <input type="file" id="fGrid" accept=".geojson,.json"><span class="st"></span></label>
+      <label class="slot" id="slotObs"><b>2 · observed_2021.geojson</b>
+        Flood outline polygons from Copernicus EMS.
+        <code>any properties</code>
+        <input type="file" id="fObs" accept=".geojson,.json"><span class="st"></span></label>
+      <label class="slot" id="slotBld"><b>3 · buildings.geojson</b>
+        Building points or footprints.
+        <code>height (optional, m)</code>
+        <input type="file" id="fBld" accept=".geojson,.json"><span class="st"></span></label>
+    </div>
+    <details>
+      <summary style="cursor:pointer">Exact format the app expects</summary>
+<pre class="schema">{ "type": "FeatureCollection",
+  "features": [
+    { "type": "Feature",
+      "geometry": { "type": "Polygon", "coordinates": [[[5.80,50.57],[5.8014,50.57],[5.8014,50.5709],[5.80,50.5709],[5.80,50.57]]] },
+      "properties": { "depth_rp10": 0.0, "depth_rp100": 0.8, "depth_rp500": 1.9, "pop": 42 } }
+  ] }
+• depth_rpN = water depth in metres for the 1-in-N-year flood (0 or null = dry)
+• any number of depth_rpN columns; the app finds them by name
+• pop = residents in the cell (optional)
+• keep each file under ~30 MB: clip to your study area</pre>
+    </details>
+    <ul class="log" id="log"></ul>
+    <div class="row">
+      <button class="btn" id="useDemo">Back to demo data</button>
+      <button class="btn" id="mClose">Cancel</button>
+      <button class="btn primary" id="mApply">Show on map</button>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast" hidden></div>
+
+
+<script src="https://cdn.jsdelivr.net/npm/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+<script src="js/utils.js"></script>
+<script src="js/demo-data.js"></script>
+<script src="js/data-loader.js"></script>
+<script src="js/analysis.js"></script>
+<script src="js/map.js"></script>
+<script src="js/water.js"></script>
+<script src="js/details.js"></script>
+<script src="js/evac.js"></script>
+<script src="js/respond.js"></script>
+<script src="js/places.js"></script>
+<script src="js/weather.js"></script>
+<script src="js/impact.js"></script>
+<script src="js/response.js"></script>
+<script src="js/player.js"></script>
+<script src="js/camera.js"></script>
+<script src="js/panels.js"></script>
+<script src="js/diagrams.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,34 @@
+{
+ "bbox": [
+  5.6,
+  50.55,
+  5.96,
+  50.64
+ ],
+ "cells": 17519,
+ "cell_m": [
+  59,
+  92
+ ],
+ "buildings": 48918,
+ "residents_in_grid": 105431,
+ "rp10": {
+  "flooded_cells": 1585,
+  "residents_in_water": 16634,
+  "buildings_in_water": 6951,
+  "max_depth_m": 10.88
+ },
+ "rp100": {
+  "flooded_cells": 1730,
+  "residents_in_water": 18877,
+  "buildings_in_water": 7962,
+  "max_depth_m": 14.24
+ },
+ "rp500": {
+  "flooded_cells": 1772,
+  "residents_in_water": 19599,
+  "buildings_in_water": 8280,
+  "max_depth_m": 14.56
+ },
+ "obs_polygons": 2
+}
