@@ -10,6 +10,7 @@ const SRC={
   drill:['assumption','Evacuation drill: plan routes on OpenStreetMap streets + flood depths (data), with your assumptions: follow rate, time to get ready, walking speed, warning lead time, shelter places, rescue rate.','Training aid: people do not all behave the same way; range shown for faster/slower reactions.'],
   rescue:['assumption','Rescue: your rescue capacity (people per hour), starting 30 min after the first person is in danger; national support ×3 (assumption).','No published Belgian rate used: set it with the fire and rescue zone.'],
   cost:['external','Damage: JRC depth–damage curves (Huizinga 2017, via CLIMAAX) × building floor area (GHS-OBAT), 2010 prices × 1.218 (Eurostat HICP).','A proxy: vehicles, networks, agriculture and business interruption not counted.'],
+  ems:['data','July 2021 check: share of the area seen flooded by satellite (Copernicus EMS rapid mapping, EMSR518 for Belgium) that the selected EFAS flood map also floods, per grid cell.','Satellite images from 15 and 18 July miss part of the Vesdre (taken after the water drained, streets and trees hide water): 2021 here is a minimum, so this is a hit rate, not a full validation.'],
   shel:['mix','Shelter places: floor area of real buildings (OpenStreetMap) ÷ 3.5 m² per person (Sphere standard), or set by you.','Real capacity depends on beds, toilets and staff: check with each site.']};
 const KIND={data:'Challenge data',external:'Published source',assumption:'Your assumption',mix:'Data + assumption'};
 document.addEventListener('click',e=>{ const el=e.target.closest('[data-src]'),pop=$('srcPop'); if(!el){ if(!e.target.closest('#srcPop')) pop.hidden=true; return; }
@@ -30,6 +31,7 @@ function openCard(){ const r=rp(),pk=peak(r),c=floodCost(r),B=DR.best,R=DR.run,P
     <h1>Flood decision card</h1><div class="s">Vesdre valley (BE) · ${sizeWord(r).toLowerCase()} flood, 1-in-${r} years (${chance(r)} chance each year) · warning ${SC.leadMin} min before the water · Flood Scenario Explorer</div>
     <h2>What is at stake</h2><div class="k"><div><b>${fmt(pk.people)}</b>residents in flooded areas</div><div><b>${fmt(pk.bld)}</b>buildings in the water</div>
       <div><b>${eur(c.damage)}</b>damage to buildings and roads (proxy)</div><div><b>${fmt(places)} / ${fmt(P.total)}</b>shelter places / people to move</div></div>
+    ${D.hasObs?`<p class="s">July 2021 satellite check: ${$('agreeHead').textContent.replace(/^.*?:\s*/,'')}</p>`:''}
     <h2>Result of the drill</h2><p>People unsafe when the water is highest: <b>${fmt(R.score)}</b> (range ${fmt(DR.range[0])}–${fmt(DR.range[1])}) with the current settings,
       <b>${fmt(B.run.score)}</b> (range ${fmt(B.range[0])}–${fmt(B.range[1])}) with the sequence below.</p>
     <h2>Sequence of actions</h2><ol>${actionPlan(B).map(([t,x])=>`<li><span class="t">${isFinite(t)?clockM(t):'Before'}</span>${strip(x)}</li>`).join('')}</ol>
@@ -43,7 +45,7 @@ $('cardBtn').onclick=openCard;
 const TOUR=[
   ['The valley, with real data',()=>{tab('sim'); S.T=0; render(); map.fitBounds(D.bbox,{padding:50});},'Vesdre valley, Belgium. Every building, resident count and water depth comes from the challenge data (EFAS, GHS-POP, GHS-OBAT) and OpenStreetMap. Click any dotted number to see its source.'],
   ['Choose the flood',()=>{ const i=D.rps.indexOf(100); if(i>=0){$('size').value=i; $('size').oninput({target:$('size')});} },'The controls under the map set the scenario. 1-in-100 years is about the rain of July 2021 in this valley. You can also build a flood from your own rain.'],
-  ['Watch the water rise',()=>{tab('sim'); S.T=0; S.speed=4; $('speed').value=4; $('speedV').textContent='×4'; setPlaying(true);},'Upstream and low ground flood first. Buildings turn colour when water reaches them; red streets are closed to cars.'],
+  ['Watch the water rise',()=>{tab('sim'); S.T=0; setSpeed(5); setPlaying(true);},'Upstream and low ground flood first. Buildings turn colour when water reaches them; red streets are closed to cars.'],
   ['Who must leave, and where to',()=>{setPlaying(false); tab('safety'); S.T=.3; render();},'Each circle is a group of residents, with a car route on real streets to a shelter the app chose (far from water, room for many). Click a shelter pin to see the area it serves.'],
   ['Choose, then play',()=>{ tab('sim'); S.T=0; render(); },'Under the map: the order to give, what happens when a shelter is full, and rescue support. Choose before pressing ▶: cars leave, shelters fill up, the next best shelter is found, streets flood.'],
   ['Best actions',()=>{ setPlaying(false); showDebrief(); },'The app tests every combination of choices on the same flood and shows the sequence that leaves the fewest people unsafe, with a range.'],

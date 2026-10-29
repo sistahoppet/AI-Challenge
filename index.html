@@ -130,7 +130,7 @@
         </div>
         <div class="pright">
           <span class="now"><span id="nowLbl">Peak</span><br><span id="clockLbl" class="mono"></span></span>
-          <label class="spd">Speed <input type="range" id="speed" min="1" max="10" step="1" value="2" aria-label="Simulation speed"><span class="mono" id="speedV">×2</span></label>
+          <label class="spd">Speed <input type="range" id="speed" min="0" max="7" step="1" value="4" aria-label="Playback speed"><span class="mono" id="speedV">×2</span></label>
           <label style="font-size:13.5px;display:flex;gap:4px;align-items:center"><input type="checkbox" id="loop"> Loop</label>
 
         </div>
@@ -174,6 +174,7 @@
             <div class="stat"><b id="sArea" data-src="efas">–</b><span>km² under water</span></div>
           </div>
           <div class="rows" id="classes"></div>
+          <div class="agreehead" id="agreeHead" hidden></div>
         </div>
         <div>
           <h2>Model or real 2021?</h2>

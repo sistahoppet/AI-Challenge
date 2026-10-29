@@ -197,6 +197,7 @@ const DOCK=[['size','Flood',0,2,1,()=>S.sizeIdx,v=>{$('size').value=v; $('size')
   ['rain','Rain',1,150,1,()=>SC.rain,v=>{SC.rain=v; drawScenarioInfo();},v=>v+' mm/h'],
   ['dur','Hours',1,48,1,()=>SC.dur/60,v=>{SC.dur=v*60; drawScenarioInfo();},v=>v+' h'],
   ['lead','Warning',0,720,15,()=>SC.leadMin,v=>{SC.leadMin=v; $('sc-leadMin').value=v; alerted=warned=null; makePlan();},v=>`${Math.floor(v/60)} h ${v%60?String(v%60).padStart(2,'0'):''}`],
+  ['rise','Water rises in',2,24,1,()=>Math.round(SC.mins*.45/60),v=>{SC.mins=Math.round(v*60/.45); $('sc-mins').value=SC.mins; alerted=warned=null; makePlan();},v=>v+' h'],
   ['comply','Follow',30,100,5,()=>DR.comply,v=>{DR.comply=v; drillRun();},v=>v+'%'],
   ['cap','Places',50,300,10,()=>DR.capX,v=>{DR.capX=v; drillRun();},v=>v+'%'],
   ['walk','Speed',10,60,5,()=>E.speed,v=>{E.speed=v; $('evSpeedMs').value=v; makePlan();},v=>v+' km/h'],

@@ -48,7 +48,22 @@ function drawAgree(){ if(!D.hasObs){$('agree').innerHTML='<p class="hint" style=
 
 /* ---------- model vs real July 2021 ---------- */
 // Model = EFAS flood-hazard map for the chosen flood size (what COULD happen). 2021 = Copernicus EMS satellite outline (what WAS seen).
-function drawCmp(){ document.querySelectorAll('#cmpSeg [data-c]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.c===S.cmp));
+// share of the 2021 satellite area that the model floods, checked every ~10 m on the drawn water (the outline can be smaller than one grid cell)
+function agreePix(r){ if(!D.hasObs||!WV) return null; const k=agreePix.c||(agreePix.c={}),key=r+':'+WV.W; if(k[key]) return k[key]; let n=0,w=0;
+  for(const f of D.observed.features) for(const p of polysOf(f.geometry)){ const b=bboxOf([p[0]]),sx=10/KX(b[1]),sy=10/110540;
+    for(let x=b[0];x<=b[2];x+=sx) for(let y=b[1];y<=b[3];y+=sy) if(pipPoly(x,y,p)){ n++; if(pixDepth(pixAt([x,y]),r,0,true)>.01) w++; } }
+  return k[key]=n?{pct:w/n*100,km2:n*1e-4}:null; }
+function drawAgreeHead(){ const h=$('agreeHead'),r=D.hasObs?rp():0,g=D.hasObs?agreePix(r):null; if(!g){ h.hidden=true; return; }
+  const ok=g.pct>=5,ic=ok?'<path d="M4 12l5 5L20 6"/>':'<circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16v.5"/>';
+  // where the 2021 outline is, compared with the modelled water (km to the nearest flooded cell)
+  const pc=bboxOf(D.observed.features.flatMap(f=>polysOf(f.geometry).map(p=>p[0]))),cen=[(pc[0]+pc[2])/2,(pc[1]+pc[3])/2];
+  let dm=Infinity; for(const c of D.cells) if(c.depth[r]>.01){ const d=mDist(cen,c.c); if(d<dm) dm=d; }
+  h.classList.toggle('warn',!ok);
+  h.innerHTML=`<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ic}</svg><span>`+(ok
+    ?`Checked against July 2021: this flood map covers <b data-src="ems">${g.pct.toFixed(0)}%</b> of the area seen flooded by satellite (Copernicus EMS)${g.km2<1?` <span class="hint" style="margin:0">(only ${g.km2.toFixed(2)} km² mapped here: a spot check)</span>`:''}.`
+    :`<b data-src="ems">July 2021 satellite check: inconclusive here.</b> The Copernicus EMS outline for this area is one ${g.km2.toFixed(2)} km² patch, ${(dm/1000).toFixed(1)} km from the modelled flood, so it can neither confirm nor reject the flood map.`)+`</span>`;
+  h.hidden=false; }
+function drawCmp(){ drawAgreeHead(); document.querySelectorAll('#cmpSeg [data-c]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.c===S.cmp));
   const r=rp(),pk=peak(r),oa=(D.observed?.features||[]).flatMap(f=>polysOf(f.geometry)).reduce((s,p)=>s+ringArea(p[0])-p.slice(1).reduce((h,q)=>h+ringArea(q),0),0)/1e6,a=D.hasObs?agreeStats(r):null,wx=WX?.data?.rainLevels,rain21=WX?.data?.replayRain?.reduce((m,x)=>Math.max(m,x.mm48),0);
   const T21=wx&&rain21?levelOf(rain21,wx):null;
   $('cmpBox').innerHTML=`<div class="crow" style="grid-template-columns:14px 1fr auto"><span class="sw" style="background:var(--w2)"></span><span><b>Model</b>: flood map for a ${sizeWord(r).toLowerCase()} flood (1-in-${r}), EFAS</span><span class="mono">${pk.area.toFixed(1)} km²</span></div>

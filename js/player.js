@@ -10,4 +10,6 @@ function setPlaying(on){ S.playing=on; $('play').textContent=on?'❚❚':'▶'; 
 $('play').onclick=()=>setPlaying(!S.playing);
 $('restart').onclick=()=>{S.T=0; render();};
 $('time').oninput=e=>{S.T=e.target.value/1000; render();};
-$('speed').oninput=e=>{S.speed=+e.target.value; $('speedV').textContent='×'+S.speed;};
+const SPEEDS=[.1,.25,.5,1,2,3,5,10]; // ×1 = the whole event in 60 s; ×0.1 = 10 min
+const setSpeed=i=>{ S.speed=SPEEDS[i]; $('speed').value=i; $('speedV').textContent='×'+S.speed; };
+$('speed').oninput=e=>setSpeed(+e.target.value);

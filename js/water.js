@@ -76,3 +76,5 @@ function pixCut(q,r,F,M){ if(q<0||!WV.dep[r]) return Infinity; const d=WV.dep[r]
 // pixels along a line from a to b, one sample per ~10 m
 function pixLine(a,b){ const n=Math.max(1,Math.ceil(mDist(a,b)/10)),out=new Set(); for(let i=0;i<=n;i++){ const q=pixAt([a[0]+(b[0]-a[0])*i/n,a[1]+(b[1]-a[1])*i/n]); if(q>=0) out.add(q); } return [...out]; }
 const ANY_WATER=.05; // safe A–B route: no street with visible water (≥ 5 cm) at that moment ("never drive or walk into flood water")
+// same properties as depthProps(cell), read from the water image pixel: the red 'closed' streets follow the water you see
+function pixProps(q){ const o={lag:WV.lag[q]}; D.rps.forEach(r=>{o['r'+r]=WV.dep[r]?.[q]||0; o['L'+r]=WV.Lm[r]?.[q]||0;}); return o; }

@@ -335,3 +335,6 @@ body:not(.explain) .tabbody details.info, body:not(.explain) .tabbody p.hint:not
 @keyframes hsBuzz{to{opacity:.2}} @keyframes hsDrive{from{transform:translateX(0)}70%,to{transform:translateX(175px)}} @keyframes hsRise{from{transform:translateY(40px)}to{transform:translateY(0)}}
 @keyframes hsPop{0%{transform:scale(0)}15%,100%{transform:scale(1)}}
 @media (prefers-reduced-motion:reduce){ .hs-buzz,.hs-car,.hs-rise,.hs-pop1,.hs-pop2,.hs-pop3{animation:none} }
+.agreehead{display:flex;gap:8px;align-items:flex-start;margin-top:8px;padding:8px 10px;border-radius:8px;background:color-mix(in srgb,var(--zg) 14%,transparent);color:var(--ink);font-size:13px}
+.agreehead svg{color:var(--zg);flex:none;margin-top:1px}
+.agreehead.warn{background:color-mix(in srgb,var(--zy) 16%,transparent)} .agreehead.warn svg{color:var(--zy)}

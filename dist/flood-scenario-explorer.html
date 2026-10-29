@@ -345,6 +345,9 @@ body:not(.explain) .tabbody details.info, body:not(.explain) .tabbody p.hint:not
 @keyframes hsBuzz{to{opacity:.2}} @keyframes hsDrive{from{transform:translateX(0)}70%,to{transform:translateX(175px)}} @keyframes hsRise{from{transform:translateY(40px)}to{transform:translateY(0)}}
 @keyframes hsPop{0%{transform:scale(0)}15%,100%{transform:scale(1)}}
 @media (prefers-reduced-motion:reduce){ .hs-buzz,.hs-car,.hs-rise,.hs-pop1,.hs-pop2,.hs-pop3{animation:none} }
+.agreehead{display:flex;gap:8px;align-items:flex-start;margin-top:8px;padding:8px 10px;border-radius:8px;background:color-mix(in srgb,var(--zg) 14%,transparent);color:var(--ink);font-size:13px}
+.agreehead svg{color:var(--zg);flex:none;margin-top:1px}
+.agreehead.warn{background:color-mix(in srgb,var(--zy) 16%,transparent)} .agreehead.warn svg{color:var(--zy)}
 </style>
 </head>
 <body>
@@ -468,7 +471,7 @@ body:not(.explain) .tabbody details.info, body:not(.explain) .tabbody p.hint:not
         </div>
         <div class="pright">
           <span class="now"><span id="nowLbl">Peak</span><br><span id="clockLbl" class="mono"></span></span>
-          <label class="spd">Speed <input type="range" id="speed" min="1" max="10" step="1" value="2" aria-label="Simulation speed"><span class="mono" id="speedV">×2</span></label>
+          <label class="spd">Speed <input type="range" id="speed" min="0" max="7" step="1" value="4" aria-label="Playback speed"><span class="mono" id="speedV">×2</span></label>
           <label style="font-size:13.5px;display:flex;gap:4px;align-items:center"><input type="checkbox" id="loop"> Loop</label>
 
         </div>
@@ -512,6 +515,7 @@ body:not(.explain) .tabbody details.info, body:not(.explain) .tabbody p.hint:not
             <div class="stat"><b id="sArea" data-src="efas">–</b><span>km² under water</span></div>
           </div>
           <div class="rows" id="classes"></div>
+          <div class="agreehead" id="agreeHead" hidden></div>
         </div>
         <div>
           <h2>Model or real 2021?</h2>
@@ -1207,6 +1211,8 @@ function pixCut(q,r,F,M){ if(q<0||!WV.dep[r]) return Infinity; const d=WV.dep[r]
 // pixels along a line from a to b, one sample per ~10 m
 function pixLine(a,b){ const n=Math.max(1,Math.ceil(mDist(a,b)/10)),out=new Set(); for(let i=0;i<=n;i++){ const q=pixAt([a[0]+(b[0]-a[0])*i/n,a[1]+(b[1]-a[1])*i/n]); if(q>=0) out.add(q); } return [...out]; }
 const ANY_WATER=.05; // safe A–B route: no street with visible water (≥ 5 cm) at that moment ("never drive or walk into flood water")
+// same properties as depthProps(cell), read from the water image pixel: the red 'closed' streets follow the water you see
+function pixProps(q){ const o={lag:WV.lag[q]}; D.rps.forEach(r=>{o['r'+r]=WV.dep[r]?.[q]||0; o['L'+r]=WV.Lm[r]?.[q]||0;}); return o; }
 
 </script>
 <script>
@@ -1300,18 +1306,19 @@ function addRoads(lines){ let added=0;
       const len=mDist(a,b),n=Math.max(1,Math.ceil(len/30)),dep={},cs=new Set();
       for(let s=0;s<n;s++){ const t0=s/n,t1=(s+1)/n,q=[a[0]+(b[0]-a[0])*t0,a[1]+(b[1]-a[1])*t0],e=[a[0]+(b[0]-a[0])*t1,a[1]+(b[1]-a[1])*t1],c=cellAt([(q[0]+e[0])/2,(q[1]+e[1])/2]);
         if(!c) continue; D.rps.forEach(r=>dep[r]=Math.max(dep[r]||0,c.depth[r])); if(D.rps.some(r=>c.depth[r]>0)) cs.add(c);
-        if(L.car&&D.rps.some(r=>c.depth[r]>CAR_DEPTH)) cutPieces.push({a:q,b:e,len:len/n,dep:c.depth,c}); }
+        const px=pixAt([(q[0]+e[0])/2,(q[1]+e[1])/2]),pd=r=>Math.max(c.depth[r],px>=0&&WV?.dep[r]?WV.dep[r][px]:0); // deepest of drawn water and cell
+        if(L.car&&D.rps.some(r=>pd(r)>CAR_DEPTH)){ const d={}; D.rps.forEach(r=>d[r]=pd(r)); cutPieces.push({a:q,b:e,len:len/n,dep:d,c,px}); } }
       roadSegs.set(key,{a,b,len,dep,cs:[...cs],car:L.car,foot:L.foot,bridge:L.bridge,cls:L.cls}); added++; } }
   return added; }
 function finishRoads(){ graphCache={}; if(!ready) return;
-  map.getSource('cut').setData({type:'FeatureCollection',features:cutPieces.map(s=>({type:'Feature',geometry:{type:'LineString',coordinates:[s.a,s.b]},properties:depthProps(s.c)}))});
+  map.getSource('cut').setData({type:'FeatureCollection',features:cutPieces.map(s=>({type:'Feature',geometry:{type:'LineString',coordinates:[s.a,s.b]},properties:s.px>=0&&WV?pixProps(s.px):depthProps(s.c)}))});
   spawnCars(); render(); makePlan(); if(S.tab==='coord') drawCoord(); }
 function collectRoads(){ if(D?.roads?.length) return; clearTimeout(roadT); roadT=setTimeout(()=>{ if(!ready||!D) return;
   const [x0,y0,x1,y1]=D.bbox,inB=p=>p[0]>=x0&&p[0]<=x1&&p[1]>=y0&&p[1]<=y1,lines=[];
   for(const f of map.querySourceFeatures('osm',{sourceLayer:'transportation'})){ if(!VEH.includes(f.properties.class)) continue;
     const g=f.geometry; for(const pts of g.type==='LineString'?[g.coordinates]:g.type==='MultiLineString'?g.coordinates:[]) if(pts.some(inB)) lines.push({pts,cls:f.properties.class,car:true,foot:!MAJOR.slice(0,2).includes(f.properties.class),bridge:f.properties.brunnel==='bridge'}); }
   if(addRoads(lines)) finishRoads(); },500); }
-function cutKm(r,now){let m=0; for(const s of cutPieces) if((now?nowDepth(s.c,r):s.dep[r])>CAR_DEPTH) m+=s.len; return m/1000;}
+function cutKm(r,now){let m=0; for(const s of cutPieces) if((now?(s.px>=0&&WV?pixDepth(s.px,r):nowDepth(s.c,r)):s.dep[r])>CAR_DEPTH) m+=s.len; return m/1000;}
 
 /* ---------- cars: illustration only (no traffic data); they stop where the street is under water ---------- */
 let cars=[];
@@ -2012,7 +2019,9 @@ function setPlaying(on){ S.playing=on; $('play').textContent=on?'❚❚':'▶'; 
 $('play').onclick=()=>setPlaying(!S.playing);
 $('restart').onclick=()=>{S.T=0; render();};
 $('time').oninput=e=>{S.T=e.target.value/1000; render();};
-$('speed').oninput=e=>{S.speed=+e.target.value; $('speedV').textContent='×'+S.speed;};
+const SPEEDS=[.1,.25,.5,1,2,3,5,10]; // ×1 = the whole event in 60 s; ×0.1 = 10 min
+const setSpeed=i=>{ S.speed=SPEEDS[i]; $('speed').value=i; $('speedV').textContent='×'+S.speed; };
+$('speed').oninput=e=>setSpeed(+e.target.value);
 
 </script>
 <script>
@@ -2103,7 +2112,22 @@ function drawAgree(){ if(!D.hasObs){$('agree').innerHTML='<p class="hint" style=
 
 /* ---------- model vs real July 2021 ---------- */
 // Model = EFAS flood-hazard map for the chosen flood size (what COULD happen). 2021 = Copernicus EMS satellite outline (what WAS seen).
-function drawCmp(){ document.querySelectorAll('#cmpSeg [data-c]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.c===S.cmp));
+// share of the 2021 satellite area that the model floods, checked every ~10 m on the drawn water (the outline can be smaller than one grid cell)
+function agreePix(r){ if(!D.hasObs||!WV) return null; const k=agreePix.c||(agreePix.c={}),key=r+':'+WV.W; if(k[key]) return k[key]; let n=0,w=0;
+  for(const f of D.observed.features) for(const p of polysOf(f.geometry)){ const b=bboxOf([p[0]]),sx=10/KX(b[1]),sy=10/110540;
+    for(let x=b[0];x<=b[2];x+=sx) for(let y=b[1];y<=b[3];y+=sy) if(pipPoly(x,y,p)){ n++; if(pixDepth(pixAt([x,y]),r,0,true)>.01) w++; } }
+  return k[key]=n?{pct:w/n*100,km2:n*1e-4}:null; }
+function drawAgreeHead(){ const h=$('agreeHead'),r=D.hasObs?rp():0,g=D.hasObs?agreePix(r):null; if(!g){ h.hidden=true; return; }
+  const ok=g.pct>=5,ic=ok?'<path d="M4 12l5 5L20 6"/>':'<circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16v.5"/>';
+  // where the 2021 outline is, compared with the modelled water (km to the nearest flooded cell)
+  const pc=bboxOf(D.observed.features.flatMap(f=>polysOf(f.geometry).map(p=>p[0]))),cen=[(pc[0]+pc[2])/2,(pc[1]+pc[3])/2];
+  let dm=Infinity; for(const c of D.cells) if(c.depth[r]>.01){ const d=mDist(cen,c.c); if(d<dm) dm=d; }
+  h.classList.toggle('warn',!ok);
+  h.innerHTML=`<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ic}</svg><span>`+(ok
+    ?`Checked against July 2021: this flood map covers <b data-src="ems">${g.pct.toFixed(0)}%</b> of the area seen flooded by satellite (Copernicus EMS)${g.km2<1?` <span class="hint" style="margin:0">(only ${g.km2.toFixed(2)} km² mapped here: a spot check)</span>`:''}.`
+    :`<b data-src="ems">July 2021 satellite check: inconclusive here.</b> The Copernicus EMS outline for this area is one ${g.km2.toFixed(2)} km² patch, ${(dm/1000).toFixed(1)} km from the modelled flood, so it can neither confirm nor reject the flood map.`)+`</span>`;
+  h.hidden=false; }
+function drawCmp(){ drawAgreeHead(); document.querySelectorAll('#cmpSeg [data-c]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.c===S.cmp));
   const r=rp(),pk=peak(r),oa=(D.observed?.features||[]).flatMap(f=>polysOf(f.geometry)).reduce((s,p)=>s+ringArea(p[0])-p.slice(1).reduce((h,q)=>h+ringArea(q),0),0)/1e6,a=D.hasObs?agreeStats(r):null,wx=WX?.data?.rainLevels,rain21=WX?.data?.replayRain?.reduce((m,x)=>Math.max(m,x.mm48),0);
   const T21=wx&&rain21?levelOf(rain21,wx):null;
   $('cmpBox').innerHTML=`<div class="crow" style="grid-template-columns:14px 1fr auto"><span class="sw" style="background:var(--w2)"></span><span><b>Model</b>: flood map for a ${sizeWord(r).toLowerCase()} flood (1-in-${r}), EFAS</span><span class="mono">${pk.area.toFixed(1)} km²</span></div>
@@ -2790,6 +2814,7 @@ const DOCK=[['size','Flood',0,2,1,()=>S.sizeIdx,v=>{$('size').value=v; $('size')
   ['rain','Rain',1,150,1,()=>SC.rain,v=>{SC.rain=v; drawScenarioInfo();},v=>v+' mm/h'],
   ['dur','Hours',1,48,1,()=>SC.dur/60,v=>{SC.dur=v*60; drawScenarioInfo();},v=>v+' h'],
   ['lead','Warning',0,720,15,()=>SC.leadMin,v=>{SC.leadMin=v; $('sc-leadMin').value=v; alerted=warned=null; makePlan();},v=>`${Math.floor(v/60)} h ${v%60?String(v%60).padStart(2,'0'):''}`],
+  ['rise','Water rises in',2,24,1,()=>Math.round(SC.mins*.45/60),v=>{SC.mins=Math.round(v*60/.45); $('sc-mins').value=SC.mins; alerted=warned=null; makePlan();},v=>v+' h'],
   ['comply','Follow',30,100,5,()=>DR.comply,v=>{DR.comply=v; drillRun();},v=>v+'%'],
   ['cap','Places',50,300,10,()=>DR.capX,v=>{DR.capX=v; drillRun();},v=>v+'%'],
   ['walk','Speed',10,60,5,()=>E.speed,v=>{E.speed=v; $('evSpeedMs').value=v; makePlan();},v=>v+' km/h'],
@@ -2826,6 +2851,7 @@ const SRC={
   drill:['assumption','Evacuation drill: plan routes on OpenStreetMap streets + flood depths (data), with your assumptions: follow rate, time to get ready, walking speed, warning lead time, shelter places, rescue rate.','Training aid: people do not all behave the same way; range shown for faster/slower reactions.'],
   rescue:['assumption','Rescue: your rescue capacity (people per hour), starting 30 min after the first person is in danger; national support ×3 (assumption).','No published Belgian rate used: set it with the fire and rescue zone.'],
   cost:['external','Damage: JRC depth–damage curves (Huizinga 2017, via CLIMAAX) × building floor area (GHS-OBAT), 2010 prices × 1.218 (Eurostat HICP).','A proxy: vehicles, networks, agriculture and business interruption not counted.'],
+  ems:['data','July 2021 check: share of the area seen flooded by satellite (Copernicus EMS rapid mapping, EMSR518 for Belgium) that the selected EFAS flood map also floods, per grid cell.','Satellite images from 15 and 18 July miss part of the Vesdre (taken after the water drained, streets and trees hide water): 2021 here is a minimum, so this is a hit rate, not a full validation.'],
   shel:['mix','Shelter places: floor area of real buildings (OpenStreetMap) ÷ 3.5 m² per person (Sphere standard), or set by you.','Real capacity depends on beds, toilets and staff: check with each site.']};
 const KIND={data:'Challenge data',external:'Published source',assumption:'Your assumption',mix:'Data + assumption'};
 document.addEventListener('click',e=>{ const el=e.target.closest('[data-src]'),pop=$('srcPop'); if(!el){ if(!e.target.closest('#srcPop')) pop.hidden=true; return; }
@@ -2846,6 +2872,7 @@ function openCard(){ const r=rp(),pk=peak(r),c=floodCost(r),B=DR.best,R=DR.run,P
     <h1>Flood decision card</h1><div class="s">Vesdre valley (BE) · ${sizeWord(r).toLowerCase()} flood, 1-in-${r} years (${chance(r)} chance each year) · warning ${SC.leadMin} min before the water · Flood Scenario Explorer</div>
     <h2>What is at stake</h2><div class="k"><div><b>${fmt(pk.people)}</b>residents in flooded areas</div><div><b>${fmt(pk.bld)}</b>buildings in the water</div>
       <div><b>${eur(c.damage)}</b>damage to buildings and roads (proxy)</div><div><b>${fmt(places)} / ${fmt(P.total)}</b>shelter places / people to move</div></div>
+    ${D.hasObs?`<p class="s">July 2021 satellite check: ${$('agreeHead').textContent.replace(/^.*?:\s*/,'')}</p>`:''}
     <h2>Result of the drill</h2><p>People unsafe when the water is highest: <b>${fmt(R.score)}</b> (range ${fmt(DR.range[0])}–${fmt(DR.range[1])}) with the current settings,
       <b>${fmt(B.run.score)}</b> (range ${fmt(B.range[0])}–${fmt(B.range[1])}) with the sequence below.</p>
     <h2>Sequence of actions</h2><ol>${actionPlan(B).map(([t,x])=>`<li><span class="t">${isFinite(t)?clockM(t):'Before'}</span>${strip(x)}</li>`).join('')}</ol>
@@ -2859,7 +2886,7 @@ $('cardBtn').onclick=openCard;
 const TOUR=[
   ['The valley, with real data',()=>{tab('sim'); S.T=0; render(); map.fitBounds(D.bbox,{padding:50});},'Vesdre valley, Belgium. Every building, resident count and water depth comes from the challenge data (EFAS, GHS-POP, GHS-OBAT) and OpenStreetMap. Click any dotted number to see its source.'],
   ['Choose the flood',()=>{ const i=D.rps.indexOf(100); if(i>=0){$('size').value=i; $('size').oninput({target:$('size')});} },'The controls under the map set the scenario. 1-in-100 years is about the rain of July 2021 in this valley. You can also build a flood from your own rain.'],
-  ['Watch the water rise',()=>{tab('sim'); S.T=0; S.speed=4; $('speed').value=4; $('speedV').textContent='×4'; setPlaying(true);},'Upstream and low ground flood first. Buildings turn colour when water reaches them; red streets are closed to cars.'],
+  ['Watch the water rise',()=>{tab('sim'); S.T=0; setSpeed(5); setPlaying(true);},'Upstream and low ground flood first. Buildings turn colour when water reaches them; red streets are closed to cars.'],
   ['Who must leave, and where to',()=>{setPlaying(false); tab('safety'); S.T=.3; render();},'Each circle is a group of residents, with a car route on real streets to a shelter the app chose (far from water, room for many). Click a shelter pin to see the area it serves.'],
   ['Choose, then play',()=>{ tab('sim'); S.T=0; render(); },'Under the map: the order to give, what happens when a shelter is full, and rescue support. Choose before pressing ▶: cars leave, shelters fill up, the next best shelter is found, streets flood.'],
   ['Best actions',()=>{ setPlaying(false); showDebrief(); },'The app tests every combination of choices on the same flood and shows the sequence that leaves the fewest people unsafe, with a range.'],
