@@ -2191,7 +2191,7 @@ function fwChart(k){ const r=rp(),dataSrc=isDemo?'DEMO DATA':'Data: EFAS, GHS-PO
     return {kind:'bar',title:`Benefit–cost: BCR = ${(av/(IM.C||1)).toFixed(2)} (€ million)`,sub:`Forecast chance ${FW.p}% × (D0 €${IM.D0}M − D1 €${IM.D1}M) vs cost €${IM.C}M. Single intervention, not a discounted multi-year appraisal.`,rows,src:HYPO,
       csv:[['item','EUR_million'],...rows.map(x=>[x.label,x.value.toFixed(2)]),['BCR',(av/(IM.C||1)).toFixed(2)]]}; }
   if(k==='fwFill'){ const C=RS.cmp; if(!C) return {kind:'empty',title:'Fill rate of emergency teams',sub:'Run "Dispatch now" in the Alert tab first.',src:dataSrc,csv:[['note'],['no dispatch']]};
-    const rows=[];['nearest','priority'].forEach(m=>{const o=C[m],n=o.I.length; [[Infinity,'reached at all'],[30,'reached within 30 min']].forEach(([lim,t])=>{const v=Math.round(n?o.I.filter(x=>x.a!=null&&x.a<=lim).length/n*100:0); rows.push({label:`${m==='nearest'?'Nearest':'Priority'} first · ${t}`,value:v,txt:v+'%',color:css(m==='nearest'?'--c-mod':'--c-both')});}));});
+    const rows=[];['nearest','priority'].forEach(m=>{const o=C[m],n=o.I.length; [[Infinity,'reached at all'],[30,'reached within 30 min']].forEach(([lim,t])=>{const v=Math.round(n?o.I.filter(x=>x.a!=null&&x.a<=lim).length/n*100:0); rows.push({label:`${m==='nearest'?'Nearest':'Priority'} first · ${t}`,value:v,txt:v+'%',color:css(m==='nearest'?'--c-mod':'--c-both')});});});
     return {kind:'bar',title:'Fill rate: requests for help that get a team (%)',sub:'Requests = flooded critical sites and groups who cannot reach a shelter in time; one team each. Team numbers and speed are assumptions.',rows,src:dataSrc+' · dispatch at the moment chosen in the Alert tab',
       csv:[['rule','fill_rate_percent'],...rows.map(x=>[x.label,x.value])]}; }
 }
