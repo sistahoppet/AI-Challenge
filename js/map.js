@@ -115,6 +115,7 @@ function draw(){
   const ph=S.T<0.45?0:S.T<0.6?1:2; [0,1,2].forEach(i=>$('ph'+i).classList.toggle('on',i===ph));
   $('nowLbl').textContent=ph===1?'Peak':`${['Rising','Peak','Going down'][ph]} · ${Math.round(p*100)}% of peak`;
   $('time').value=Math.round(S.T*1000);
+  if(typeof drillTick==='function') drillTick();
 }
 
 /* ---------- legend, tooltip ---------- */

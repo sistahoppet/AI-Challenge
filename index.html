@@ -15,6 +15,7 @@
     <h1 class="brand">Flood Scenario Explorer<small>Learning from the July 2021 floods</small></h1>
     <span id="dataBadge" class="badge">DEMO DATA</span>
     <span class="spacer"></span>
+    <button class="btn" id="tourBtn">Guided demo</button>
     <button class="btn" id="helpBtn">How to use</button>
     <button class="btn primary" id="openData">Load team data</button>
   </header>
@@ -60,6 +61,14 @@
         <div class="ov attr" id="attr"></div>
         <div class="ov tip" id="tip" hidden></div>
         <div class="ov alertbar" id="alertBar" hidden></div>
+        <div class="ov hud" id="hud" hidden aria-live="off" aria-label="People right now"></div>
+        <div class="ov inject" id="inject" hidden role="dialog" aria-label="Decision"></div>
+        <div class="ov inject tour" id="tour" hidden role="dialog" aria-label="Guided demo"></div>
+        <div class="ov stage" id="drillStage" hidden>
+          <div class="head"><b style="font-family:var(--f-display);font-size:18px;text-transform:uppercase;letter-spacing:.04em">Debrief</b><span class="spacer"></span>
+            <button class="btn primary sm" id="drillCard">Mayor's decision card</button><button class="btn sm" id="drillClose">Back to map</button></div>
+          <div id="drillBody" style="overflow:auto"></div>
+        </div>
         <div class="ov stage" id="dataStage" hidden>
           <div class="head"><b id="dsTitle" style="font-family:var(--f-display);font-size:18px;text-transform:uppercase;letter-spacing:.04em">Table</b><span class="spacer"></span>
             <button class="btn sm" id="dsCsv">Download CSV</button><button class="btn sm" id="dsClose">Back to map</button></div>
@@ -82,6 +91,7 @@
           </div>
         </div>
       </section>
+      <div class="dock" id="dock" aria-label="Scenario controls"><div class="dockin" id="dockIn"></div><button class="btn sm" id="dockHide" aria-expanded="true">Hide</button></div>
       <div class="player" aria-label="Simulation player">
         <button class="pbtn" id="restart" title="Back to start" aria-label="Back to start">⏮</button>
         <button class="pbtn main" id="play" aria-label="Play">▶</button>
@@ -93,6 +103,8 @@
           <span class="now"><span id="nowLbl">Peak</span><br><span id="clockLbl" class="mono"></span></span>
           <label class="spd">Speed <input type="range" id="speed" min="1" max="10" step="1" value="2" aria-label="Simulation speed"><span class="mono" id="speedV">×2</span></label>
           <label style="font-size:13.5px;display:flex;gap:4px;align-items:center"><input type="checkbox" id="loop"> Loop</label>
+          <button class="btn sm" id="trainBtn" aria-pressed="false" title="The run stops when you must decide">Training mode</button>
+          <button class="btn sm" id="debriefBtn" title="Best sequence of actions">Debrief</button>
         </div>
       </div>
     </div>
@@ -129,9 +141,9 @@
         <div>
           <h2 id="expTitle">Right now</h2>
           <div class="stats">
-            <div class="stat"><b id="sPeople">–</b><span>people live in flooded areas</span></div>
-            <div class="stat"><b id="sBld">–</b><span>buildings in the water</span></div>
-            <div class="stat"><b id="sArea">–</b><span>km² under water</span></div>
+            <div class="stat"><b id="sPeople" data-src="pop">–</b><span>people live in flooded areas</span></div>
+            <div class="stat"><b id="sBld" data-src="obat">–</b><span>buildings in the water</span></div>
+            <div class="stat"><b id="sArea" data-src="efas">–</b><span>km² under water</span></div>
           </div>
           <div class="rows" id="classes"></div>
         </div>
@@ -211,6 +223,11 @@
           <div class="stats" id="evStats" style="margin-top:12px"></div>
           <ol class="safe groups" id="evGroups" style="margin-top:10px"></ol>
           <p class="hint" id="evNote"></p>
+        </div>
+        <div>
+          <h2>Drill: people, shelters, best actions</h2>
+          <p class="hint" style="margin:0 0 8px">How people really move over the event: some stay home, shelters fill up, streets flood. Press <b>Training mode</b> under the map to take the decisions yourself; the controls under the map change the scenario.</p>
+          <div id="drillOut"></div>
         </div>
       </div>
 
@@ -297,6 +314,11 @@
 
       <div class="tabbody" id="tab-policy" hidden>
         <div>
+          <h2>Mayor's decision card</h2>
+          <p class="hint" style="margin:0 0 8px">One printable page: what is at stake, the best sequence of actions with times, sources and limits.</p>
+          <button class="btn primary sm" id="cardBtn">Open the decision card</button>
+        </div>
+        <div>
           <h2>Cost of this flood</h2>
           <div id="costOut"></div>
         </div>
@@ -374,6 +396,7 @@
   </div>
 </div>
 <div class="toast" id="toast" hidden></div>
+<div class="srcpop" id="srcPop" hidden role="tooltip"></div>
 
 
 <script src="https://cdn.jsdelivr.net/npm/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
@@ -399,6 +422,8 @@
 <script src="js/framework.js"></script>
 <script src="js/costs.js"></script>
 <script src="js/data-view.js"></script>
+<script src="js/drill.js"></script>
+<script src="js/brief.js"></script>
 <script src="js/ui.js"></script>
 <script src="js/ux.js"></script>
 <script src="js/main.js"></script>

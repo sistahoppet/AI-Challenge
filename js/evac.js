@@ -53,19 +53,20 @@ function waveOf(t,r=rp()){ if(!isFinite(t)) return 3; let c=tsCache[r]; if(!c){ 
   return t<c[0]?1:t<c[1]?2:3; }
 function evacGroups(r){ const B=Math.max(1,Math.round(400/D.G.m)),m=new Map();
   D.cells.forEach(c=>{ if(!c.pop||!(E.who==='red'?c.z===3:c.depth[r]>.01)) return; const key=Math.floor(c.gx/B)+':'+Math.floor(c.gy/B);
-    let g=m.get(key); if(!g) m.set(key,g={pop:0,x:0,y:0,dmax:0,ts:Infinity}); g.pop+=c.pop; g.x+=c.c[0]*c.pop; g.y+=c.c[1]*c.pop; g.dmax=Math.max(g.dmax,c.depth[r]); g.ts=Math.min(g.ts,floodStart(c,r));});
-  return [...m.values()].map(g=>({pop:g.pop,c:[g.x/g.pop,g.y/g.pop],dmax:g.dmax,ts:g.ts,wave:waveOf(g.ts,r)})); }
+    let g=m.get(key); if(!g) m.set(key,g={key,pop:0,x:0,y:0,dmax:0,ts:Infinity}); g.pop+=c.pop; g.x+=c.c[0]*c.pop; g.y+=c.c[1]*c.pop; g.dmax=Math.max(g.dmax,c.depth[r]); g.ts=Math.min(g.ts,floodStart(c,r));});
+  return [...m.values()].map(g=>({key:g.key,pop:g.pop,c:[g.x/g.pop,g.y/g.pop],dmax:g.dmax,ts:g.ts,wave:waveOf(g.ts,r)})); }
 function planFor(r){
   const groups=evacGroups(r).sort((a,b)=>a.wave-b.wave||b.pop-a.pop),total=groups.reduce((s,g)=>s+g.pop,0),load=E.shelters.map(()=>0),routes=[];
   if(!E.shelters.length) return {r,kind:'none',groups,routes,load,total,moved:0,over:total,slow:0};
   const g=roadGraph(r,'foot')||gridGraph(r),trees=E.shelters.map(s=>dijkstra(g,nearest(g,s.c))); let moved=0,over=0,slow=0;
-  for(const gr of groups){ const st=nearest(g,gr.c); let left=gr.pop;
+  for(const [gi,gr] of groups.entries()){ const st=nearest(g,gr.c); let left=gr.pop;
     const order=trees.map((t,k)=>k).filter(k=>isFinite(trees[k].dist[st])).sort((a,b)=>trees[a].dist[st]-trees[b].dist[st]);
+    const way=k=>{const path=[gr.c]; for(let u=st;u>=0;u=trees[k].prev[u]) path.push(g.pts[u]); path.push(E.shelters[k].c); return prepLine(path);};
+    if(order.length) gr.near={...way(order[0]),k:order[0]}; // where people go on their own (closest shelter): used by the drill
     for(const k of order){ if(left<=0) break; const take=Math.min(left,capOf(k)-load[k]); if(take<=0) continue; load[k]+=take; left-=take; // fills the closest shelter with room
-      const path=[gr.c]; for(let u=st;u>=0;u=trees[k].prev[u]) path.push(g.pts[u]); path.push(E.shelters[k].c);
       // in time = get ready + walk + delay fits in the time available: the warning lead time, or less if the water arrives sooner
-      const l=prepLine(path),min=l.len/(E.speed*1000/60),avail=Math.min(SC.leadMin,isFinite(gr.ts)?gr.ts*SC.mins:Infinity),clear=FW.mob+min+FW.delay,ok=clear<=avail; moved+=take; if(!ok) slow+=take;
-      routes.push({...l,min,avail,clear,people:take,wave:gr.wave,k,ok}); if(!ok) gr.slow=(gr.slow||0)+take; }
+      const l=way(k),min=l.len/(E.speed*1000/60),avail=Math.min(SC.leadMin,isFinite(gr.ts)?gr.ts*SC.mins:Infinity),clear=FW.mob+min+FW.delay,ok=clear<=avail; moved+=take; if(!ok) slow+=take;
+      routes.push({...l,min,avail,clear,people:take,wave:gr.wave,k,ok,gi}); if(!ok) gr.slow=(gr.slow||0)+take; }
     gr.left=left; over+=left; }
   return {r,kind:g.kind,groups,routes,load,total,moved,over,slow};
 }
@@ -73,26 +74,27 @@ let planT=null;
 function makePlan(){ clearTimeout(planT); planT=setTimeout(()=>{ if(!D) return; E.plan=planFor(rp()); drawPlan(); },60); }
 
 /* ---------- map layers ---------- */
+const walkCol=()=>['match',['get','st'],'stuck',css('--cut'),'noplace',css('--people-risk'),css('--walk')]; // drill: stuck in water / turned away
 const waveCol=()=>['match',['get','wave'],1,css('--wave1'),2,css('--wave2'),css('--wave3')];
 function addEvacLayers(){
   map.addLayer({id:'routes-case',type:'line',source:'routes',layout:{'line-join':'round','line-cap':'round'},paint:{'line-color':'#fff','line-width':6,'line-opacity':.8}});
   map.addLayer({id:'routes',type:'line',source:'routes',layout:{'line-join':'round','line-cap':'round'},paint:{'line-color':waveCol(),'line-width':3,'line-opacity':['case',['==',['get','ok'],1],.95,.55]}});
   map.addLayer({id:'groups',type:'circle',source:'groups',paint:{'circle-radius':['interpolate',['linear'],['sqrt',['get','pop']],0,5,40,20],'circle-color':waveCol(),'circle-opacity':.85,'circle-stroke-color':'#fff','circle-stroke-width':1.5}});
   map.addLayer({id:'groups-lab',type:'symbol',source:'groups',layout:{'text-field':['get','lab'],'text-font':['Noto Sans Bold'],'text-size':11,'text-allow-overlap':true},paint:{'text-color':'#fff'}});
-  map.addLayer({id:'walkers',type:'circle',source:'walkers',paint:{'circle-radius':['interpolate',['linear'],['zoom'],12,2,17,4.5],'circle-color':css('--walk'),'circle-stroke-color':waveCol(),'circle-stroke-width':1.5}});
+  map.addLayer({id:'walkers',type:'circle',source:'walkers',paint:{'circle-radius':['interpolate',['linear'],['zoom'],12,2.5,17,5.5],'circle-color':walkCol(),'circle-stroke-color':waveCol(),'circle-stroke-width':1.5}});
 }
-function evacVisibility(){ const on=S.tab==='safety'&&!!E.plan; ['routes-case','routes','groups','groups-lab','walkers'].forEach(id=>map.setLayoutProperty(id,'visibility',on?'visible':'none')); }
+function evacVisibility(){ const on=(S.tab==='safety'||DR.train)&&!!E.plan; ['routes-case','routes','groups','groups-lab','walkers'].forEach(id=>map.setLayoutProperty(id,'visibility',on?'visible':'none')); }
 function recolorEvac(){ ['routes','groups'].forEach(id=>map.setPaintProperty(id,id==='routes'?'line-color':'circle-color',waveCol()));
-  map.setPaintProperty('walkers','circle-color',css('--walk')); map.setPaintProperty('walkers','circle-stroke-color',waveCol()); }
-function drawPlan(){ const P=E.plan; if(!P) return; drawShelterList(); drawEvacPanel(); drawCritical(); if(S.tab==='policy'){ drawCosts(); drawImpact(); }
+  map.setPaintProperty('walkers','circle-color',walkCol()); map.setPaintProperty('walkers','circle-stroke-color',waveCol()); }
+function drawPlan(){ const P=E.plan; if(!P) return; drawShelterList(); drawEvacPanel(); drawCritical(); if(typeof drillReset==='function') drillReset(); if(S.tab==='policy'){ drawCosts(); drawImpact(); }
   if(!ready) return; const F=fs=>({type:'FeatureCollection',features:fs}),pt=(c,p)=>({type:'Feature',geometry:{type:'Point',coordinates:c},properties:p});
   map.getSource('routes').setData(F(P.routes.map(r=>({type:'Feature',geometry:{type:'LineString',coordinates:r.pts},properties:{wave:r.wave,ok:r.ok?1:0}}))));
   map.getSource('groups').setData(F(P.groups.map(g=>pt(g.c,{pop:g.pop,wave:g.wave,lab:fmt(g.pop)}))));
   // moving dots: about one per 2 dots of residents, capped for speed
   const R=rng(3),per=Math.max(perDot*2,P.moved/1200); E.walkers=[];
   P.routes.forEach((r,i)=>{for(let n=Math.max(1,Math.round(r.people/per));n>0;n--) E.walkers.push({r:i,s0:R()});});
-  drawShelters(); evacVisibility(); }
-function stepWalkers(now){ const P=E.plan; if(!P||S.tab!=='safety'||!E.walkers.length) return; const t=reduce?0:now/1000,v=E.speed/3.6*60,f=[]; // 60× faster than real
+  drawShelters(); evacVisibility(); drillRun(); }
+function stepWalkers(now){ const P=E.plan; if(!P||!(S.tab==='safety'||DR.train)||!E.walkers.length) return; if(DR.run) return drillWalkers(); const t=reduce?0:now/1000,v=E.speed/3.6*60,f=[]; // 60× faster than real
   for(const w of E.walkers){const r=P.routes[w.r]; if(!r.len) continue; f.push({type:'Feature',geometry:{type:'Point',coordinates:along(r,((w.s0+t*v/r.len)%1)*r.len)},properties:{wave:r.wave}});}
   map.getSource('walkers').setData({type:'FeatureCollection',features:f}); }
 FX.push(stepWalkers);

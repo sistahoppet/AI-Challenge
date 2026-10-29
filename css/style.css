@@ -51,7 +51,7 @@ button,input,select{font:inherit;color:inherit}
 .seg button{border:0;background:transparent;padding:5px 12px;cursor:pointer;font-size:14px}
 .seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);font-weight:600}
 .layout{display:grid;grid-template-columns:1fr minmax(330px,390px);min-height:0}
-.mapside{display:grid;grid-template-rows:1fr auto;min-height:0}
+.mapside{display:grid;grid-template-rows:1fr auto auto;min-height:0}
 .mapwrap{position:relative;min-height:0}
 #map{position:absolute;inset:0;background:var(--land)}
 /* right panel */
@@ -262,3 +262,32 @@ input[type=number].btn,.form input,.capbox input,select.btn{min-height:32px;font
 .dtable .tbl td,.dtable .tbl th{white-space:nowrap}
 #dataStage{grid-template-rows:auto 1fr}
 .tabs button{font-size:12.5px}
+
+/* drill: controls in front, live counts, decisions, debrief */
+.dock{display:flex;gap:8px;align-items:flex-start;background:var(--surface);border-top:1px solid var(--line);padding:8px 12px}
+.dockin{flex:1;display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:4px 14px;align-items:end}
+.dock.min .dockin{display:none} .dock.min{justify-content:flex-end;padding-block:4px}
+.dk{display:grid;grid-template-columns:1fr auto;gap:0 6px;font-size:12.5px;color:var(--muted)} .dk b{color:var(--ink);font-weight:600;font-size:12.5px}
+.dk input{grid-column:1 / -1;width:100%;margin:2px 0 0;accent-color:var(--accent)}
+.hud{left:12px;top:12px;z-index:5;display:flex;flex-wrap:wrap;gap:4px;padding:6px;max-width:min(560px,calc(100% - 80px));font-size:12px}
+.hud .hi{display:grid;padding:3px 8px;border-radius:6px;border-left:4px solid var(--line);min-width:62px}
+.hud .hi b{font-size:16px;font-variant-numeric:tabular-nums} .hud .hi i{font-style:normal;color:var(--muted);white-space:nowrap}
+.hud .walk{border-color:var(--accent)} .hud .shel{border-color:var(--zg)} .hud .up{border-color:var(--zy)} .hud .danger{border-color:var(--cut)} .hud .noplace{border-color:var(--people-risk)} .hud .resc{border-color:var(--unit)}
+.hud .bad b{color:var(--err)}
+.inject{left:50%;top:50%;transform:translate(-50%,-50%);z-index:8;width:min(460px,calc(100% - 32px));padding:14px 16px;border:2px solid var(--accent)}
+.inject.tour{top:auto;bottom:16px;transform:translateX(-50%);border-color:var(--line)}
+.inject .ih{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:16px} .inject p{margin:8px 0;font-size:14px}
+.iopts{display:grid;gap:6px} .iopts.row{display:flex;gap:6px;justify-content:flex-end} .iopts .btn{text-align:left}
+.tag.warn{background:var(--cut);color:#fff} .tag.data{background:var(--zg);color:#fff} .tag.external{background:var(--unit);color:#fff} .tag.assumption{background:var(--zy);color:#fff} .tag.mix{background:var(--muted);color:var(--surface)}
+.pin.full{background:var(--cut)} .pin::after{content:"";position:absolute;left:-2px;bottom:-9px;width:26px;height:4px;transform:rotate(45deg) translate(9px,2px);transform-origin:left;
+  background:linear-gradient(90deg,var(--ink) var(--fill,0%),color-mix(in srgb,var(--surface) 70%,transparent) var(--fill,0%));border-radius:2px}
+.pin{position:relative}
+.tbl.score{width:100%;font-size:13px;border-collapse:collapse} .tbl.score td,.tbl.score th{padding:3px 4px;border-bottom:1px solid var(--line);text-align:right} .tbl.score td:first-child,.tbl.score th:first-child{text-align:left}
+.h3{font-size:14px;margin:12px 0 4px} .dlog{font-size:13px;padding-left:18px;margin:0}
+.steps{padding-left:20px;font-size:14.5px} .steps li{margin:8px 0} .steps li>span.mono{display:inline-block;min-width:150px;color:var(--muted);margin-right:8px}
+.gain{color:var(--zg);font-weight:600;white-space:nowrap}
+[data-src]{text-decoration:underline dotted;text-underline-offset:3px;cursor:help}
+.srcpop{position:fixed;z-index:50;width:320px;background:var(--surface);border:1px solid var(--line);border-radius:8px;box-shadow:0 4px 16px rgb(0 0 0 / .2);padding:10px 12px;font-size:13px}
+.srcpop p{margin:6px 0}
+#trainBtn[aria-pressed="true"]{background:var(--cut);color:#fff;border-color:var(--cut)}
+@media (max-width:900px){ .hud{max-width:calc(100% - 24px)} .dockin{grid-template-columns:repeat(2,1fr)} }
