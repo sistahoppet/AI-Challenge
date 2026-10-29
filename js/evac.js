@@ -82,12 +82,12 @@ function addEvacLayers(){
   map.addLayer({id:'groups',type:'circle',source:'groups',paint:{'circle-radius':['interpolate',['linear'],['sqrt',['get','pop']],0,5,40,20],'circle-color':waveCol(),'circle-opacity':.85,'circle-stroke-color':'#fff','circle-stroke-width':1.5}});
   map.addLayer({id:'groups-lab',type:'symbol',source:'groups',layout:{'text-field':['get','lab'],'text-font':['Noto Sans Bold'],'text-size':11,'text-allow-overlap':true},paint:{'text-color':'#fff'}});
   const ic=carIcon(); if(ic&&!map.hasImage('evcar')) map.addImage('evcar',ic,{sdf:true}); // evacuees drive: one car icon, coloured by status, turned along the road
-  map.addLayer({id:'walkers',type:'symbol',source:'walkers',layout:{'icon-image':'evcar','icon-size':['interpolate',['linear'],['zoom'],11,.35,16,.8],'icon-rotate':['-',['get','b'],90],'icon-rotation-alignment':'map','icon-allow-overlap':true,'icon-ignore-placement':true},
+  map.addLayer({id:'walkers',type:'symbol',source:'walkers',layout:{'icon-image':'evcar','icon-size':['interpolate',['exponential',2],['zoom'],12,.12,15,.15,17,.6,19,2.4],'icon-rotate':['-',['get','b'],90],'icon-rotation-alignment':'map','icon-pitch-alignment':'map','icon-allow-overlap':true,'icon-ignore-placement':true},
     paint:{'icon-color':walkCol(),'icon-halo-color':'#000','icon-halo-width':1}});
   addDrillLayers();
 }
 function evacVisibility(){ const on=S.tab==='safety'&&!!E.plan; ['routes-case','routes','groups','groups-lab','catch-fill','catch-line'].forEach(id=>map.setLayoutProperty(id,'visibility',on||(id.startsWith('catch')&&DR.sel!=null)?'visible':'none'));
-  map.setLayoutProperty('walkers','visibility',(on||S.tab==='sim')&&E.plan?'visible':'none'); pinVis(); }
+  const cars=(on||S.tab==='sim')&&E.plan; map.setLayoutProperty('walkers','visibility',cars&&!S.l3d?'visible':'none'); map.setLayoutProperty('cars-3d','visibility',cars&&S.l3d?'visible':'none'); pinVis(); }
 function recolorEvac(){ ['routes','groups'].forEach(id=>map.setPaintProperty(id,id==='routes'?'line-color':'circle-color',waveCol()));
   map.setPaintProperty('walkers','icon-color',walkCol()); }
 function drawPlan(){ const P=E.plan; if(!P) return; drawShelterList(); drawEvacPanel(); drawCritical(); if(typeof drillReset==='function') drillReset(); if(S.tab==='policy'){ drawCosts(); drawImpact(); }

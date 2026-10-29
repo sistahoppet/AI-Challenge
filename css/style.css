@@ -281,7 +281,7 @@ input[type=number].btn,.form input,.capbox input,select.btn{min-height:32px;font
 .tag.warn{background:var(--cut);color:#fff} .tag.data{background:var(--zg);color:#fff} .tag.external{background:var(--unit);color:#fff} .tag.assumption{background:var(--zy);color:#fff} .tag.mix{background:var(--muted);color:var(--surface)}
 .pin.full{background:var(--cut)} .pin::after{content:"";position:absolute;left:-2px;bottom:-9px;width:26px;height:4px;transform:rotate(45deg) translate(9px,2px);transform-origin:left;
   background:linear-gradient(90deg,var(--ink) var(--fill,0%),color-mix(in srgb,var(--surface) 70%,transparent) var(--fill,0%));border-radius:2px}
-.pin{position:relative}
+
 .tbl.score{width:100%;font-size:13px;border-collapse:collapse} .tbl.score td,.tbl.score th{padding:3px 4px;border-bottom:1px solid var(--line);text-align:right} .tbl.score td:first-child,.tbl.score th:first-child{text-align:left}
 .h3{font-size:14px;margin:12px 0 4px} .dlog{font-size:13px;padding-left:18px;margin:0}
 .steps{padding-left:20px;font-size:14.5px} .steps li{margin:8px 0} .steps li>span.mono{display:inline-block;min-width:150px;color:var(--muted);margin-right:8px}

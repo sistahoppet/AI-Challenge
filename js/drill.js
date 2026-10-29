@@ -140,10 +140,13 @@ function extraPins(){ DR.mk.forEach(([m])=>m.remove()); DR.mk=[]; if(!ready||!DR
     DR.mk.push([new maplibregl.Marker({element:el,anchor:'bottom-left'}).setLngLat(s.c).addTo(map),i]); }); pinVis(); }
 function pinVis(){ const on=S.tab==='safety'||S.tab==='sim'||S.tab==='coord'; [...markers,...DR.mk.map(x=>x[0])].forEach(m=>m.getElement().hidden=!on); }
 function drillWalkers(){ const R=DR.run,t=S.T*R.M,f=[];
-  for(const c of R.co){ const s=segAt(c,t); let p=null,b=0; if(s[1]==='walk'){ const d=Math.min(s[2].len,(t-s[3])*s[4]),q=along(s[2],Math.min(s[2].len,d+8)); p=along(s[2],d);
+  for(const c of R.co){ if(c.n<1e-6) continue; const s=segAt(c,t); let p=null,b=0; if(s[1]==='walk'){ if((t-s[3])*s[4]>s[2].len) continue; const d=(t-s[3])*s[4],q=along(s[2],Math.min(s[2].len,d+8)); p=along(s[2],d);
       b=Math.atan2((q[0]-p[0])*KX(p[1]),(q[1]-p[1])*110540)*180/Math.PI; } else if(s[1]==='stuck'||s[1]==='noplace') p=s[2]; if(!p) continue;
-    f.push({type:'Feature',geometry:{type:'Point',coordinates:p},properties:{wave:c.g.wave,st:s[1],b}}); }
-  map.getSource('walkers').setData({type:'FeatureCollection',features:f}); }
+    f.push({type:'Feature',geometry:S.l3d?carBox(p,b):{type:'Point',coordinates:p},properties:{wave:c.g.wave,st:s[1],b}}); }
+  map.getSource(S.l3d?'cars3d':'walkers').setData({type:'FeatureCollection',features:f}); }
+// 3D: a real-size car (4.5 × 1.9 m footprint, turned along the road), extruded 1.6 m
+function carBox(p,b){ const a=b*Math.PI/180,kx=KX(p[1]),f=[Math.sin(a)*2.25,Math.cos(a)*2.25],s=[Math.cos(a)*.95,-Math.sin(a)*.95],pt=(i,j)=>[p[0]+(f[0]*i+s[0]*j)/kx,p[1]+(f[1]*i+s[1]*j)/110540];
+  return {type:'Polygon',coordinates:[[pt(1,1),pt(1,-1),pt(-1,-1),pt(-1,1),pt(1,1)]]}; }
 // car icon drawn once (signed-distance icon: one shape, coloured by status in the layer)
 function carIcon(){ const W=40,H=22,cv=document.createElement('canvas'); cv.width=W; cv.height=H; const x=cv.getContext('2d'); if(!x?.getImageData) return null;
   x.fillStyle='#000'; x.beginPath(); x.roundRect?.(3,1,W-6,H-2,6); x.fill(); x.globalCompositeOperation='destination-out'; x.fillRect(W-14,4,6,H-8); x.fillRect(8,4,5,H-8);
@@ -152,7 +155,9 @@ function carIcon(){ const W=40,H=22,cv=document.createElement('canvas'); cv.widt
 /* ---------- shelter clicked: the area it serves + why it was chosen ---------- */
 function addDrillLayers(){ map.addSource('catch',{type:'geojson',data:DR.prep?.catchFC||{type:'FeatureCollection',features:[]}});
   map.addLayer({id:'catch-fill',type:'fill',source:'catch',filter:['==',['get','k'],-9],paint:{'fill-color':css('--accent'),'fill-opacity':.35}},'routes-case');
-  map.addLayer({id:'catch-line',type:'line',source:'catch',filter:['==',['get','k'],-9],paint:{'line-color':css('--accent'),'line-width':1}},'routes-case'); }
+  map.addLayer({id:'catch-line',type:'line',source:'catch',filter:['==',['get','k'],-9],paint:{'line-color':css('--accent'),'line-width':1}},'routes-case');
+  map.addSource('cars3d',{type:'geojson',data:{type:'FeatureCollection',features:[]}});
+  map.addLayer({id:'cars-3d',type:'fill-extrusion',source:'cars3d',layout:{visibility:'none'},paint:{'fill-extrusion-color':walkCol(),'fill-extrusion-height':1.6,'fill-extrusion-opacity':.95}}); }
 function selectShelter(k){ DR.sel=k; const card=$('shelCard'); if(!ready) return; const f=['==',['get','k'],k??-9];
   map.setFilter('catch-fill',f); map.setFilter('catch-line',f); map.setFilter('routes',k==null?null:f); map.setFilter('routes-case',k==null?null:f);
   if(k==null||!DR.run){ card.hidden=true; return; } const s=DR.run.sh[k],src=k<E.shelters.length?E.shelters[k].src:(E.cands||[]).find(c=>c.c===s.c),R=DR.run;

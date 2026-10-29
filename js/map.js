@@ -45,7 +45,7 @@ function initMap(){
   map.on('error',e=>{ if(e.sourceId&&isTile(e.sourceId)){ tileFail++; if(!tileOk&&tileFail>=2) showNotice(); } });
   map.on('data',e=>{ if(e.dataType==='source'&&e.tile&&isTile(e.sourceId)&&e.sourceId!=='dem'&&e.tile.state==='loaded'){ tileOk=true; $('notice').hidden=true; } });
   map.on('load',()=>{
-    ['cells','bld','bldpt','obs','cut','people','cars','routes','groups','walkers','places','ab','trips','incidents','units'].forEach(id=>map.addSource(id,{type:'geojson',data:empty()}));
+    ['cells','bld','bldpt','obs','cut','people','cars','routes','groups','walkers','places','ab','trips','incidents','units'].forEach(id=>map.addSource(id,{type:'geojson',data:empty(),...(id==='bld'?{maxzoom:15,buffer:16}:{})})); // buildings: fewer tile levels = no blank moment while zooming
     map.addLayer({id:'zones',type:'fill',source:'cells',layout:{visibility:'none'},paint:{'fill-color':zoneColor(),'fill-opacity':0.55,'fill-antialias':false}});
     map.addLayer({id:'water-2d',type:'fill',source:'cells',paint:{'fill-color':'#000','fill-opacity':0}}); // invisible: only for the hover tooltip
     map.addLayer({id:'water-3d',type:'fill-extrusion',source:'cells',layout:{visibility:'none'},paint:{'fill-extrusion-color':waterColor(),'fill-extrusion-height':0,'fill-extrusion-opacity':0.6}});
@@ -61,7 +61,10 @@ function initMap(){
     map.addLayer({id:'obs-line',type:'line',source:'obs',paint:{'line-color':css('--obs'),'line-width':2.4,'line-dasharray':[2,1.5]}});
     detailLayers('top').forEach(l=>map.addLayer(l));
     ready=true; refreshData(); setBasemap(S.basemap); applyLayers(); render();
-    map.on('mousemove',onHover); map.on('mouseout',()=>$('tip').hidden=true); map.on('click',onMapClick);
+    // in 3D, dots lie flat on the ground instead of standing up like discs in the air
+    map.getStyle().layers.filter(l=>l.type==='circle').forEach(l=>{ map.setPaintProperty(l.id,'circle-pitch-alignment','map'); map.setPaintProperty(l.id,'circle-pitch-scale','map'); });
+    map.on('mousemove',onHover); map.on('mouseout',()=>$('tip').hidden=true); let clickT=null; map.on('click',e=>{ clearTimeout(clickT); clickT=setTimeout(()=>onMapClick(e),230); }); // wait: a double-click is A–B, not two clicks
+    map.doubleClickZoom.disable(); map.on('dblclick',e=>{ e.preventDefault(); clearTimeout(clickT); abDouble([e.lngLat.lng,e.lngLat.lat]); }); // double-click: route A, then B
     map.on('sourcedata',e=>{ if(e.sourceId==='osm'&&e.tile) collectRoads(); }); // not 'idle': the animated water keeps the map busy
   });
 }

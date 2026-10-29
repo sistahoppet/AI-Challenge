@@ -291,7 +291,7 @@ input[type=number].btn,.form input,.capbox input,select.btn{min-height:32px;font
 .tag.warn{background:var(--cut);color:#fff} .tag.data{background:var(--zg);color:#fff} .tag.external{background:var(--unit);color:#fff} .tag.assumption{background:var(--zy);color:#fff} .tag.mix{background:var(--muted);color:var(--surface)}
 .pin.full{background:var(--cut)} .pin::after{content:"";position:absolute;left:-2px;bottom:-9px;width:26px;height:4px;transform:rotate(45deg) translate(9px,2px);transform-origin:left;
   background:linear-gradient(90deg,var(--ink) var(--fill,0%),color-mix(in srgb,var(--surface) 70%,transparent) var(--fill,0%));border-radius:2px}
-.pin{position:relative}
+
 .tbl.score{width:100%;font-size:13px;border-collapse:collapse} .tbl.score td,.tbl.score th{padding:3px 4px;border-bottom:1px solid var(--line);text-align:right} .tbl.score td:first-child,.tbl.score th:first-child{text-align:left}
 .h3{font-size:14px;margin:12px 0 4px} .dlog{font-size:13px;padding-left:18px;margin:0}
 .steps{padding-left:20px;font-size:14.5px} .steps li{margin:8px 0} .steps li>span.mono{display:inline-block;min-width:150px;color:var(--muted);margin-right:8px}
@@ -565,11 +565,11 @@ body:not(.explain) .tabbody details.info, body:not(.explain) .tabbody p.hint:not
         <div>
           <h2>Safe route A → B</h2>
           <div class="row" style="justify-content:flex-start">
-            <button class="btn sm" id="abA" aria-pressed="false">Set A</button><button class="btn sm" id="abB" aria-pressed="false">Set B</button>
+            <span hidden><button id="abA"></button><button id="abB"></button></span><button class="btn sm" id="abClear">Clear A–B</button>
             <button class="btn sm" id="abShelter">A → nearest shelter</button>
             <select class="btn" id="abMode" aria-label="Travel mode"><option value="car">By car</option><option value="foot">On foot</option></select>
           </div>
-          <p id="abOut" style="font-size:14px;margin:8px 0 0">Click "Set A" and "Set B", then click the map. The route uses real roads and avoids the water at the moment shown in the video (try "water rising").</p>
+          <p id="abOut" style="font-size:14px;margin:8px 0 0"><b>Double-click the map</b>: first A, then B. The route uses real roads and avoids the water at the moment shown in the video (try "water rising").</p>
         </div>
         <div>
           <h2>Evacuation plan</h2>
@@ -1011,7 +1011,7 @@ function initMap(){
   map.on('error',e=>{ if(e.sourceId&&isTile(e.sourceId)){ tileFail++; if(!tileOk&&tileFail>=2) showNotice(); } });
   map.on('data',e=>{ if(e.dataType==='source'&&e.tile&&isTile(e.sourceId)&&e.sourceId!=='dem'&&e.tile.state==='loaded'){ tileOk=true; $('notice').hidden=true; } });
   map.on('load',()=>{
-    ['cells','bld','bldpt','obs','cut','people','cars','routes','groups','walkers','places','ab','trips','incidents','units'].forEach(id=>map.addSource(id,{type:'geojson',data:empty()}));
+    ['cells','bld','bldpt','obs','cut','people','cars','routes','groups','walkers','places','ab','trips','incidents','units'].forEach(id=>map.addSource(id,{type:'geojson',data:empty(),...(id==='bld'?{maxzoom:15,buffer:16}:{})})); // buildings: fewer tile levels = no blank moment while zooming
     map.addLayer({id:'zones',type:'fill',source:'cells',layout:{visibility:'none'},paint:{'fill-color':zoneColor(),'fill-opacity':0.55,'fill-antialias':false}});
     map.addLayer({id:'water-2d',type:'fill',source:'cells',paint:{'fill-color':'#000','fill-opacity':0}}); // invisible: only for the hover tooltip
     map.addLayer({id:'water-3d',type:'fill-extrusion',source:'cells',layout:{visibility:'none'},paint:{'fill-extrusion-color':waterColor(),'fill-extrusion-height':0,'fill-extrusion-opacity':0.6}});
@@ -1027,7 +1027,10 @@ function initMap(){
     map.addLayer({id:'obs-line',type:'line',source:'obs',paint:{'line-color':css('--obs'),'line-width':2.4,'line-dasharray':[2,1.5]}});
     detailLayers('top').forEach(l=>map.addLayer(l));
     ready=true; refreshData(); setBasemap(S.basemap); applyLayers(); render();
-    map.on('mousemove',onHover); map.on('mouseout',()=>$('tip').hidden=true); map.on('click',onMapClick);
+    // in 3D, dots lie flat on the ground instead of standing up like discs in the air
+    map.getStyle().layers.filter(l=>l.type==='circle').forEach(l=>{ map.setPaintProperty(l.id,'circle-pitch-alignment','map'); map.setPaintProperty(l.id,'circle-pitch-scale','map'); });
+    map.on('mousemove',onHover); map.on('mouseout',()=>$('tip').hidden=true); let clickT=null; map.on('click',e=>{ clearTimeout(clickT); clickT=setTimeout(()=>onMapClick(e),230); }); // wait: a double-click is A–B, not two clicks
+    map.doubleClickZoom.disable(); map.on('dblclick',e=>{ e.preventDefault(); clearTimeout(clickT); abDouble([e.lngLat.lng,e.lngLat.lat]); }); // double-click: route A, then B
     map.on('sourcedata',e=>{ if(e.sourceId==='osm'&&e.tile) collectRoads(); }); // not 'idle': the animated water keeps the map busy
   });
 }
@@ -1124,7 +1127,7 @@ function onHover(ev){
 /* ---------- animation loop shared by water, cars and evacuees (~30 frames/s) ---------- */
 const FX=[]; let fxLast=0;
 function fxLoop(now){ requestAnimationFrame(fxLoop); if(document.hidden||!ready||!D||now-fxLast<33) return;
-  const dt=Math.min(0.1,(now-fxLast)/1000); fxLast=now; FX.forEach(f=>f(now,dt)); }
+  const dt=Math.min(0.1,(now-fxLast)/1000); fxLast=now; FX.forEach(f=>{ try{ f(now,dt); }catch(e){ if(!f.err){ f.err=1; console.error(e); } } }); } // one failing animation must not stop the others (cars, people, water)
 requestAnimationFrame(fxLoop);
 
 /* ---------- smooth water image ---------- */
@@ -1389,12 +1392,12 @@ function addEvacLayers(){
   map.addLayer({id:'groups',type:'circle',source:'groups',paint:{'circle-radius':['interpolate',['linear'],['sqrt',['get','pop']],0,5,40,20],'circle-color':waveCol(),'circle-opacity':.85,'circle-stroke-color':'#fff','circle-stroke-width':1.5}});
   map.addLayer({id:'groups-lab',type:'symbol',source:'groups',layout:{'text-field':['get','lab'],'text-font':['Noto Sans Bold'],'text-size':11,'text-allow-overlap':true},paint:{'text-color':'#fff'}});
   const ic=carIcon(); if(ic&&!map.hasImage('evcar')) map.addImage('evcar',ic,{sdf:true}); // evacuees drive: one car icon, coloured by status, turned along the road
-  map.addLayer({id:'walkers',type:'symbol',source:'walkers',layout:{'icon-image':'evcar','icon-size':['interpolate',['linear'],['zoom'],11,.35,16,.8],'icon-rotate':['-',['get','b'],90],'icon-rotation-alignment':'map','icon-allow-overlap':true,'icon-ignore-placement':true},
+  map.addLayer({id:'walkers',type:'symbol',source:'walkers',layout:{'icon-image':'evcar','icon-size':['interpolate',['exponential',2],['zoom'],12,.12,15,.15,17,.6,19,2.4],'icon-rotate':['-',['get','b'],90],'icon-rotation-alignment':'map','icon-pitch-alignment':'map','icon-allow-overlap':true,'icon-ignore-placement':true},
     paint:{'icon-color':walkCol(),'icon-halo-color':'#000','icon-halo-width':1}});
   addDrillLayers();
 }
 function evacVisibility(){ const on=S.tab==='safety'&&!!E.plan; ['routes-case','routes','groups','groups-lab','catch-fill','catch-line'].forEach(id=>map.setLayoutProperty(id,'visibility',on||(id.startsWith('catch')&&DR.sel!=null)?'visible':'none'));
-  map.setLayoutProperty('walkers','visibility',(on||S.tab==='sim')&&E.plan?'visible':'none'); pinVis(); }
+  const cars=(on||S.tab==='sim')&&E.plan; map.setLayoutProperty('walkers','visibility',cars&&!S.l3d?'visible':'none'); map.setLayoutProperty('cars-3d','visibility',cars&&S.l3d?'visible':'none'); pinVis(); }
 function recolorEvac(){ ['routes','groups'].forEach(id=>map.setPaintProperty(id,id==='routes'?'line-color':'circle-color',waveCol()));
   map.setPaintProperty('walkers','icon-color',walkCol()); }
 function drawPlan(){ const P=E.plan; if(!P) return; drawShelterList(); drawEvacPanel(); drawCritical(); if(typeof drillReset==='function') drillReset(); if(S.tab==='policy'){ drawCosts(); drawImpact(); }
@@ -1681,6 +1684,10 @@ function countBridges(pts){let n=0,on=false; for(let j=1;j<pts.length;j++){const
 function wetLen(pts,r,lim){let m=0; for(let j=1;j<pts.length;j++){const s=roadSegs.get(kk(pts[j-1])+'|'+kk(pts[j]))||roadSegs.get(kk(pts[j])+'|'+kk(pts[j-1])); if(s&&s.cs.some(c=>nowDepth(c,r)>lim)) m+=s.len;} return m;}
 function abStart(w){ AB.pick=w; AB.toShelter=false; $('ab'+w).setAttribute('aria-pressed',true); map.getCanvas().style.cursor='crosshair'; toast(`Click the map to set ${w}`); }
 $('abA').onclick=()=>abStart('A'); $('abB').onclick=()=>abStart('B');
+// double-click on the map: first point = A, second = B (route drawn), a third starts again from A
+function abDouble(p){ AB.pick=null; AB.toShelter=false; if(!AB.a||AB.b){ AB.b=null; AB.mk.B?.remove(); abSet('A',p); $('abOut').textContent='A set. Double-click again for B.'; toast('A set: double-click B'); }
+  else { abSet('B',p); abRoute(); } }
+$('abClear').onclick=()=>{ AB.a=AB.b=null; AB.mk.A?.remove(); AB.mk.B?.remove(); map.getSource('ab')?.setData({type:'FeatureCollection',features:[]}); $('abOut').textContent='Double-click the map: first A, then B.'; };
 $('abShelter').onclick=()=>{ AB.toShelter=true; AB.b=null; if(AB.a) abRoute(); else { AB.pick='A'; $('abA').setAttribute('aria-pressed',true); map.getCanvas().style.cursor='crosshair'; toast('Click the map to set A (where you are)'); } };
 $('abMode').onchange=()=>{ if(AB.a&&(AB.b||AB.toShelter)) abRoute(); };
 
@@ -2702,10 +2709,13 @@ function extraPins(){ DR.mk.forEach(([m])=>m.remove()); DR.mk=[]; if(!ready||!DR
     DR.mk.push([new maplibregl.Marker({element:el,anchor:'bottom-left'}).setLngLat(s.c).addTo(map),i]); }); pinVis(); }
 function pinVis(){ const on=S.tab==='safety'||S.tab==='sim'||S.tab==='coord'; [...markers,...DR.mk.map(x=>x[0])].forEach(m=>m.getElement().hidden=!on); }
 function drillWalkers(){ const R=DR.run,t=S.T*R.M,f=[];
-  for(const c of R.co){ const s=segAt(c,t); let p=null,b=0; if(s[1]==='walk'){ const d=Math.min(s[2].len,(t-s[3])*s[4]),q=along(s[2],Math.min(s[2].len,d+8)); p=along(s[2],d);
+  for(const c of R.co){ if(c.n<1e-6) continue; const s=segAt(c,t); let p=null,b=0; if(s[1]==='walk'){ if((t-s[3])*s[4]>s[2].len) continue; const d=(t-s[3])*s[4],q=along(s[2],Math.min(s[2].len,d+8)); p=along(s[2],d);
       b=Math.atan2((q[0]-p[0])*KX(p[1]),(q[1]-p[1])*110540)*180/Math.PI; } else if(s[1]==='stuck'||s[1]==='noplace') p=s[2]; if(!p) continue;
-    f.push({type:'Feature',geometry:{type:'Point',coordinates:p},properties:{wave:c.g.wave,st:s[1],b}}); }
-  map.getSource('walkers').setData({type:'FeatureCollection',features:f}); }
+    f.push({type:'Feature',geometry:S.l3d?carBox(p,b):{type:'Point',coordinates:p},properties:{wave:c.g.wave,st:s[1],b}}); }
+  map.getSource(S.l3d?'cars3d':'walkers').setData({type:'FeatureCollection',features:f}); }
+// 3D: a real-size car (4.5 × 1.9 m footprint, turned along the road), extruded 1.6 m
+function carBox(p,b){ const a=b*Math.PI/180,kx=KX(p[1]),f=[Math.sin(a)*2.25,Math.cos(a)*2.25],s=[Math.cos(a)*.95,-Math.sin(a)*.95],pt=(i,j)=>[p[0]+(f[0]*i+s[0]*j)/kx,p[1]+(f[1]*i+s[1]*j)/110540];
+  return {type:'Polygon',coordinates:[[pt(1,1),pt(1,-1),pt(-1,-1),pt(-1,1),pt(1,1)]]}; }
 // car icon drawn once (signed-distance icon: one shape, coloured by status in the layer)
 function carIcon(){ const W=40,H=22,cv=document.createElement('canvas'); cv.width=W; cv.height=H; const x=cv.getContext('2d'); if(!x?.getImageData) return null;
   x.fillStyle='#000'; x.beginPath(); x.roundRect?.(3,1,W-6,H-2,6); x.fill(); x.globalCompositeOperation='destination-out'; x.fillRect(W-14,4,6,H-8); x.fillRect(8,4,5,H-8);
@@ -2714,7 +2724,9 @@ function carIcon(){ const W=40,H=22,cv=document.createElement('canvas'); cv.widt
 /* ---------- shelter clicked: the area it serves + why it was chosen ---------- */
 function addDrillLayers(){ map.addSource('catch',{type:'geojson',data:DR.prep?.catchFC||{type:'FeatureCollection',features:[]}});
   map.addLayer({id:'catch-fill',type:'fill',source:'catch',filter:['==',['get','k'],-9],paint:{'fill-color':css('--accent'),'fill-opacity':.35}},'routes-case');
-  map.addLayer({id:'catch-line',type:'line',source:'catch',filter:['==',['get','k'],-9],paint:{'line-color':css('--accent'),'line-width':1}},'routes-case'); }
+  map.addLayer({id:'catch-line',type:'line',source:'catch',filter:['==',['get','k'],-9],paint:{'line-color':css('--accent'),'line-width':1}},'routes-case');
+  map.addSource('cars3d',{type:'geojson',data:{type:'FeatureCollection',features:[]}});
+  map.addLayer({id:'cars-3d',type:'fill-extrusion',source:'cars3d',layout:{visibility:'none'},paint:{'fill-extrusion-color':walkCol(),'fill-extrusion-height':1.6,'fill-extrusion-opacity':.95}}); }
 function selectShelter(k){ DR.sel=k; const card=$('shelCard'); if(!ready) return; const f=['==',['get','k'],k??-9];
   map.setFilter('catch-fill',f); map.setFilter('catch-line',f); map.setFilter('routes',k==null?null:f); map.setFilter('routes-case',k==null?null:f);
   if(k==null||!DR.run){ card.hidden=true; return; } const s=DR.run.sh[k],src=k<E.shelters.length?E.shelters[k].src:(E.cands||[]).find(c=>c.c===s.c),R=DR.run;

@@ -227,11 +227,11 @@
         <div>
           <h2>Safe route A → B</h2>
           <div class="row" style="justify-content:flex-start">
-            <button class="btn sm" id="abA" aria-pressed="false">Set A</button><button class="btn sm" id="abB" aria-pressed="false">Set B</button>
+            <span hidden><button id="abA"></button><button id="abB"></button></span><button class="btn sm" id="abClear">Clear A–B</button>
             <button class="btn sm" id="abShelter">A → nearest shelter</button>
             <select class="btn" id="abMode" aria-label="Travel mode"><option value="car">By car</option><option value="foot">On foot</option></select>
           </div>
-          <p id="abOut" style="font-size:14px;margin:8px 0 0">Click "Set A" and "Set B", then click the map. The route uses real roads and avoids the water at the moment shown in the video (try "water rising").</p>
+          <p id="abOut" style="font-size:14px;margin:8px 0 0"><b>Double-click the map</b>: first A, then B. The route uses real roads and avoids the water at the moment shown in the video (try "water rising").</p>
         </div>
         <div>
           <h2>Evacuation plan</h2>

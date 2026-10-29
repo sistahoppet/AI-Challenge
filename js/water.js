@@ -4,7 +4,7 @@
 /* ---------- animation loop shared by water, cars and evacuees (~30 frames/s) ---------- */
 const FX=[]; let fxLast=0;
 function fxLoop(now){ requestAnimationFrame(fxLoop); if(document.hidden||!ready||!D||now-fxLast<33) return;
-  const dt=Math.min(0.1,(now-fxLast)/1000); fxLast=now; FX.forEach(f=>f(now,dt)); }
+  const dt=Math.min(0.1,(now-fxLast)/1000); fxLast=now; FX.forEach(f=>{ try{ f(now,dt); }catch(e){ if(!f.err){ f.err=1; console.error(e); } } }); } // one failing animation must not stop the others (cars, people, water)
 requestAnimationFrame(fxLoop);
 
 /* ---------- smooth water image ---------- */

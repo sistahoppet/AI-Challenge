@@ -97,6 +97,10 @@ function countBridges(pts){let n=0,on=false; for(let j=1;j<pts.length;j++){const
 function wetLen(pts,r,lim){let m=0; for(let j=1;j<pts.length;j++){const s=roadSegs.get(kk(pts[j-1])+'|'+kk(pts[j]))||roadSegs.get(kk(pts[j])+'|'+kk(pts[j-1])); if(s&&s.cs.some(c=>nowDepth(c,r)>lim)) m+=s.len;} return m;}
 function abStart(w){ AB.pick=w; AB.toShelter=false; $('ab'+w).setAttribute('aria-pressed',true); map.getCanvas().style.cursor='crosshair'; toast(`Click the map to set ${w}`); }
 $('abA').onclick=()=>abStart('A'); $('abB').onclick=()=>abStart('B');
+// double-click on the map: first point = A, second = B (route drawn), a third starts again from A
+function abDouble(p){ AB.pick=null; AB.toShelter=false; if(!AB.a||AB.b){ AB.b=null; AB.mk.B?.remove(); abSet('A',p); $('abOut').textContent='A set. Double-click again for B.'; toast('A set: double-click B'); }
+  else { abSet('B',p); abRoute(); } }
+$('abClear').onclick=()=>{ AB.a=AB.b=null; AB.mk.A?.remove(); AB.mk.B?.remove(); map.getSource('ab')?.setData({type:'FeatureCollection',features:[]}); $('abOut').textContent='Double-click the map: first A, then B.'; };
 $('abShelter').onclick=()=>{ AB.toShelter=true; AB.b=null; if(AB.a) abRoute(); else { AB.pick='A'; $('abA').setAttribute('aria-pressed',true); map.getCanvas().style.cursor='crosshair'; toast('Click the map to set A (where you are)'); } };
 $('abMode').onchange=()=>{ if(AB.a&&(AB.b||AB.toShelter)) abRoute(); };
 
