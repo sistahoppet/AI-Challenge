@@ -24,7 +24,7 @@ function ingest(files){
   for(const f of (files.buildings?.features||[])){const c=f.geometry&&centroidOf(f.geometry); if(!c) continue;
     let ci=-1; for(const i of idx.query(c[0],c[1])) if(pipPoly(c[0],c[1],cells[i].poly)){ci=i;break;}
     if(ci<0) missed++; const h=+(f.properties?.height??f.properties?.height_m);
-    const bp=+f.properties?.pop; blds.push({c,geom:f.geometry,h:isFinite(h)&&h>0?h:8,ci,pop:bp>0?bp:0,use:f.properties?.use??null,area:+f.properties?.area||0,obs:obsPolys.length?inObs(c[0],c[1]):false});}
+    const bp=+f.properties?.pop; blds.push({c,geom:f.geometry,h:isFinite(h)&&h>0?h:8,ci,pop:bp>0?bp:0,use:f.properties?.use??null,kind:f.properties?.kind??null,fp:f.geometry.type!=='Point',area:+f.properties?.area||0,obs:obsPolys.length?inObs(c[0],c[1]):false});}
   if(blds.length) ok(`Buildings: ${blds.length.toLocaleString()}${missed?` (${missed} outside the grid, not counted)`:''}.`);
   else ok('No buildings file: building counts will show 0.');
   // OpenStreetMap places (hospitals, schools…) and roads: optional, from scripts/export_tiles.py or export_osm.py
@@ -34,7 +34,7 @@ function ingest(files){
   if(places.length) ok(`Places: ${places.length} (hospitals, schools, sports halls…).`);
   const roads=(files.roads?.features||[]).filter(f=>f.geometry?.type==='LineString');
   if(roads.length) ok(`Roads: ${roads.length.toLocaleString()} from OpenStreetMap.`);
-  return {log,data:{cells,rps,blds,places,roads,observed:files.observed||null,hasObs:obsPolys.length>0,bbox:bboxOf(cells.map(c=>c.ring))}};
+  return {log,data:{cells,rps,blds,places,roads,observed:files.observed||null,hasObs:obsPolys.length>0,hasFp:blds.filter(b=>b.fp).length>blds.length/2,bbox:bboxOf(cells.map(c=>c.ring))}};
 }
 
 /* ---------- data loading modal ---------- */
@@ -59,7 +59,7 @@ async function tryAutoLoad(){
   if(!/^https?:$/.test(location.protocol)) return;
   const get=async n=>{ try{ const r=await fetch('data/'+n,{cache:'no-store'}); return r.ok?await r.json():null; }catch(e){ return null; } };
   const grid=await get('grid.geojson'); if(!grid) return;
-  const r=ingest({grid,observed:await get('observed_2021.geojson'),buildings:await get('buildings.geojson'),places:await get('places.geojson'),roads:await get('roads.geojson')});
+  const r=ingest({grid,observed:await get('observed_2021.geojson'),buildings:await get('buildings_fp.geojson')||await get('buildings.geojson'),places:await get('places.geojson'),roads:await get('roads.geojson')});
   if(r.data){ load(r.data,false); toast('Team data loaded from the data folder'); }
   else toast('data/grid.geojson has a problem: '+r.log.filter(l=>l.e).map(l=>l.m).join(' '));
 }

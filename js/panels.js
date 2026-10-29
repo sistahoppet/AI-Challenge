@@ -18,7 +18,7 @@ $('stageClose').onclick=()=>setTab('sim');
 /* ---------- safety ---------- */
 function drawZones(){ const r=D.zoneRule;
   $('zoneLegend').innerHTML=[[3,'--zr','Red: high risk',`Floods even in a frequent flood (1-in-${r.lo}), or water over 1.5 m in a 1-in-${r.mid} flood`],
-    [2,'--zy','Yellow: caution','Floods only in rarer floods, or was flooded in 2021'],[1,'--zg','Green: safer','Dry in every flood size']]
+    [2,'--zy','Yellow: caution',`Under water in a 1-in-${r.mid} flood, less than 1.5 m`],[1,'--zg','Green: safer',`Dry up to 1-in-${r.mid} (hover the map: some flood in the extreme one)`]]
    .map(([z,v,t,s])=>`<div class="crow" style="align-items:start"><span class="sw" style="background:var(${v});margin-top:3px"></span><span><b>${t}</b><br><span class="hint" style="margin:0">${s}</span></span><span class="mono">${fmt(D.zoneTot[z-1].people)} people</span></div>`).join('');}
 function drawSafe(){ drawShelterList(); drawShelters(); } // shelters start from the safest places (evac.js)
 function flyTo(k){ setOrbit(false); if(S.tab!=='safety'&&S.tab!=='coord') setTab('safety'); map.flyTo({center:E.shelters[k].c,zoom:16,duration:1400}); }

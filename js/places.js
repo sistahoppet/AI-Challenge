@@ -54,7 +54,7 @@ function shelterCandidates(){ if(!D.places?.length) return {list:[],out:{}};
   const top=D.rps[D.rps.length-1],wet=D.cells.filter(c=>c.z>1),red=wet.filter(c=>c.z===3),flood=D.cells.filter(c=>c.depth[top]>0),out={zone:0,near:0};
   const g=roadGraph(top,'car',CAR_DEPTH),cs=g&&compSizes(g),big=cs?Math.max(...cs):0;
   const list=D.places.filter(p=>STYPE[p.kind]&&p.ci>=0).map(p=>{ const c=D.cells[p.ci];
-    if(c.z!==1){out.zone++; return null;}
+    if(c.z!==1||c.depth[top]>.01){out.zone++; return null;} // not in any mapped flood, extreme one included
     let dmin=Infinity,nw=null; for(const w of wet){const d=mDist(p.c,w.c); if(d<dmin){dmin=d;}} for(const w of flood){const d=mDist(p.c,w.c); if(!nw||d<nw.d) nw={w,d};}
     if(dmin<150){out.near++; return null;}
     let near=0; for(const w of red) if(mDist(p.c,w.c)<=1500) near+=w.pop;

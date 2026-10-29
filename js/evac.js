@@ -58,7 +58,7 @@ function evacGroups(r){ const B=Math.max(1,Math.round(400/D.G.m)),m=new Map();
 function planFor(r){
   const groups=evacGroups(r).sort((a,b)=>a.wave-b.wave||b.pop-a.pop),total=groups.reduce((s,g)=>s+g.pop,0),load=E.shelters.map(()=>0),routes=[];
   if(!E.shelters.length) return {r,kind:'none',groups,routes,load,total,moved:0,over:total,slow:0};
-  const g=roadGraph(r,'foot')||gridGraph(r),trees=E.shelters.map(s=>dijkstra(g,nearest(g,s.c))); let moved=0,over=0,slow=0;
+  const g=roadGraph(r,'car')||gridGraph(r),trees=E.shelters.map(s=>dijkstra(g,nearest(g,s.c))); let moved=0,over=0,slow=0;
   for(const [gi,gr] of groups.entries()){ const st=nearest(g,gr.c); let left=gr.pop;
     const order=trees.map((t,k)=>k).filter(k=>isFinite(trees[k].dist[st])).sort((a,b)=>trees[a].dist[st]-trees[b].dist[st]);
     const way=k=>{const path=[gr.c]; for(let u=st;u>=0;u=trees[k].prev[u]) path.push(g.pts[u]); path.push(E.shelters[k].c); return prepLine(path);};
@@ -68,7 +68,7 @@ function planFor(r){
       const l=way(k),min=l.len/(E.speed*1000/60),avail=Math.min(SC.leadMin,isFinite(gr.ts)?gr.ts*SC.mins:Infinity),clear=FW.mob+min+FW.delay,ok=clear<=avail; moved+=take; if(!ok) slow+=take;
       routes.push({...l,min,avail,clear,people:take,wave:gr.wave,k,ok,gi}); if(!ok) gr.slow=(gr.slow||0)+take; }
     gr.left=left; over+=left; }
-  return {r,kind:g.kind,groups,routes,load,total,moved,over,slow};
+  return {r,kind:g.kind,groups,routes,load,total,moved,over,slow,g,trees};
 }
 let planT=null;
 function makePlan(){ clearTimeout(planT); planT=setTimeout(()=>{ if(!D) return; E.plan=planFor(rp()); drawPlan(); },60); }
@@ -81,41 +81,44 @@ function addEvacLayers(){
   map.addLayer({id:'routes',type:'line',source:'routes',layout:{'line-join':'round','line-cap':'round'},paint:{'line-color':waveCol(),'line-width':3,'line-opacity':['case',['==',['get','ok'],1],.95,.55]}});
   map.addLayer({id:'groups',type:'circle',source:'groups',paint:{'circle-radius':['interpolate',['linear'],['sqrt',['get','pop']],0,5,40,20],'circle-color':waveCol(),'circle-opacity':.85,'circle-stroke-color':'#fff','circle-stroke-width':1.5}});
   map.addLayer({id:'groups-lab',type:'symbol',source:'groups',layout:{'text-field':['get','lab'],'text-font':['Noto Sans Bold'],'text-size':11,'text-allow-overlap':true},paint:{'text-color':'#fff'}});
-  map.addLayer({id:'walkers',type:'circle',source:'walkers',paint:{'circle-radius':['interpolate',['linear'],['zoom'],12,2.5,17,5.5],'circle-color':walkCol(),'circle-stroke-color':waveCol(),'circle-stroke-width':1.5}});
+  const ic=carIcon(); if(ic&&!map.hasImage('evcar')) map.addImage('evcar',ic,{sdf:true}); // evacuees drive: one car icon, coloured by status, turned along the road
+  map.addLayer({id:'walkers',type:'symbol',source:'walkers',layout:{'icon-image':'evcar','icon-size':['interpolate',['linear'],['zoom'],11,.35,16,.8],'icon-rotate':['-',['get','b'],90],'icon-rotation-alignment':'map','icon-allow-overlap':true,'icon-ignore-placement':true},
+    paint:{'icon-color':walkCol(),'icon-halo-color':'#000','icon-halo-width':1}});
+  addDrillLayers();
 }
-function evacVisibility(){ const on=(S.tab==='safety'||DR.train)&&!!E.plan; ['routes-case','routes','groups','groups-lab','walkers'].forEach(id=>map.setLayoutProperty(id,'visibility',on?'visible':'none')); }
+function evacVisibility(){ const on=S.tab==='safety'&&!!E.plan; ['routes-case','routes','groups','groups-lab','catch-fill','catch-line'].forEach(id=>map.setLayoutProperty(id,'visibility',on||(id.startsWith('catch')&&DR.sel!=null)?'visible':'none'));
+  map.setLayoutProperty('walkers','visibility',(on||S.tab==='sim')&&E.plan?'visible':'none'); pinVis(); }
 function recolorEvac(){ ['routes','groups'].forEach(id=>map.setPaintProperty(id,id==='routes'?'line-color':'circle-color',waveCol()));
-  map.setPaintProperty('walkers','circle-color',walkCol()); map.setPaintProperty('walkers','circle-stroke-color',waveCol()); }
+  map.setPaintProperty('walkers','icon-color',walkCol()); }
 function drawPlan(){ const P=E.plan; if(!P) return; drawShelterList(); drawEvacPanel(); drawCritical(); if(typeof drillReset==='function') drillReset(); if(S.tab==='policy'){ drawCosts(); drawImpact(); }
   if(!ready) return; const F=fs=>({type:'FeatureCollection',features:fs}),pt=(c,p)=>({type:'Feature',geometry:{type:'Point',coordinates:c},properties:p});
-  map.getSource('routes').setData(F(P.routes.map(r=>({type:'Feature',geometry:{type:'LineString',coordinates:r.pts},properties:{wave:r.wave,ok:r.ok?1:0}}))));
+  map.getSource('routes').setData(F(P.routes.map(r=>({type:'Feature',geometry:{type:'LineString',coordinates:r.pts},properties:{wave:r.wave,ok:r.ok?1:0,k:r.k}}))));
   map.getSource('groups').setData(F(P.groups.map(g=>pt(g.c,{pop:g.pop,wave:g.wave,lab:fmt(g.pop)}))));
   // moving dots: about one per 2 dots of residents, capped for speed
   const R=rng(3),per=Math.max(perDot*2,P.moved/1200); E.walkers=[];
   P.routes.forEach((r,i)=>{for(let n=Math.max(1,Math.round(r.people/per));n>0;n--) E.walkers.push({r:i,s0:R()});});
   drawShelters(); evacVisibility(); drillRun(); }
-function stepWalkers(now){ const P=E.plan; if(!P||!(S.tab==='safety'||DR.train)||!E.walkers.length) return; if(DR.run) return drillWalkers(); const t=reduce?0:now/1000,v=E.speed/3.6*60,f=[]; // 60× faster than real
+function stepWalkers(now){ const P=E.plan; if(!P||!(S.tab==='safety'||S.tab==='sim')||!E.walkers.length) return; if(DR.run) return drillWalkers(); const t=reduce?0:now/1000,v=E.speed/3.6*60,f=[]; // 60× faster than real
   for(const w of E.walkers){const r=P.routes[w.r]; if(!r.len) continue; f.push({type:'Feature',geometry:{type:'Point',coordinates:along(r,((w.s0+t*v/r.len)%1)*r.len)},properties:{wave:r.wave}});}
   map.getSource('walkers').setData({type:'FeatureCollection',features:f}); }
 FX.push(stepWalkers);
 function drawShelters(){ markers.forEach(m=>m.remove()); markers=[]; if(!ready) return;
   E.shelters.forEach((s,k)=>{const el=document.createElement('div'); el.className='pin'+(s.auto?'':' you'); el.innerHTML=`<span>${k+1}</span>`;
-    el.title=`${s.name}: ${fmtFull(E.plan?.load[k]||0)} of ${fmtFull(capOf(k))} places used`; el.onclick=()=>flyTo(k);
+    el.title=`${s.name}: ${fmtFull(E.plan?.load[k]||0)} of ${fmtFull(capOf(k))} places used`; el.onclick=e=>{ e.stopPropagation(); selectShelter(k); flyTo(k); };
     markers.push(new maplibregl.Marker({element:el,anchor:'bottom-left'}).setLngLat(s.c).addTo(map));});
-  markers.forEach(m=>m.getElement().hidden=!(S.tab==='safety'||S.tab==='coord')); }
+  pinVis(); }
 
 /* ---------- panel ---------- */
 function drawShelterList(){ const ul=$('safeList'),P=E.plan;
   ul.innerHTML=!E.shelters.length?'<li class="hint">No shelter in the plan: add one from the candidates below or on the map.</li>':E.shelters.map((s,k)=>{const ld=P?.load[k]||0,full=ld>=capOf(k);
     return `<li class="shel"><button data-k="${k}"><span class="n${s.auto?'':' you'}">${k+1}</span><span><b>${esc(s.name)}</b> <span class="hint" style="margin:0">${s.kind?`${kindName(s.kind)} · ${STAY[s.stay]||''}`:s.auto?'':'added by you'}</span>
       ${s.dmin!=null&&s.src?`<br>${chips(s)}`:s.desc?`<br><span class="hint" style="margin:0">${esc(s.desc)}</span>`:''}</span></button>
-      <span class="capbox"><input type="number" min="0" step="10" value="${capOf(k)}" data-cap="${k}" aria-label="Places in ${esc(s.name)}" title="${esc(s.capSrc||'')}"><span class="mono">${fmtFull(ld)} used${full?' · FULL':''}</span>
-      <span class="hint" style="margin:0">${s.userCap?'set by you':s.cap?'from floor area':'default'}</span></span>
-      <button class="x" data-del="${k}" title="Remove from plan" aria-label="Remove shelter ${k+1}">✕</button></li>`;}).join('');
+      <span class="capbox"><span class="mono">${fmtFull(capOf(k))} places</span><span class="mono">${fmtFull(ld)} planned${full?' · FULL':''}</span>
+      <span class="hint" style="margin:0">${s.cap?'from floor area':'default'}</span></span></li>`;}).join('');
   const inPlan=new Set(E.shelters.map(s=>s.src)),rest=(E.cands||[]).filter(c=>!inPlan.has(c));
-  $('candList').innerHTML=`<summary>Other candidates (${rest.length}) · excluded: ${E.out?.zone||0} in a flood zone, ${E.out?.near||0} closer than 150 m to water</summary>`
+  $('candList').innerHTML=`<summary>Next best shelters (${rest.length}), used when the first ones are full · excluded: ${E.out?.zone||0} in a flood zone, ${E.out?.near||0} closer than 150 m to water</summary>`
     +rest.slice(0,25).map(c=>`<div class="cand"><span><b>${esc(c.name||kindName(c.kind))}</b> <span class="hint" style="margin:0">${kindName(c.kind)} · ${STAY[c.stay]} · ${c.cap?fmtFull(c.cap)+' places':'capacity unknown'} · score ${Math.round(c.score*100)}</span><br>${chips(c)}</span>
-      <button class="btn sm" data-add="${E.cands.indexOf(c)}">Add</button></div>`).join(''); }
+      </div>`).join(''); }
 function drawEvacPanel(){ const P=E.plan,r=rp(),pct=n=>P.total?Math.round(n/P.total*100)+'%':'–';
   $('evScen').textContent=`For the ${sizeWord(r).toLowerCase()} flood (1-in-${r} years) picked in Simulate.`;
   $('evStats').innerHTML=[[P.total,'people to move'],[P.moved-P.slow,`reach a shelter in time on foot (${pct(P.moved-P.slow)})`],[P.slow+P.over,'need help: too far or no place left']]
@@ -126,8 +129,8 @@ function drawEvacPanel(){ const P=E.plan,r=rp(),pct=n=>P.total?Math.round(n/P.to
   $('evNote').textContent=(P.kind==='streets'?'Routes follow OpenStreetMap streets and avoid deep water. ':P.kind==='ground'?'Routes go over open ground (streets not loaded yet: zoom in on the area). ':'')
     +'Waves: wave 1 is where water arrives first in the video (low ground, upstream sections first). This is an order, not real timing. Capacity, speed and warning time are your assumptions.'; }
 const num=(id,k)=>$(id).onchange=e=>{const v=+e.target.value; if(v>0){E[k]=v; makePlan();}};
-num('evCap','cap'); E.speed=1.1*3.6;
-$('evSpeedMs').onchange=e=>{const v=+e.target.value; if(v>0){E.speed=v*3.6; makePlan();}}; // stored in km/h
+num('evCap','cap'); E.speed=30; // km/h, OpenStreetMap streets in a town (CAR_KMH in places.js)
+$('evSpeedMs').onchange=e=>{const v=+e.target.value; if(v>0){E.speed=v; makePlan();}}; // km/h
 $('sf-foot').onchange=e=>{const v=+e.target.value; if(v>0){FOOT_DEPTH=v; graphCache={}; if(AB.a) abRoute(false);}};
 $('sf-car').onchange=e=>{const v=+e.target.value; if(v>0){CAR_DEPTH=v; roadsReset(); render(); drawLegend();}};
 $('evWho').onchange=e=>{E.who=e.target.value; makePlan();};

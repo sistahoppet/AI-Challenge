@@ -2,13 +2,16 @@
 // Loaded as a classic script: top-level names are shared between files (order set in index.html).
 
 /* ---------- map ---------- */
+// building type: 0 home, 1 shops/offices/industry (GHS-OBAT use), 2 emergency & care (OpenStreetMap site inside), 3 school/sports hall
+const KEYK=new Set(['hospital','clinic','care_home','fire_station','police','town_hall']),PUBK=new Set(['school','sports_hall','stadium','community_centre']);
+const btOf=b=>KEYK.has(b.kind)?2:PUBK.has(b.kind)?3:b.use===2?1:0;
 function squareAround([x,y],m=6){const dx=m/(111320*Math.cos(y*Math.PI/180)),dy=m/110540;return {type:'Polygon',coordinates:[[[x-dx,y-dy],[x+dx,y-dy],[x+dx,y+dy],[x-dx,y+dy],[x-dx,y-dy]]]};}
 // every feature carries its cell depth per flood size (r10, r100, …) so the map can follow the video with paint expressions only
 // c = the cell (or null): depth per flood size (r10…), channel depth (L10…) and delay (lag) for the "water now" expression
 function depthProps(c){const o={lag:c?c.lag:0}; D.rps.forEach(r=>{o['r'+r]=c?c.depth[r]:0; o['L'+r]=c?c.L[r]:0;}); return o;}
 function buildSources(){
   cellFC={type:'FeatureCollection',features:D.cells.map((c,i)=>({type:'Feature',geometry:{type:'Polygon',coordinates:c.poly},properties:Object.assign({i,z:c.z,pop:+c.pop.toFixed(1),elev:c.elev??-1},depthProps(c))}))};
-  bldFC={type:'FeatureCollection',features:D.blds.map(b=>({type:'Feature',geometry:b.geom.type==='Point'?squareAround(b.c):b.geom,properties:Object.assign({h:b.h,use:b.use??-1,area:b.area||0,bpop:+(b.pop||0).toFixed(2)},depthProps(b.ci>=0?D.cells[b.ci]:null))}))};
+  bldFC={type:'FeatureCollection',features:D.blds.map(b=>({type:'Feature',geometry:b.geom.type==='Point'?squareAround(b.c,Math.max(3,Math.sqrt(b.area||36)/2)):b.geom,properties:Object.assign({bt:btOf(b),h:b.h,use:b.use??-1,area:b.area||0,bpop:+(b.pop||0).toFixed(2)},depthProps(b.ci>=0?D.cells[b.ci]:null))}))};
 }
 // water depth now, per feature: depth − (1 − rise) × L, rise = level(T − lag) (same formula as nowDepth in analysis.js)
 // keep=true: highest level reached so far (stays at 1 after the peak) → "water reached here", i.e. likely damage
@@ -19,7 +22,9 @@ const over=()=>['-',['get','r'+rp()],['*',['-',1,withInit(riseExpr(S.T))],['get'
 const overMax=()=>['-',['get','r'+rp()],['*',['-',1,withInit(riseExpr(S.T,true))],['get','L'+rp()]]];
 const waterColor=()=>['step',over(),css('--w1'),0.5,css('--w2'),1.5,css('--w3')];
 const zoneColor=()=>['match',['get','z'],1,css('--zg'),2,css('--zy'),css('--zr')];
-const bldColor=()=>['step',overMax(),css('--bld'),0.01,css('--hit1'),0.5,css('--hit2'),1.5,css('--hit3')]; // colour = deepest water so far (stays after the water goes down)
+const btColor=()=>['match',['get','bt'],1,css('--bt1'),2,css('--bt2'),3,css('--bt3'),css('--bt0')]; // dry: colour by type
+const roofColor=()=>['step',overMax(),['match',['get','bt'],0,css('--roof'),1,css('--roof-flat'),2,css('--bt2'),css('--bt3')],0.01,css('--hit1'),0.5,css('--hit2'),1.5,css('--hit3')];
+const bldColor=()=>['step',overMax(),btColor(),0.01,css('--hit1'),0.5,css('--hit2'),1.5,css('--hit3')]; // colour = deepest water so far (stays after the water goes down)
 const isDark=()=>css('--bg')==='#0f181c';
 const BASE={
   'streets-light':{tiles:['a','b','c','d'].map(s=>`https://${s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png`),attr:'© OpenStreetMap contributors © CARTO'},
@@ -47,7 +52,10 @@ function initMap(){
     detailLayers('mid').forEach(l=>map.addLayer(l));
     map.addLayer({id:'bld-2d',type:'fill',source:'bld',paint:{'fill-color':bldColor()}});
     map.addLayer({id:'bld-hit',type:'circle',source:'bldpt',paint:{'circle-radius':['interpolate',['linear'],['zoom'],11,1.8,16,6]}}); // marker for every building water has reached
-    map.addLayer({id:'bld-3d',type:'fill-extrusion',source:'bld',layout:{visibility:'none'},paint:{'fill-extrusion-color':bldColor(),'fill-extrusion-height':0,'fill-extrusion-opacity':0.95}});
+    map.addLayer({id:'bld-3d',type:'fill-extrusion',source:'bld',layout:{visibility:'none'},paint:{'fill-extrusion-color':bldColor(),'fill-extrusion-height':0,'fill-extrusion-opacity':0.95,'fill-extrusion-vertical-gradient':true}});
+    // roof band on top, thickness and colour by type: tiled homes, flat grey work buildings, coloured public and emergency buildings
+    map.addLayer({id:'bld-roof',type:'fill-extrusion',source:'bld',layout:{visibility:'none'},paint:{'fill-extrusion-color':roofColor(),'fill-extrusion-height':0,'fill-extrusion-base':0,'fill-extrusion-opacity':0.95}});
+    map.addLayer({id:'bld-line',type:'line',source:'bld',minzoom:15,paint:{'line-color':css('--ink'),'line-opacity':.25,'line-width':.5}});
     addLiveLayers(); addEvacLayers(); addPlaceLayers(); addResponseLayers();
     map.addLayer({id:'obs-fill',type:'fill',source:'obs',paint:{'fill-color':css('--obs'),'fill-opacity':.45}});
     map.addLayer({id:'obs-line',type:'line',source:'obs',paint:{'line-color':css('--obs'),'line-width':2.4,'line-dasharray':[2,1.5]}});
@@ -76,23 +84,25 @@ function applyLayers(){
   const model=S.cmp!=='obs',obs=S.cmp!=='model'&&D.hasObs&&!zones;
   map.setLayoutProperty('water-img','visibility',vis(!zones&&model)); map.setLayoutProperty('water-3d','visibility',vis(three&&!zones&&$('tCols').checked));
   map.setLayoutProperty('zones','visibility',vis(zones||$('tZones').checked)); map.setPaintProperty('zones','fill-opacity',zones?.55:.3);
-  map.setLayoutProperty('bld-2d','visibility',vis(!three&&$('tBld').checked)); map.setLayoutProperty('bld-hit','visibility',vis(!three&&$('tBld').checked&&!zones)); map.setLayoutProperty('bld-3d','visibility',vis(three&&$('tBld').checked));
+  map.setLayoutProperty('bld-2d','visibility',vis(!three&&$('tBld').checked)); map.setLayoutProperty('bld-hit','visibility',vis(!three&&$('tBld').checked&&!zones)); map.setLayoutProperty('bld-3d','visibility',vis(three&&$('tBld').checked)); map.setLayoutProperty('bld-roof','visibility',vis(three&&$('tBld').checked)); map.setLayoutProperty('bld-line','visibility',vis(!three&&$('tBld').checked));
+  map.setLayerZoomRange('bld-hit',0,14.5); // up close the real footprints show the water; the dots only help when zoomed out
   map.setLayoutProperty('obs-line','visibility',vis(obs)); map.setLayoutProperty('obs-fill','visibility',vis(obs));
-  map.setPaintProperty('bld-3d','fill-extrusion-height',['*',['get','h'],S.lift,1.02]); // just above the OSM footprint it sits in
+  map.setPaintProperty('bld-3d','fill-extrusion-height',['*',['get','h'],S.lift,1.02]); // real GHS-OBAT height, just above the OSM footprint it sits in
+  map.setPaintProperty('bld-roof','fill-extrusion-base',['*',['get','h'],S.lift,1.02]); map.setPaintProperty('bld-roof','fill-extrusion-height',['*',['+',['get','h'],['match',['get','bt'],0,1.6,1,.4,2,2.2,1.2]],S.lift,1.02]);
   detailVisibility(); evacVisibility(); placesVisibility(); responseVisibility(); paintDynamic(true);
-  markers.forEach(m=>m.getElement().hidden=!(zones||S.tab==='coord'));
+  pinVis();
 }
 // paint expressions that follow the video (cheap: no data is re-sent to the map)
 let lastFilter=0;
 function paintDynamic(force){ if(!ready) return; const cols=S.l3d&&$('tCols').checked;
-  map.setPaintProperty('bld-2d','fill-color',bldColor()); map.setPaintProperty('bld-3d','fill-extrusion-color',bldColor());
+  map.setPaintProperty('bld-2d','fill-color',bldColor()); map.setPaintProperty('bld-3d','fill-extrusion-color',bldColor()); map.setPaintProperty('bld-roof','fill-extrusion-color',roofColor());
   const hit=['>',overMax(),.01],now=['>',over(),.01];
   map.setPaintProperty('bld-hit','circle-color',bldColor()); map.setPaintProperty('bld-hit','circle-opacity',['case',hit,.95,0]);
   map.setPaintProperty('bld-hit','circle-stroke-color',['case',now,css('--w3'),'#fff']); map.setPaintProperty('bld-hit','circle-stroke-width',['case',now,2,1]);
   map.setPaintProperty('bld-hit','circle-stroke-opacity',['case',hit,1,0]);
   if(S.l3d&&(force||performance.now()-lastFilter>150)){ lastFilter=performance.now(); // filters are slower, so update them less often
     // 3D: only buildings in the water are drawn from GHS-OBAT (coloured); all others come from OpenStreetMap at their real height
-    map.setFilter('bld-3d',$('tOsmB').checked?['>',over(),0.01]:null);
+    map.setFilter('bld-3d',$('tOsmB').checked&&!D.hasFp?['>',over(),0.01]:null); map.setFilter('bld-roof',$('tOsmB').checked&&!D.hasFp?['>',over(),0.01]:null);
     if(cols){ map.setFilter('water-3d',['>',over(),0.01]); map.setPaintProperty('water-3d','fill-extrusion-color',waterColor());
       map.setPaintProperty('water-3d','fill-extrusion-height',['*',['max',over(),0.15],S.exag*S.lift]); } }
   paintDetails(); paintPlaces();
@@ -125,7 +135,7 @@ function drawLegend(){
     L.innerHTML=`<div class="t">Safety zones</div>${[['--zr','Red: high risk'],['--zy','Yellow: caution'],['--zg','Green: safer']].map(([v,t])=>`<div class="li"><span class="sw" style="background:var(${v})"></span>${t}</div>`).join('')}<div class="li"><span class="pin" style="width:14px;height:14px;border-width:1px"></span>Shelters</div>
      <div class="t" style="margin-top:6px">Evacuation</div>${[1,2,3].map(w=>`<div class="li"><span class="sw" style="background:var(--wave${w});height:4px"></span>Wave ${w} route</div>`).join('')}${dot('--walk','People walking (sped up)','border:1px solid var(--ink)')}`; return;}
   L.innerHTML=`<div class="t">Water depth</div><div class="grad"></div><div class="gradlab"><span>0</span><span>0.5</span><span>1.5</span><span>2.5+ m</span></div>
-   ${D?.hasObs&&S.cmp!=='model'?`<div class="li"><span class="sw" style="border:2px dashed var(--obs);background:color-mix(in srgb,var(--obs) 45%,transparent)"></span>Water seen by satellite, July 2021</div>`:''}<div class="t" style="margin-top:6px">Water reached buildings</div>${CLASSES.map((c,k)=>`<div class="li"><span class="sw dot" style="background:var(--hit${k+1})"></span>${['under 0.5 m','0.5–1.5 m','over 1.5 m: likely serious damage'][k]}</div>`).join('')}
+   ${D?.hasObs&&S.cmp!=='model'?`<div class="li"><span class="sw" style="border:2px dashed var(--obs);background:color-mix(in srgb,var(--obs) 45%,transparent)"></span>Water seen by satellite, July 2021</div>`:''}<div class="t" style="margin-top:6px">Buildings (real shape)</div>${[['--bt0','Home'],['--bt1','Shop, office, industry'],['--bt3','School, sports hall'],['--bt2','Hospital, fire, police, town hall']].map(([v,t])=>`<div class="li"><span class="sw" style="background:var(${v})"></span>${t}</div>`).join('')}<div class="t" style="margin-top:6px">Water reached buildings</div>${CLASSES.map((c,k)=>`<div class="li"><span class="sw dot" style="background:var(--hit${k+1})"></span>${['under 0.5 m','0.5–1.5 m','over 1.5 m: likely serious damage'][k]}</div>`).join('')}
    <div class="li"><span class="sw dot" style="background:var(--hit2);box-shadow:0 0 0 2px var(--w3)"></span>Blue ring: under water now</div>
    <div class="li"><span class="sw" style="background:var(--cut);height:4px"></span>Street under water (≥ ${CAR_DEPTH} m): closed</div><div class="li"><span class="sw" style="background:repeating-linear-gradient(90deg,var(--dmg) 0 4px,transparent 4px 7px);height:4px"></span>Was flooded: check before use</div>
    ${$('tPeople').checked?dot('--people',`1 dot ≈ ${fmt(perDot)} resident${perDot>1?'s':''}`)+dot('--people-risk','Residents in water'):''}
@@ -136,6 +146,6 @@ function onHover(ev){
   const layer=S.tab==='safety'?'zones':'water-2d',f=ready&&map.queryRenderedFeatures(ev.point,{layers:[layer]})[0],tip=$('tip');
   if(!f){tip.hidden=true;return;} const c=D.cells[f.properties.i];
   if(S.tab!=='safety'&&nowDepth(c,rp())<=0.01){tip.hidden=true;return;}
-  tip.innerHTML=`<b>${['','Green zone','Yellow zone','Red zone'][c.z]}</b> · ${fmt(c.pop)} residents<br>${D.rps.map(r=>`${sizeWord(r)} (1-in-${r}): <span class="mono">${c.depth[r].toFixed(2)} m</span>`).join('<br>')}${D.hasObs?`<br>Flooded in 2021: ${c.obs?'yes':'no'}`:''}`;
+  tip.innerHTML=`<b>${['','Green zone','Yellow zone','Red zone'][c.z]}</b> · ${fmt(c.pop)} residents<br><i>Why: ${c.zr}</i><br>${D.rps.map(r=>`${sizeWord(r)} (1-in-${r}): <span class="mono">${c.depth[r].toFixed(2)} m</span>`).join('<br>')}${D.hasObs?`<br>Flooded in 2021: ${c.obs?'yes':'no'}`:''}`;
   tip.hidden=false; const w=$('map').clientWidth; tip.style.left=Math.min(ev.point.x+14,w-250)+'px'; tip.style.top=(ev.point.y+14)+'px';
 }

@@ -43,7 +43,7 @@ async function mapFigure(k){ const keep={tab:S.tab,T:S.T,cmp:S.cmp},r=rp(),W=712
   const cv=map.getCanvas(),ratio=cv.height/cv.width,h=Math.round(W*ratio),f={h,sub:'',legend:[]};
   const pins=()=>E.shelters.map((s,i)=>{const p=map.project(s.c),x=24+p.x/cv.clientWidth*W,y=80+p.y/cv.clientHeight*h; return x<24||x>24+W||y<80||y>80+h?'':`<circle cx="${x}" cy="${y}" r="9" fill="${css('--zg')}" stroke="#fff" stroke-width="2"/><text x="${x}" y="${y+4}" font-size="11" font-weight="700" fill="#fff" text-anchor="middle">${i+1}</text>`;}).join('');
   try{
-    if(k==='mhaz'){ f.img=await shot({tab:'safety'}); f.sub='Red: floods in the most frequent flood or deeper than 1.5 m at 1-in-100. Yellow: floods only in rarer floods or in 2021. Green: dry in every flood size.';
+    if(k==='mhaz'){ f.img=await shot({tab:'safety'}); f.sub=`Red: under water in the 1-in-${D.zoneRule.lo} flood, or deeper than 1.5 m at 1-in-${D.zoneRule.mid}. Yellow: under water at 1-in-${D.zoneRule.mid}. Green: dry up to 1-in-${D.zoneRule.mid}.`;
       f.legend=[{name:'Red: high risk',color:css('--zr')},{name:'Yellow: caution',color:css('--zy')},{name:'Green: safer',color:css('--zg')}]; }
     if(k==='mheat'){ f.img=await shot({tab:'sim',T:.6,cmp:'model'}); f.sub=`Water depth at the peak of the ${sizeWord(r).toLowerCase()} flood (1-in-${r}), EFAS. Darker blue = deeper.`;
       f.legend=[{name:'Shallow (< 0.5 m)',color:css('--w1')},{name:'Knee to chest (0.5–1.5 m)',color:css('--w2')},{name:'Over head height (> 1.5 m)',color:css('--w3')}]; }
@@ -52,6 +52,11 @@ async function mapFigure(k){ const keep={tab:S.tab,T:S.T,cmp:S.cmp},r=rp(),W=712
       f.img='data:image/gif;base64,R0lGODlhAQABAAAAACw='; f.sub=`Area under water at three moments of the ${sizeWord(r).toLowerCase()} flood: upstream sections fill first.`; }
     if(k==='mevac'){ f.img=await shot({tab:'safety'}); f.overlay=pins(); f.sub=`Evacuation plan for the ${sizeWord(r).toLowerCase()} flood: routes by wave, groups of residents, shelters (numbered).`;
       f.legend=[{name:'Wave 1 route',color:css('--wave1'),line:1},{name:'Wave 2',color:css('--wave2'),line:1},{name:'Wave 3',color:css('--wave3'),line:1},{name:'Shelter',color:css('--zg'),dot:1}]; }
+    if(f.img){ const z=map.getZoom(),lat=map.getCenter().lat,mpp=40075016.686*Math.cos(lat*Math.PI/180)/(512*2**z)*cv.clientWidth/(W-48); // metres per figure pixel
+      const want=(W-48)/5*mpp,nice=[100,200,500,1000,2000,5000,10000].reduce((a,b)=>Math.abs(b-want)<Math.abs(a-want)?b:a),bw=nice/mpp,x0=36,y0=80+f.h-18;
+      f.overlay=(f.overlay||'')+`<g font-size="11" fill="#fff" stroke="#000" stroke-width="0" font-family="sans-serif"><rect x="${x0-6}" y="${y0-16}" width="${bw+52}" height="26" rx="4" fill="rgb(0 0 0 / .55)"/>
+        <rect x="${x0}" y="${y0}" width="${bw}" height="5" fill="#fff"/><rect x="${x0}" y="${y0}" width="${bw/2}" height="5" fill="#000" stroke="#fff" stroke-width=".8"/><text x="${x0}" y="${y0-4}">0</text><text x="${x0+bw+4}" y="${y0+6}">${nice>=1000?nice/1000+' km':nice+' m'}</text>
+        <g transform="translate(${24+W-48-26},${100})"><circle r="15" fill="rgb(0 0 0 / .55)"/><path d="M0,-11L6,6L0,2L-6,6z" fill="#fff"/><text y="-17" text-anchor="middle" font-weight="700" fill="${css('--ink')}">N</text></g></g>`; }
   } finally { Object.assign(S,keep); applyLayers(); render(); }
   return f; }
 

@@ -46,7 +46,7 @@ function detailVisibility(){
   const b=S.basemap,fills=b==='detail',lines=fills||b==='satellite',three=S.l3d,set=(id,on)=>map.setLayoutProperty(id,'visibility',on?'visible':'none');
   set('osm-urban',fills);
   for(const [box,ids] of Object.entries(DGROUPS)) ids.forEach(id=>{const t=map.getLayer(id).type,area=t==='fill'||t==='fill-extrusion';
-    set(id,$(box).checked&&(area?fills:lines)&&(id.endsWith('-3d')?three:id==='osm-bld'?!three:true));});
+    set(id,$(box).checked&&(area?fills:lines)&&(id.endsWith('-3d')?three&&!D.hasFp:id==='osm-bld'?!three:true));});
   map.setPaintProperty('osm-bld-3d','fill-extrusion-height',['*',['coalesce',['get','render_height'],6],S.lift]);
   set('people',$('tPeople').checked&&S.tab!=='safety'); set('cars',$('tCars').checked&&S.tab!=='safety'); set('roads-cut',S.tab!=='safety'); set('roads-dmg',S.tab!=='safety');
 }

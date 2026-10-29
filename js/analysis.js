@@ -36,7 +36,16 @@ function mDist(a,b){return Math.hypot((a[0]-b[0])*KX(a[1]),(a[1]-b[1])*110540);}
 function computeZones(D){
   buildGrid(D);
   const R=D.base||D.rps,lo=R[0],mid=R.includes(100)?100:R[Math.floor(R.length/2)]; D.zoneRule={lo,mid}; // zones use the mapped flood sizes only, not a user scenario
-  D.cells.forEach(c=>{const any=R.some(rp=>c.depth[rp]>0); c.z=(c.depth[lo]>0||c.depth[mid]>1.5)?3:(any||c.obs)?2:1;});
+  // one rule, from the EFAS maps only (EU Floods Directive probability classes + a depth limit for people):
+  //  red    = under water already in the frequent flood (1-in-lo), or deeper than 1.5 m (over head height) in the 1-in-mid flood
+  //  yellow = under water in the 1-in-mid flood (less than 1.5 m)
+  //  green  = dry up to 1-in-mid (it may still flood in the extreme one: said in the reason). 2021 satellite outlines are shown apart.
+  const top=R[R.length-1],m=v=>v.toFixed(1)+' m';
+  D.cells.forEach(c=>{ const a=c.depth[lo]||0,b=c.depth[mid]||0,x=c.depth[top]||0;
+    if(a>.01){ c.z=3; c.zr=`under water in the frequent flood (1-in-${lo}): ${m(a)}`; }
+    else if(b>1.5){ c.z=3; c.zr=`${m(b)} of water in the 1-in-${mid} flood (over head height)`; }
+    else if(b>.01){ c.z=2; c.zr=`${m(b)} of water in the 1-in-${mid} flood`; }
+    else { c.z=1; c.zr=x>.01&&top!==mid?`dry up to 1-in-${mid}; ${m(x)} in the extreme 1-in-${top} flood`:'dry in every flood size'; } });
   const lat0=D.cells[0]?.c[1]||50,kx=111320*Math.cos(lat0*Math.PI/180),ky=110540,dist=(a,b)=>Math.hypot((a[0]-b[0])*kx,(a[1]-b[1])*ky);
   const wet=D.cells.filter(c=>c.z>1),red=D.cells.filter(c=>c.z===3),bCount=new Map();
   D.blds.forEach(b=>{if(b.ci>=0) bCount.set(b.ci,(bCount.get(b.ci)||0)+1);});

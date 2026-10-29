@@ -6,19 +6,9 @@ function drawCoord(){ if(!D) return;
   const rows=D.rps.map(r=>{const pk=peak(r),P=planFor(r); return {r,pk,P,km:cutKm(r,false)};});
   $('trig').innerHTML=`<table class="tbl"><thead><tr><th>If the forecast says…</th><th>Residents in water</th><th>Streets closed</th><th>To move</th><th>Need help</th></tr></thead><tbody>${
     rows.map(({r,pk,P,km},i)=>`<tr${r===rp()?' class="on"':''}><td><b>Plan ${String.fromCharCode(65+i)}</b> · ${sizeWord(r)}<br><span class="hint">1-in-${r} years</span></td><td>${fmt(pk.people)}</td><td>${km.toFixed(1)} km</td><td>${fmt(P.total)}</td><td>${fmt(P.slow+P.over)}</td></tr>`).join('')}</tbody></table>`;
-  drawRoles(); drawMsg(); drawWeather(); }
+  drawWeather(); }
 
-/* ---------- who does what (starting template: the team adapts it to the local emergency plan) ---------- */
-const ROLES=[
-  ['Residents','Know your zone, your wave and your shelter (Check a place below). Pack medicines, papers, a charger. Know which neighbours need help.','Leave when your wave is called. Never walk or drive through moving water.','Wait for the all-clear before going home. Report damage.'],
-  ['Municipality / mayor','Check each shelter and its real capacity. Share this plan and map with residents.','Open shelters, send messages wave by wave, close flooded streets.','Know who is in which shelter. Plan a safe return.'],
-  ['Civil protection, fire service','Place boats and pumps near wave 1 areas.','Help people who cannot reach a shelter in time (stay upstairs, rescue).','Search flooded buildings. Reopen access roads.'],
-  ['Regional government','Agree forecast triggers (Plan A, B, C…) with the river forecasters. Fund shelters.','Coordinate towns along the same river.','Use the maps for rebuilding and zoning choices.'],
-  ['EU level','Share flood forecasts and hazard maps across borders.','Satellite rapid mapping on request. Cross-border help.','Compare the event with the hazard maps and update them.']];
-function drawRoles(){ if($('roles').dataset.done) return; $('roles').dataset.done=1;
-  $('roles').innerHTML=`<table class="tbl roles"><thead><tr><th></th><th>Before</th><th>During</th><th>After</th></tr></thead><tbody>${ROLES.map(r=>`<tr><th>${r[0]}</th>${r.slice(1).map(t=>`<td contenteditable="true">${t}</td>`).join('')}</tr>`).join('')}</tbody></table>`; }
-
-/* ---------- message to residents ---------- */
+/* ---------- alert text (used in the CAP alert draft) ---------- */
 const MSG={
   en:{go:'FLOOD WARNING – {area}. Water may reach your street soon. Leave now and go to {shelter}. Walk on dry streets; never walk or drive through moving water. Help neighbours who need it. Do not go back before the all-clear.',
       ready:'FLOOD ALERT – {area}. Water may reach your street in the coming hours. Get ready to leave: medicines, papers, phone charger. Your shelter: {shelter}. Follow official updates.'},
@@ -30,13 +20,7 @@ const MSG={
       ready:'HOCHWASSERALARM – {area}. Das Wasser kann in den nächsten Stunden Ihre Straße erreichen. Bereiten Sie sich auf das Verlassen vor: Medikamente, Papiere, Ladegerät. Ihre Notunterkunft: {shelter}. Folgen Sie den offiziellen Meldungen.'}};
 const AREA={en:'wave {w} area',fr:'zone de la vague {w}',nl:'gebied golf {w}',de:'Gebiet Welle {w}'};
 const osmLink=c=>`https://www.openstreetmap.org/?mlat=${c[1].toFixed(5)}&mlon=${c[0].toFixed(5)}#map=17/${c[1].toFixed(5)}/${c[0].toFixed(5)}`;
-function drawMsg(){ const P=E.plan,lang=$('msgLang').value,w=+$('msgWave').value; if(!P) return;
-  const ks=[...new Set(P.routes.filter(r=>r.wave===w).map(r=>r.k))].slice(0,3);
-  const sh=ks.length?ks.map(k=>`${E.shelters[k].name} (${osmLink(E.shelters[k].c)})`).join(' / '):'—';
-  $('msgText').value=MSG[lang][w===1?'go':'ready'].replace('{area}',AREA[lang].replace('{w}',w)).replace('{shelter}',sh); }
-['msgLang','msgWave'].forEach(id=>$(id).onchange=drawMsg);
 const copy=t=>navigator.clipboard?.writeText(t).then(()=>toast('Copied'),()=>toast('Copy blocked: select the text and copy it by hand'));
-$('msgCopy').onclick=()=>copy($('msgText').value);
 
 /* ---------- files for emergency services (nothing is sent automatically) ---------- */
 const stamp=()=>new Date().toISOString().slice(0,16).replace(/[:T]/g,'-');

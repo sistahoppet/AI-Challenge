@@ -120,3 +120,12 @@ const _drawLegend=drawLegend; drawLegend=function(){ _drawLegend(); const L=$('l
   if(S.tab==='safety'||$('tZones').checked) L.insertAdjacentHTML('beforeend','<div class="hint" style="margin:4px 0 0">Map: hatched = high risk, dotted = caution.</div>'); };
 // zone names in panel lists get their shape too
 new MutationObserver(()=>document.querySelectorAll('#zoneLegend .crow').forEach((r,i)=>{ if(!r.querySelector('.zs')) r.querySelector('.sw')?.insertAdjacentHTML('afterend',`<span class="zs" aria-hidden="true">${ZSHAPE[3-i]}</span>`); })).observe($('zoneLegend'),{childList:true});
+
+/* ---------- map toolbox: one icon per layer group (same switches as "Map layers" in the panel) ---------- */
+const TOOLS=[['tZones','Safety zones','<path d="M12 3l8 4v6c0 5-4 8-8 9-4-1-8-4-8-9V7z"/>'],['tBld','Buildings','<path d="M4 21V9l6-4v16M10 21V3l10 5v13M2 21h20"/>'],
+  ['tPeople','Residents','<circle cx="9" cy="8" r="3"/><path d="M3 20c0-4 3-6 6-6s6 2 6 6M16 11a3 3 0 1 0 0-6M21 20c0-3-2-5-4-5.5"/>'],['tPlaces','Key sites','<path d="M12 21s-7-6-7-12a7 7 0 0 1 14 0c0 6-7 12-7 12z"/><path d="M12 6v6M9 9h6"/>'],
+  ['tRoad','Streets','<path d="M8 3L5 21M16 3l3 18M12 4v3M12 11v3M12 18v2"/>'],['tTree','Trees, parks','<path d="M12 3l6 9h-4l4 6H6l4-6H6z"/><path d="M12 18v3"/>'],
+  ['tNames','Place names','<path d="M5 6V4h14v2M12 4v16M9 20h6"/>'],['tCars','Traffic (illustration)','<rect x="3" y="11" width="18" height="6" rx="2"/><path d="M6 11l2-4h8l2 4"/><circle cx="7" cy="18" r="1.5"/><circle cx="17" cy="18" r="1.5"/>']];
+$('tools').innerHTML=TOOLS.map(([id,t,p])=>`<button data-for="${id}" title="${t}" aria-label="${t}" aria-pressed="${$(id).checked}"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${p}</svg></button>`).join('');
+$('tools').onclick=e=>{ const b=e.target.closest('[data-for]'); if(!b) return; const c=$(b.dataset.for); c.checked=!c.checked; c.dispatchEvent(new Event('change',{bubbles:true})); };
+document.addEventListener('change',e=>{ const b=document.querySelector(`#tools [data-for="${e.target.id}"]`); if(b) b.setAttribute('aria-pressed',e.target.checked); });

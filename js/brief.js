@@ -44,9 +44,9 @@ const TOUR=[
   ['The valley, with real data',()=>{tab('sim'); S.T=0; render(); map.fitBounds(D.bbox,{padding:50});},'Vesdre valley, Belgium. Every building, resident count and water depth comes from the challenge data (EFAS, GHS-POP, GHS-OBAT) and OpenStreetMap. Click any dotted number to see its source.'],
   ['Choose the flood',()=>{ const i=D.rps.indexOf(100); if(i>=0){$('size').value=i; $('size').oninput({target:$('size')});} },'The controls under the map set the scenario. 1-in-100 years is about the rain of July 2021 in this valley. You can also build a flood from your own rain.'],
   ['Watch the water rise',()=>{tab('sim'); S.T=0; S.speed=4; $('speed').value=4; $('speedV').textContent='×4'; setPlaying(true);},'Upstream and low ground flood first. Buildings turn colour when water reaches them; red streets are closed to cars.'],
-  ['Who must leave, and where to',()=>{setPlaying(false); tab('safety'); S.T=.3; render();},'Each circle is a group of residents, with a route on real streets to a shelter that stays dry. Shelter places come from building floor area.'],
-  ['Train like a pilot',()=>{ tab('safety'); if(!DR.train) $('trainBtn').onclick(); },'Training mode: people leave, shelters fill up, streets flood. The run stops when the mayor must decide. Choose, then see the consequences.'],
-  ['The best sequence of actions',()=>{ setPlaying(false); showDebrief(); },'The app tests every combination of decisions on the same flood and shows the sequence that leaves the fewest people unsafe, with a range.'],
+  ['Who must leave, and where to',()=>{setPlaying(false); tab('safety'); S.T=.3; render();},'Each circle is a group of residents, with a car route on real streets to a shelter the app chose (far from water, room for many). Click a shelter pin to see the area it serves.'],
+  ['Choose, then play',()=>{ tab('sim'); S.T=0; render(); },'Under the map: the order to give, what happens when a shelter is full, and rescue support. Choose before pressing ▶: cars leave, shelters fill up, the next best shelter is found, streets flood.'],
+  ['Best actions',()=>{ setPlaying(false); showDebrief(); },'The app tests every combination of choices on the same flood and shows the sequence that leaves the fewest people unsafe, with a range.'],
   ['The mayor\'s decision card',()=>{ $('drillStage').hidden=true; tab('policy'); },'One printable page: what is at stake, the sequence of actions with times, and the sources and limits. Button: "Mayor\'s decision card".']];
 let tourI=-1;
 const tab=t=>document.querySelector(`.tabs [data-t="${t}"]`)?.click();

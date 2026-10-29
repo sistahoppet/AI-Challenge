@@ -10,7 +10,7 @@
   --osm-urban:#e9e6e1; --osm-grass:#d9e8c8; --osm-wood:#b9d6a3; --osm-wood3:#7fae6a; --osm-river:#5aa9df; --osm-river-ink:#1d5f93;
   --osm-road:#ffffff; --osm-major:#f6cf7a; --osm-case:#b9bfc2; --osm-bld:#d6d0c8; --osm-label:#4a5a60; --osm-halo:#ffffff;
   --people:#3b4a52; --people-risk:#d4612b; --car:#2f6fd6; --cut:#e0213a; --walk:#ffffff;
-  --wave1:#d63b2f; --wave2:#ee8a1c; --wave3:#c9a400; --crit:#7b3fb5; --shel:#1f8f5a; --dmg:#6b3d1e; --unit:#1d4ed8;
+  --bt0:#d6cfc3; --bt1:#aab4bd; --bt2:#8e6bbf; --bt3:#4f9a72; --roof:#6d5a52; --roof-flat:#8a9399; --wave1:#d63b2f; --wave2:#ee8a1c; --wave3:#c9a400; --crit:#7b3fb5; --shel:#1f8f5a; --dmg:#6b3d1e; --unit:#1d4ed8;
   --f-display:"Barlow Condensed","Arial Narrow",Arial,sans-serif;
   --f-body:"Source Sans 3","Segoe UI",system-ui,sans-serif;
   --f-mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
@@ -21,14 +21,14 @@
   --c-both:#2a66a6; --c-mod:#4f9bd2; --c-obs:#c4851f;
   --osm-urban:#222f35; --osm-grass:#1f3226; --osm-wood:#24402c; --osm-wood3:#2f5a3a; --osm-river:#2b6e9c; --osm-river-ink:#9fd0f2;
   --osm-road:#3a4a51; --osm-major:#6b5a32; --osm-case:#2a373d; --osm-bld:#34434a; --osm-label:#b5c6cc; --osm-halo:#0f181c;
-  --people:#c9d6db; --people-risk:#ff8a4c; --car:#6aa3ff; --cut:#ff4d63; --walk:#ffffff; --dmg:#c08a5a; --unit:#7aa7ff; --zr:#e5535d; --zy:#a8812a; --zg:#2aa595; color-scheme:dark}}
+  --bt0:#5d6670; --bt1:#47525c; --bt2:#9a7fd0; --bt3:#3f8f66; --roof:#3a3634; --roof-flat:#6b737a; --people:#c9d6db; --people-risk:#ff8a4c; --car:#6aa3ff; --cut:#ff4d63; --walk:#ffffff; --dmg:#c08a5a; --unit:#7aa7ff; --zr:#e5535d; --zy:#a8812a; --zg:#2aa595; color-scheme:dark}}
 :root[data-theme="dark"]{
   --bg:#0f181c; --surface:#16232a; --ink:#e3edf0; --muted:#97abb2; --line:#2a3b42; --land:#1b272c;
   --accent:#4fb6d6; --accent-ink:#06222c; --bld:#66747a; --demo:#3b3014; --demo-ink:#f3d58a; --err:#ff8a7a;
   --c-both:#2a66a6; --c-mod:#4f9bd2; --c-obs:#c4851f;
   --osm-urban:#222f35; --osm-grass:#1f3226; --osm-wood:#24402c; --osm-wood3:#2f5a3a; --osm-river:#2b6e9c; --osm-river-ink:#9fd0f2;
   --osm-road:#3a4a51; --osm-major:#6b5a32; --osm-case:#2a373d; --osm-bld:#34434a; --osm-label:#b5c6cc; --osm-halo:#0f181c;
-  --people:#c9d6db; --people-risk:#ff8a4c; --car:#6aa3ff; --cut:#ff4d63; --walk:#ffffff; --dmg:#c08a5a; --unit:#7aa7ff; --zr:#e5535d; --zy:#a8812a; --zg:#2aa595; color-scheme:dark}
+  --bt0:#5d6670; --bt1:#47525c; --bt2:#9a7fd0; --bt3:#3f8f66; --roof:#3a3634; --roof-flat:#6b737a; --people:#c9d6db; --people-risk:#ff8a4c; --car:#6aa3ff; --cut:#ff4d63; --walk:#ffffff; --dmg:#c08a5a; --unit:#7aa7ff; --zr:#e5535d; --zy:#a8812a; --zg:#2aa595; color-scheme:dark}
 html,body{height:100%} body{margin:0} [hidden]{display:none!important}
 body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.45}
 *{box-sizing:border-box}
@@ -307,3 +307,31 @@ body:not(.explain) .tabbody details.info, body:not(.explain) .tabbody p.hint:not
 .dk{font-size:12px} .dk span{white-space:nowrap}
 @media (max-width:900px){ .hud{max-width:calc(100% - 24px)} }
 .guide[hidden]{display:none}
+
+/* logo, toolbox, shelter card, choices, video */
+.brand{display:flex;align-items:center;gap:10px} .brand .logo{width:34px;height:34px;flex:none}
+.tools{right:12px;bottom:40px;display:grid;gap:2px;padding:4px;z-index:5}
+.tools button{width:34px;height:34px;display:grid;place-items:center;border:0;border-radius:6px;background:transparent;color:var(--muted);cursor:pointer}
+.tools button:hover{background:color-mix(in srgb,var(--accent) 15%,transparent)} .tools button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
+.tools button:focus-visible{outline:2px solid var(--accent)}
+.shelcard{left:12px;bottom:12px;z-index:6;width:min(300px,calc(100% - 80px));padding:10px 12px;font-size:13px}
+.shelcard .ih{display:flex;gap:6px;align-items:center;font-size:15px} .shelcard .ih b{flex:1}
+.shelcard .x{border:1px solid var(--line);background:transparent;color:var(--ink);border-radius:6px;cursor:pointer;width:26px;height:26px}
+.shelcard .kv{display:grid;grid-template-columns:auto 1fr;gap:2px 8px;margin:8px 0;align-items:baseline} .shelcard .kv span{font-weight:700;font-variant-numeric:tabular-nums;text-align:right}
+.shelcard .kv i{font-style:normal;color:var(--muted)} .shelcard .chips{display:flex;flex-wrap:wrap;gap:4px} .shelcard .mini{margin:6px 0 0;color:var(--muted);font-size:12px}
+.dockcol{flex:1;display:grid;gap:4px} .dockin.choices{grid-template-columns:repeat(auto-fill,minmax(170px,1fr));border-top:1px dashed var(--line);padding-top:4px}
+.dk.ch select{grid-column:1 / -1;width:100%;padding:3px 6px;font-size:12.5px}
+.pin.extra{background:var(--muted);width:20px;height:20px} .pin.extra span{font-size:13px}
+.hud .hi{grid-template-columns:auto auto;column-gap:4px;align-items:center} .hud .hi svg{grid-row:span 2;color:var(--muted)} .hud .bad svg{color:var(--err)}
+.howto .htscreen{position:relative;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:color-mix(in srgb,var(--accent) 10%,var(--surface))}
+.howto svg{display:block;width:100%;height:auto}
+.htcap{padding:8px 10px;font-size:13.5px;min-height:3.2em;background:var(--surface);border-top:1px solid var(--line)} .htbar{height:3px;background:var(--line)} .htbar span{display:block;height:100%;width:0;background:var(--accent)}
+.hs-dev{fill:var(--surface);stroke:var(--ink);stroke-width:3} .hs-scr{fill:color-mix(in srgb,var(--accent) 35%,var(--surface))} .hs-ink{fill:var(--ink)} .hs-warn{fill:var(--cut)}
+.hs-line{fill:none;stroke:var(--ink);stroke-width:3} .hs-wave{fill:none;stroke:var(--accent);stroke-width:4;stroke-linecap:round} .hs-shel{fill:var(--bt3)} .hs-plus{stroke:#fff;stroke-width:5;stroke-linecap:round}
+.hs-water{fill:color-mix(in srgb,var(--accent) 70%,#1d4ed8)} .hs-road{fill:var(--muted)} .hs-dash{stroke:#fff;stroke-width:3;stroke-dasharray:14 12} .hs-carb{fill:var(--car)}
+.hs-112{font:700 28px var(--f-display);fill:var(--cut)}
+.hs-buzz{animation:hsBuzz .5s ease-in-out infinite alternate} .hs-car{animation:hsDrive 6s ease-in-out infinite} .hs-rise{animation:hsRise 6s ease-in-out infinite}
+.hs-pop1,.hs-pop2,.hs-pop3{animation:hsPop 6s ease-out infinite;transform-box:fill-box;transform-origin:center} .hs-pop2{animation-delay:.6s} .hs-pop3{animation-delay:1.2s}
+@keyframes hsBuzz{to{opacity:.2}} @keyframes hsDrive{from{transform:translateX(0)}70%,to{transform:translateX(175px)}} @keyframes hsRise{from{transform:translateY(40px)}to{transform:translateY(0)}}
+@keyframes hsPop{0%{transform:scale(0)}15%,100%{transform:scale(1)}}
+@media (prefers-reduced-motion:reduce){ .hs-buzz,.hs-car,.hs-rise,.hs-pop1,.hs-pop2,.hs-pop3{animation:none} }
