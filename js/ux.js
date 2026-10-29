@@ -35,13 +35,13 @@ const IC={
 const icon=(n,cls='ic')=>`<svg class="${cls}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${IC[n]||''}</svg>`;
 const pre=(el,n)=>{ if(el&&!el.querySelector(':scope > svg.ic')) el.insertAdjacentHTML('afterbegin',icon(n)); };
 // tabs, header buttons, numbers
-document.querySelectorAll('.tabs [data-t]').forEach(b=>pre(b,{sim:'wave',safety:'exit',coord:'bell',diag:'chart',policy:'bank'}[b.dataset.t]));
+document.querySelectorAll('.tabs [data-t]').forEach(b=>pre(b,{sim:'wave',safety:'exit',coord:'bell',diag:'chart',policy:'bank',data:'list'}[b.dataset.t]));
 pre($('helpBtn'),'help'); pre($('openData'),'upload');
 [['sPeople','people'],['sBld','building'],['sArea','area']].forEach(([id,n])=>pre($(id).parentElement,n));
 // section titles: icon by keyword
 const H2IC=[[/flood size|How big/i,'rain'],[/Right now/i,'chart'],[/Press/i,'play'],[/Model or real/i,'compare'],[/Map layers|Show on map/i,'layers'],[/Safety zones/i,'shield'],[/Shelters/i,'house'],
   [/Critical/i,'hospital'],[/route/i,'route'],[/Evacuation plan/i,'exit'],[/Forecast/i,'rain'],[/Emergency teams/i,'truck'],[/Be ready/i,'warn'],[/Who does what/i,'list'],
-  [/Message/i,'megaphone'],[/Share/i,'share'],[/Check a place/i,'pin'],[/diagram/i,'chart'],[/Cost/i,'euro'],[/Impact/i,'bank'],[/What it means/i,'people'],[/2021 flood/i,'compare'],[/Read with care/i,'info']];
+  [/Message/i,'megaphone'],[/Share/i,'share'],[/Check a place/i,'pin'],[/diagram/i,'chart'],[/Cost/i,'euro'],[/Impact/i,'bank'],[/What it means/i,'people'],[/2021 flood/i,'compare'],[/Read with care/i,'info'],[/Data used/i,'list'],[/own file/i,'upload']];
 document.querySelectorAll('.panel h2').forEach(h=>{ const m=H2IC.find(([re])=>re.test(h.textContent)); if(m) h.insertAdjacentHTML('afterbegin',icon(m[1],'ic h2ic')); });
 
 /* ---------- tooltips for technical terms (hover or keyboard focus) ---------- */

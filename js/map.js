@@ -7,8 +7,8 @@ function squareAround([x,y],m=6){const dx=m/(111320*Math.cos(y*Math.PI/180)),dy=
 // c = the cell (or null): depth per flood size (r10…), channel depth (L10…) and delay (lag) for the "water now" expression
 function depthProps(c){const o={lag:c?c.lag:0}; D.rps.forEach(r=>{o['r'+r]=c?c.depth[r]:0; o['L'+r]=c?c.L[r]:0;}); return o;}
 function buildSources(){
-  cellFC={type:'FeatureCollection',features:D.cells.map((c,i)=>({type:'Feature',geometry:{type:'Polygon',coordinates:c.poly},properties:Object.assign({i,z:c.z},depthProps(c))}))};
-  bldFC={type:'FeatureCollection',features:D.blds.map(b=>({type:'Feature',geometry:b.geom.type==='Point'?squareAround(b.c):b.geom,properties:Object.assign({h:b.h},depthProps(b.ci>=0?D.cells[b.ci]:null))}))};
+  cellFC={type:'FeatureCollection',features:D.cells.map((c,i)=>({type:'Feature',geometry:{type:'Polygon',coordinates:c.poly},properties:Object.assign({i,z:c.z,pop:+c.pop.toFixed(1),elev:c.elev??-1},depthProps(c))}))};
+  bldFC={type:'FeatureCollection',features:D.blds.map(b=>({type:'Feature',geometry:b.geom.type==='Point'?squareAround(b.c):b.geom,properties:Object.assign({h:b.h,use:b.use??-1,area:b.area||0,bpop:+(b.pop||0).toFixed(2)},depthProps(b.ci>=0?D.cells[b.ci]:null))}))};
 }
 // water depth now, per feature: depth − (1 − rise) × L, rise = level(T − lag) (same formula as nowDepth in analysis.js)
 // keep=true: highest level reached so far (stays at 1 after the peak) → "water reached here", i.e. likely damage

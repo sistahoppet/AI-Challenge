@@ -60,6 +60,11 @@
         <div class="ov attr" id="attr"></div>
         <div class="ov tip" id="tip" hidden></div>
         <div class="ov alertbar" id="alertBar" hidden></div>
+        <div class="ov stage" id="dataStage" hidden>
+          <div class="head"><b id="dsTitle" style="font-family:var(--f-display);font-size:18px;text-transform:uppercase;letter-spacing:.04em">Table</b><span class="spacer"></span>
+            <button class="btn sm" id="dsCsv">Download CSV</button><button class="btn sm" id="dsClose">Back to map</button></div>
+          <div class="dtable" id="dsTable"></div>
+        </div>
         <div class="ov stage" id="stage" hidden>
           <div class="head">
             <b id="stageTitle" style="font-family:var(--f-display);font-size:18px;text-transform:uppercase;letter-spacing:.04em">Diagram</b>
@@ -99,6 +104,7 @@
         <button role="tab" aria-selected="false" data-t="coord">Alert</button>
         <button role="tab" aria-selected="false" data-t="diag">Diagrams</button>
         <button role="tab" aria-selected="false" data-t="policy">Policy</button>
+        <button role="tab" aria-selected="false" data-t="data">Data</button>
       </div>
 
       <div class="tabbody" id="tab-sim">
@@ -268,6 +274,19 @@
         </div>
       </div>
 
+      <div class="tabbody" id="tab-data" hidden>
+        <div>
+          <h2>Data used in this app</h2>
+          <div id="dataCards" class="dcards"></div>
+        </div>
+        <div>
+          <h2>Add your own file</h2>
+          <label class="slot" id="slotUser"><b>GeoJSON or CSV from Colab</b>
+            CSV needs longitude / latitude columns (lon, lng, x / lat, y). Coordinates in EPSG:4326.
+            <input type="file" id="fUser" accept=".geojson,.json,.csv"><span class="st"></span></label>
+        </div>
+      </div>
+
       <div class="tabbody" id="tab-diag" hidden>
         <div>
           <h2>Pick a diagram</h2>
@@ -379,6 +398,7 @@
 <script src="js/figures.js"></script>
 <script src="js/framework.js"></script>
 <script src="js/costs.js"></script>
+<script src="js/data-view.js"></script>
 <script src="js/ui.js"></script>
 <script src="js/ux.js"></script>
 <script src="js/main.js"></script>
