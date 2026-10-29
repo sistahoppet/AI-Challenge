@@ -228,6 +228,21 @@ pre.schema{background:var(--bg);border-radius:6px;padding:10px;overflow-x:auto;f
 .spd input{width:90px;accent-color:var(--accent)}
 .scen summary{color:var(--ink)}
 .dlist .dg{font-family:var(--f-display);text-transform:uppercase;letter-spacing:.06em;font-size:13px;color:var(--muted);margin-top:8px}
+/* folding sections, ⓘ, compact legend */
+.tabbody{gap:12px}
+.sec>h2.fold{cursor:pointer;display:flex;align-items:center;justify-content:space-between;margin:0;padding:6px 0;border-bottom:1px solid var(--line);user-select:none}
+.sec>h2.fold::after{content:'▸';font-size:13px;color:var(--muted);transition:transform .15s}
+.sec.open>h2.fold::after{transform:rotate(90deg)}
+.sec>h2.fold:hover{color:var(--ink)}
+.sec>.secbody{display:none;padding-top:8px}
+.sec.open>.secbody{display:block}
+.secbody .sub{font-family:var(--f-display);text-transform:uppercase;letter-spacing:.06em;font-size:12.5px;color:var(--muted);margin:12px 0 6px}
+details.info{margin-top:6px}
+details.info>summary{cursor:pointer;font-size:12.5px;color:var(--accent);list-style:none}
+details.info>summary::-webkit-details-marker{display:none}
+.legend.folded{display:none}
+.legbtn{top:12px;left:12px;padding:4px 10px;font-size:12.5px;cursor:pointer;font-family:var(--f-display);text-transform:uppercase;letter-spacing:.05em}
+.legend{top:46px;max-height:calc(100% - 140px);overflow:auto}
 </style>
 </head>
 <body>
@@ -331,7 +346,7 @@ pre.schema{background:var(--bg);border-radius:6px;padding:10px;overflow-x:auto;f
           <div class="ticks" id="sizeTicks"></div>
         </div>
         <details class="cands scen">
-          <summary><b>Or build your own rain scenario</b></summary>
+          <summary><b>🌧 Build your own rain scenario</b></summary>
           <div class="form" id="scIn" style="margin-top:8px"></div>
           <p id="scInfo" style="font-size:13.5px;margin:8px 0"></p>
           <div class="row" style="justify-content:flex-start"><button class="btn primary sm" id="scBuild">Build this flood</button><button class="btn sm" id="scReset">Back to mapped sizes</button></div>
@@ -339,10 +354,10 @@ pre.schema{background:var(--bg);border-radius:6px;padding:10px;overflow-x:auto;f
         </details>
         <div>
           <h2><span class="step">2</span>Press ▶ under the map</h2>
-          <p class="hint" style="margin:0">Each valley section fills from its riverbed, and upstream sections rise first (real terrain heights). The order is from the data; the timing is illustrative.</p>
+          <p class="hint" style="margin:0">Water rises upstream first. Pause (space) and click the map to check a place.</p>
         </div>
         <div>
-          <h2 id="expTitle">On the map right now</h2>
+          <h2 id="expTitle">Right now</h2>
           <div class="stats">
             <div class="stat"><b id="sPeople">–</b><span>people live in flooded areas</span></div>
             <div class="stat"><b id="sBld">–</b><span>buildings in the water</span></div>
@@ -2101,6 +2116,41 @@ function designDiagram(k){ const sf=css('--surface'),blue=mix(css('--accent'),sf
   const meta={flow:['Flowchart: how the simulation works','The algorithm as built in this app (not a hydraulic model).'],arch:['System architecture','From forecasts and data to alerts. Sensors are a proposed extension.'],
     dfd:['Data flow diagram','External entities (rectangles), processes (rounded), data stores (open boxes).'],erd:['Entity–relationship diagram','Proposed database for an operational version: the prototype stores no personal data.']}[k];
   return {kind:'boxes',title:meta[0],sub:meta[1],...d,src,csv:csv(d)}; }
+
+</script>
+<script>
+// ui.js - Less on screen: each panel section folds (one open at a time per tab), long explanations hide behind ⓘ,
+// the legend folds to a small button. Works on the existing HTML, so sections added later behave the same.
+// Loaded as a classic script: top-level names are shared between files (order set in index.html).
+
+/* ---------- sections: click the title to open; opening one closes the others in the same tab ---------- */
+const KEEP_OPEN={'tab-sim':3}; // first sections that always stay visible (Simulate: flood size, play, numbers right now)
+const OPEN_FIRST={'tab-sim':-1,'tab-safety':1,'tab-coord':0,'tab-diag':0,'tab-policy':0};
+document.querySelectorAll('.tabbody').forEach(tab=>{
+  const secs=[...tab.children].filter(s=>s.querySelector(':scope > h2'));
+  secs.forEach((sec,i)=>{ if(i<(KEEP_OPEN[tab.id]||0)) return;
+    const h=sec.querySelector(':scope > h2'),body=document.createElement('div'); body.className='secbody';
+    [...sec.childNodes].filter(n=>n!==h).forEach(n=>body.appendChild(n)); sec.appendChild(body); sec.classList.add('sec');
+    h.setAttribute('role','button'); h.tabIndex=0; h.classList.add('fold');
+    const open=on=>{ sec.classList.toggle('open',on); h.setAttribute('aria-expanded',on); };
+    open(i===(OPEN_FIRST[tab.id]??0));
+    const toggle=()=>{ const on=!sec.classList.contains('open'); if(on) tab.querySelectorAll('.sec.open').forEach(o=>{o.classList.remove('open'); o.querySelector('h2').setAttribute('aria-expanded',false);}); open(on); if(on) sec.scrollIntoView({block:'nearest',behavior:'smooth'}); };
+    h.onclick=toggle; h.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault(); toggle();}}; });
+});
+// "Show on map" + "Map details" become one "Map layers" section
+(()=>{ const secs=[...$('tab-sim').querySelectorAll('.sec')],a=secs.find(s=>/Show on map/.test(s.querySelector('h2').textContent)),b=secs.find(s=>/Map details/.test(s.querySelector('h2').textContent));
+  if(a&&b){ a.querySelector('h2').textContent='Map layers'; const sub=document.createElement('p'); sub.className='sub'; sub.textContent='Map details (OpenStreetMap)'; a.querySelector('.secbody').append(sub,...b.querySelector('.secbody').childNodes); b.remove(); } })();
+
+/* ---------- long explanations → ⓘ ---------- */
+document.querySelectorAll('.tabbody p.hint, .tabbody .secbody > .hint').forEach(p=>{
+  if(['sizeHint','evScen'].includes(p.id)) return; const dyn=['evNote','wxStatus'].includes(p.id);
+  if(!dyn&&p.textContent.trim().length<90) return;
+  const d=document.createElement('details'); d.className='info'; d.innerHTML='<summary>ⓘ How this works</summary>'; p.replaceWith(d); d.appendChild(p); p.style.margin='4px 0 0'; });
+
+/* ---------- legend: folds to a small button ---------- */
+(()=>{ const L=$('legend'); let open=false; const btn=document.createElement('button'); btn.className='ov legbtn'; btn.textContent='Legend ▸'; L.after(btn);
+  const set=on=>{open=on; L.classList.toggle('folded',!on); btn.textContent=on?'Legend ▾':'Legend ▸'; btn.setAttribute('aria-expanded',on);}; set(false);
+  btn.onclick=()=>set(!open); })();
 
 </script>
 <script>
