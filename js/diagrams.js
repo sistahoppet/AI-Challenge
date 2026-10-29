@@ -15,6 +15,15 @@ const DIAGS=[
   {g:'Maps',k:'mheat',t:'Water depth heatmap',s:'Water depth at the peak of the flood size you picked.',metric:false},
   {g:'Maps',k:'mprog',t:'Flood progression',s:'Three moments: early, rising, peak.',metric:false},
   {g:'Maps',k:'mevac',t:'Evacuation route map',s:'Closed roads, shelters, evacuation routes and groups.',metric:false},
+  {g:'Policy framework',k:'fwArch',t:'Five modules and what the app covers',s:'Architecture of the AI-assisted crisis management framework.',metric:false},
+  {g:'Policy framework',k:'fwMethods',t:'Review of the calculation methods',s:'Which formulas are supported and what replaces the rest.',metric:false},
+  {g:'Policy framework',k:'fwStages',t:'Framework stages and status in the app',s:'8 stages, methods, references, and what is built.',metric:false},
+  {g:'Policy framework',k:'fwClear',t:'Evacuation clearance time',s:'Mobilisation + travel + delay vs time before the water arrives (real routes).',metric:false},
+  {g:'Policy framework',k:'fwG6',t:'UNDRR G-6: pre-emptive evacuation',s:'Share of at-risk residents protected, per flood size.',metric:false},
+  {g:'Policy framework',k:'fwAAL',t:'Risk curve (AAL logic)',s:'Residents in flooded areas vs yearly chance (real data).',metric:false},
+  {g:'Policy framework',k:'fwCost',t:'Cost–loss model (ECMWF)',s:'When acting is worth it: p* = C / L (hypothetical €).',metric:false},
+  {g:'Policy framework',k:'fwBCR',t:'Benefit–cost ratio',s:'Avoided damage vs cost (hypothetical €).',metric:false},
+  {g:'Policy framework',k:'fwFill',t:'Fill rate of emergency teams',s:'Requests for help that get a team, nearest vs priority.',metric:false},
   {g:'System design',k:'flow',t:'Flowchart: how the simulation works',s:'The algorithm step by step, as built in this app.',metric:false},
   {g:'System design',k:'arch',t:'System architecture',s:'From forecasts and data to alerts for authorities and residents.',metric:false},
   {g:'System design',k:'dfd',t:'Data flow diagram',s:'How rain, sensors, simulation results and alerts move through the system.',metric:false},
@@ -60,6 +69,7 @@ function chartData(){
       csv:[['scenario','residents'],...rows.map(r=>[r.label,r.value])]};}
   if(S.diag[0]==='m') return {kind:'img',title:DIAGS.find(x=>x.k===S.diag).t,sub:'',src:'Sources: EFAS, GHS-OBAT, GHS-POP, OpenStreetMap, Copernicus DEM'+(isDemo?' · DEMO DATA':''),csv:null};
   if(['flow','arch','dfd','erd'].includes(S.diag)) return designDiagram(S.diag);
+  if(S.diag.startsWith('fw')) return fwChart(S.diag);
   const names=['Flooded in both','Only on the hazard map','Only in 2021'],cols=['--c-both','--c-mod','--c-obs'];
   if(!D.hasObs) return {kind:'empty',title:'Model vs the real 2021 flood',sub:'Load the 2021 flood file (Copernicus EMS) to draw this diagram.',src,csv:[['note'],['no 2021 file loaded']]};
   return {kind:'stack',title:'Hazard map vs the real 2021 flood (area, km²)',sub:'How much of each flood-size map overlaps the satellite outline of July 2021.',src,
@@ -79,14 +89,15 @@ function buildSvg(c){
   <text x="24" y="64" font-size="13" fill="${muted}">${esc(c.sub)}</text>`;
   if(c.kind==='empty') return s+`<text x="24" y="${top+20}" font-size="15" fill="${ink}">No data yet.</text></svg>`;
   if(c.kind==='img'||c.kind==='boxes'||c.kind==='line') return extraSvg(c,W,F,ink,muted,line,bg);
+  if(c.kind==='table'||c.kind==='dumbbell') return fwSvg(c,W,F,ink,muted,line,bg);
   let y=top;
   if(c.legend){ let lx=X0; c.legend.forEach(l=>{s+=`<rect x="${lx}" y="${y}" width="12" height="12" rx="2" fill="${l.color}"/><text x="${lx+18}" y="${y+11}" font-size="13" fill="${ink}">${esc(l.name)}</text>`; lx+=18+l.name.length*7.2+22;}); y+=legendH; }
   if(c.kind==='bar'){ const max=niceMax(Math.max(...c.rows.map(r=>r.value))),sx=v=>X0+(X1-X0)*v/max;
     for(let i=0;i<=4;i++){const v=max*i/4,x=sx(v); s+=`<line x1="${x}" x2="${x}" y1="${y-6}" y2="${y+n*rh}" stroke="${line}" stroke-width="1"/><text x="${x}" y="${y+n*rh+18}" font-size="12" fill="${muted}" text-anchor="middle">${fmtFull(v)}</text>`;}
     c.rows.forEach((r,i)=>{const yy=y+i*rh+(rh-bh)/2,w=Math.max(2,sx(r.value)-X0);
       s+=`<text x="${LW}" y="${yy+bh/2+5}" font-size="14" fill="${ink}" text-anchor="end">${esc(r.label)}</text>
-      <path d="${roundedBar(X0,yy,w,bh,0,4)}" fill="${r.color}"><title>${esc(r.label)}: ${fmtFull(r.value)}</title></path>
-      <text x="${X0+w+6}" y="${yy+bh/2+5}" font-size="13" font-weight="700" fill="${ink}">${fmtFull(r.value)}</text>`;});
+      <path d="${roundedBar(X0,yy,w,bh,0,4)}" fill="${r.color}"><title>${esc(r.label)}: ${r.txt??fmtFull(r.value)}</title></path>
+      <text x="${X0+w+6}" y="${yy+bh/2+5}" font-size="13" font-weight="700" fill="${ink}">${r.txt??fmtFull(r.value)}</text>`;});
   } else {
     const max=c.pct?100:niceMax(Math.max(...c.rows.map(r=>r.parts.reduce((a,p)=>a+p.value,0)))),sx=v=>(X1-X0)*v/max;
     for(let i=0;i<=4;i++){const v=max*i/4,x=X0+sx(v); s+=`<line x1="${x}" x2="${x}" y1="${y-6}" y2="${y+n*rh}" stroke="${line}"/><text x="${x}" y="${y+n*rh+18}" font-size="12" fill="${muted}" text-anchor="middle">${c.pct?Math.round(v)+'%':v.toFixed(v<10?1:0)}</text>`;}

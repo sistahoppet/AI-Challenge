@@ -11,6 +11,7 @@ function extraSvg(c,W,F,ink,muted,line,bg){
     let o=head(c,W,H,F,ink,muted,bg)+legendRow(c.series.map(s=>({name:s.name,color:s.color,line:1})),X0,82,ink);
     for(let i=0;i<=4;i++){const v=max*i/4; o+=`<line x1="${X0}" x2="${X1}" y1="${sy(v)}" y2="${sy(v)}" stroke="${line}"/><text x="${X0-8}" y="${sy(v)+4}" font-size="12" fill="${muted}" text-anchor="end">${+v.toFixed(v<10?1:0)}</text>`;}
     o+=`<text x="${X0-8}" y="${Y0-12}" font-size="12" fill="${muted}" text-anchor="end">${xmlEsc(c.yTitle)}</text>`;
+    if(c.vref){ const x=X0+(X1-X0)*c.vref.i/Math.max(1,n-1); o+=`<line x1="${x}" x2="${x}" y1="${Y0}" y2="${Y1}" stroke="${ink}" stroke-dasharray="3 3"/><text x="${x+5}" y="${Y0+12}" font-size="12.5" font-weight="700" fill="${ink}">${xmlEsc(c.vref.label)}</text>`; }
     (c.refs||[]).forEach(r=>{o+=`<line x1="${X0}" x2="${X1}" y1="${sy(r.v)}" y2="${sy(r.v)}" stroke="${muted}" stroke-dasharray="4 4"/><text x="${X1+6}" y="${sy(r.v)+4}" font-size="12" fill="${muted}">${xmlEsc(r.label)}</text>`;});
     const tick=Math.ceil(n/8); c.x.forEach((t,i)=>{ if(i%tick===0||i===n-1) o+=`<text x="${sx(i)}" y="${Y1+18}" font-size="11.5" fill="${muted}" text-anchor="middle">${xmlEsc(t)}</text>`; });
     c.series.forEach(s=>{ o+=`<path d="${s.values.map((v,i)=>`${i?'L':'M'}${sx(i).toFixed(1)},${sy(v).toFixed(1)}`).join('')}" fill="none" stroke="${s.color}" stroke-width="2" stroke-linejoin="round"/>`;
