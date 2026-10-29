@@ -2,7 +2,7 @@
 // Loaded as a classic script: top-level names are shared between files (order set in index.html).
 
 /* ---------- assumptions (shown in the app; check before quoting) ---------- */
-const FOOT_DEPTH=0.15;  // water a walker should not cross; US NWS "Turn Around Don't Drown": ~15 cm of moving water can knock an adult down
+let FOOT_DEPTH=0.15;  // (editable in Evacuate) water a walker should not cross; US NWS "Turn Around Don't Drown": ~15 cm of moving water can knock an adult down
 const SPHERE_M2=3.5;    // m² of covered floor per person in a shelter (Sphere humanitarian minimum standard)
 const CAR_KMH=30;       // average car speed in town, for travel times only
 const KINDS={hospital:['H','Hospital'],clinic:['+','Clinic'],care_home:['C','Care home'],fire_station:['F','Fire station'],police:['P','Police'],town_hall:['T','Town hall'],

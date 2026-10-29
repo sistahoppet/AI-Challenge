@@ -211,3 +211,10 @@ pre.schema{background:var(--bg);border-radius:6px;padding:10px;overflow-x:auto;f
 .insp .maplibregl-popup-content{pointer-events:auto;font-size:13px;line-height:1.4}
 .maplibregl-popup-close-button{position:absolute;right:4px;top:2px;border:0;background:none;font-size:16px;cursor:pointer;color:var(--muted)}
 .rsl{margin:4px 0 0;padding-left:18px;font-size:13px;display:grid;gap:3px}
+.alertbar{top:12px;left:50%;transform:translateX(-50%);padding:6px 12px;font-size:13px;max-width:min(560px,calc(100% - 140px));background:var(--surface);border-left:4px solid var(--cut);z-index:4}
+.form label.sl{display:grid;grid-template-columns:1fr auto;gap:2px 8px}
+.form label.sl input{grid-column:1 / -1}
+.spd{display:flex;gap:6px;align-items:center;font-size:13px}
+.spd input{width:90px;accent-color:var(--accent)}
+.scen summary{color:var(--ink)}
+.dlist .dg{font-family:var(--f-display);text-transform:uppercase;letter-spacing:.06em;font-size:13px;color:var(--muted);margin-top:8px}

@@ -221,6 +221,13 @@ pre.schema{background:var(--bg);border-radius:6px;padding:10px;overflow-x:auto;f
 .insp .maplibregl-popup-content{pointer-events:auto;font-size:13px;line-height:1.4}
 .maplibregl-popup-close-button{position:absolute;right:4px;top:2px;border:0;background:none;font-size:16px;cursor:pointer;color:var(--muted)}
 .rsl{margin:4px 0 0;padding-left:18px;font-size:13px;display:grid;gap:3px}
+.alertbar{top:12px;left:50%;transform:translateX(-50%);padding:6px 12px;font-size:13px;max-width:min(560px,calc(100% - 140px));background:var(--surface);border-left:4px solid var(--cut);z-index:4}
+.form label.sl{display:grid;grid-template-columns:1fr auto;gap:2px 8px}
+.form label.sl input{grid-column:1 / -1}
+.spd{display:flex;gap:6px;align-items:center;font-size:13px}
+.spd input{width:90px;accent-color:var(--accent)}
+.scen summary{color:var(--ink)}
+.dlist .dg{font-family:var(--f-display);text-transform:uppercase;letter-spacing:.06em;font-size:13px;color:var(--muted);margin-top:8px}
 </style>
 </head>
 <body>
@@ -273,6 +280,7 @@ pre.schema{background:var(--bg);border-radius:6px;padding:10px;overflow-x:auto;f
         <div class="ov hint3d" id="hint3d" hidden>Drag to move · Right-drag or Ctrl+drag to turn · Scroll to zoom</div>
         <div class="ov attr" id="attr"></div>
         <div class="ov tip" id="tip" hidden></div>
+        <div class="ov alertbar" id="alertBar" hidden></div>
         <div class="ov stage" id="stage" hidden>
           <div class="head">
             <b id="stageTitle" style="font-family:var(--f-display);font-size:18px;text-transform:uppercase;letter-spacing:.04em">Diagram</b>
@@ -298,10 +306,8 @@ pre.schema{background:var(--bg);border-radius:6px;padding:10px;overflow-x:auto;f
           <div class="phases"><span id="ph0">Water rising</span><span id="ph1">Peak</span><span id="ph2">Water going down</span></div>
         </div>
         <div class="pright">
-          <span class="now" id="nowLbl">Peak</span>
-          <select class="btn" id="speed" aria-label="Speed">
-            <option value="0.25">0.25×</option><option value="0.5">0.5×</option><option value="1" selected>1× speed</option><option value="2">2×</option><option value="4">4×</option>
-          </select>
+          <span class="now"><span id="nowLbl">Peak</span><br><span id="clockLbl" class="mono"></span></span>
+          <label class="spd">Speed <input type="range" id="speed" min="1" max="10" step="1" value="2" aria-label="Simulation speed"><span class="mono" id="speedV">×2</span></label>
           <label style="font-size:13.5px;display:flex;gap:4px;align-items:center"><input type="checkbox" id="loop"> Loop</label>
         </div>
       </div>
@@ -324,6 +330,13 @@ pre.schema{background:var(--bg);border-radius:6px;padding:10px;overflow-x:auto;f
           <input type="range" id="size" min="0" max="2" step="1" value="1" aria-label="Flood size">
           <div class="ticks" id="sizeTicks"></div>
         </div>
+        <details class="cands scen">
+          <summary><b>Or build your own rain scenario</b></summary>
+          <div class="form" id="scIn" style="margin-top:8px"></div>
+          <p id="scInfo" style="font-size:13.5px;margin:8px 0"></p>
+          <div class="row" style="justify-content:flex-start"><button class="btn primary sm" id="scBuild">Build this flood</button><button class="btn sm" id="scReset">Back to mapped sizes</button></div>
+          <p class="hint">Rain reaching the river = rain × duration × (1 − soaked up) × (1 − drained), compared with 37 years of real 48-hour rain in the Vesdre catchment to find its yearly chance; the flood map for that chance is interpolated between the EFAS maps. A simple index, not a hydrological model: short storms on small streams, snowmelt and blocked bridges are not represented.</p>
+        </details>
         <div>
           <h2><span class="step">2</span>Press ▶ under the map</h2>
           <p class="hint" style="margin:0">Each valley section fills from its riverbed, and upstream sections rise first (real terrain heights). The order is from the data; the timing is illustrative.</p>
@@ -399,9 +412,14 @@ pre.schema{background:var(--bg);border-radius:6px;padding:10px;overflow-x:auto;f
           <h2>Evacuation plan</h2>
           <p class="hint" style="margin:0 0 8px" id="evScen"></p>
           <div class="form">
+            <label>Event length (clock), min <span class="tag">your assumption</span><input class="btn" type="number" id="sc-mins" min="30" step="30" value="2880"></label>
+            <label>Warning lead time, min <span class="tag">your assumption</span><input class="btn" type="number" id="sc-leadMin" min="0" step="15" value="180"></label>
+            <label>Alert authorities when residents in water reach <span class="tag">your assumption</span><input class="btn" type="number" id="sc-alertN" min="1" step="100" value="1000"></label>
+            <label>Max safe water for walkers, m <span class="tag">your assumption</span><input class="btn" type="number" id="sf-foot" min="0.05" step="0.05" value="0.15"></label>
+            <label>Close roads to cars from, m <span class="tag">your assumption</span><input class="btn" type="number" id="sf-car" min="0.05" step="0.05" value="0.3"></label>
             <label>Who leaves<select class="btn" id="evWho"><option value="water">Everyone in the water at this flood size</option><option value="red">Red-zone residents only</option></select></label>
             <label>Places when size unknown <span class="tag">your assumption</span><input class="btn" type="number" id="evCap" min="10" step="10" value="500"></label>
-            <label>Walking speed, km/h <span class="tag">your assumption</span><input class="btn" type="number" id="evSpeed" min="0.5" max="8" step="0.5" value="4"></label>
+            <label>Walking speed, m/s <span class="tag">your assumption</span><input class="btn" type="number" id="evSpeedMs" min="0.2" max="2.5" step="0.1" value="1.1"></label>
             <label>Warning time, hours <span class="tag">your assumption</span><input class="btn" type="number" id="evLead" min="0.25" max="72" step="0.25" value="3"></label>
           </div>
           <div class="stats" id="evStats" style="margin-top:12px"></div>
@@ -703,7 +721,8 @@ function buildGrid(D){
    level has risen by (L − its own depth), so its depth at a moment = depth − (1 − rise) × L, and at the peak it equals the EFAS depth.
    Upstream sections rise first: delay ∝ how far down the channel is (ground height of the lowest flooded cell nearby, Copernicus DEM).
    The order follows the terrain; the timing itself is illustrative (no hydraulic model). */
-const LAG_MAX=.15; // share of the video by which the most downstream section rises after the most upstream one
+let LAG_MAX=.15; // share of the video by which the most downstream section rises after the most upstream one (scenario "terrain slope" changes it)
+let INIT=0;      // scenario: water already in the river at the start (m): low ground near the channel is wet from the first minute
 function stageModel(D){ const G=D.G,kx=Math.max(1,Math.round(250/G.m)),ky=Math.max(1,Math.round(250/(G.h*110540))),hasZ=D.cells.some(c=>c.elev!=null);
   D.cells.forEach(c=>{ c.L={}; D.rps.forEach(r=>c.L[r]=c.depth[r]); c.ech=c.elev;
     for(let dy=-ky;dy<=ky;dy++) for(let dx=-kx;dx<=kx;dx++){ const x=c.gx+dx,y=c.gy+dy; if(x<0||y<0||x>=G.nx||y>=G.ny) continue; const j=G.idx[y*G.nx+x]; if(j<0) continue; const o=D.cells[j];
@@ -711,7 +730,8 @@ function stageModel(D){ const G=D.G,kx=Math.max(1,Math.round(250/G.m)),ky=Math.m
   const wz=D.cells.filter(c=>c.ech!=null&&D.rps.some(r=>c.depth[r]>0)).map(c=>c.ech),hi=wz.length?Math.max(...wz):0,lo=wz.length?Math.min(...wz):0;
   D.cells.forEach(c=>c.lag=hasZ&&hi>lo&&c.ech!=null?LAG_MAX*Math.min(1,Math.max(0,(hi-c.ech)/(hi-lo))):0);
   D.hasTerrain=hasZ; }
-function nowDepth(c,r,T=S.T){ const d=c.depth[r]; if(!d) return 0; return Math.max(0,d-(1-level(T-c.lag))*c.L[r]); }
+const riseAt=(c,r,T)=>Math.max(level(T-c.lag),Math.min(1,INIT/(c.L[r]||1)));
+function nowDepth(c,r,T=S.T){ const d=c.depth[r]; if(!d) return 0; return Math.max(0,d-(1-riseAt(c,r,T))*c.L[r]); }
 // moment (0..1 of the video) when the cell starts to get water: used for evacuation waves
 function floodStart(c,r){ const d=c.depth[r]; if(!d) return Infinity; const v=1-d/c.L[r]; return c.lag+.45*Math.acos(1-2*v)/Math.PI; }
 const KX=y=>111320*Math.cos(y*Math.PI/180);
@@ -720,8 +740,8 @@ function mDist(a,b){return Math.hypot((a[0]-b[0])*KX(a[1]),(a[1]-b[1])*110540);}
 /* ---------- safety zones + safest places ---------- */
 function computeZones(D){
   buildGrid(D);
-  const lo=D.rps[0],mid=D.rps.includes(100)?100:D.rps[Math.floor(D.rps.length/2)]; D.zoneRule={lo,mid};
-  D.cells.forEach(c=>{const any=D.rps.some(rp=>c.depth[rp]>0); c.z=(c.depth[lo]>0||c.depth[mid]>1.5)?3:(any||c.obs)?2:1;});
+  const R=D.base||D.rps,lo=R[0],mid=R.includes(100)?100:R[Math.floor(R.length/2)]; D.zoneRule={lo,mid}; // zones use the mapped flood sizes only, not a user scenario
+  D.cells.forEach(c=>{const any=R.some(rp=>c.depth[rp]>0); c.z=(c.depth[lo]>0||c.depth[mid]>1.5)?3:(any||c.obs)?2:1;});
   const lat0=D.cells[0]?.c[1]||50,kx=111320*Math.cos(lat0*Math.PI/180),ky=110540,dist=(a,b)=>Math.hypot((a[0]-b[0])*kx,(a[1]-b[1])*ky);
   const wet=D.cells.filter(c=>c.z>1),red=D.cells.filter(c=>c.z===3),bCount=new Map();
   D.blds.forEach(b=>{if(b.ci>=0) bCount.set(b.ci,(bCount.get(b.ci)||0)+1);});
@@ -734,7 +754,7 @@ function computeZones(D){
 
 /* ---------- state ---------- */
 let D=null,isDemo=true;
-const S={sizeIdx:1,T:0.5,playing:false,speed:1,exag:1,mode:'2d',l3d:false,lift:0,tab:'sim',diag:'size',metric:'people',basemap:'detail',cmp:'both'};
+const S={sizeIdx:1,T:0.5,playing:false,speed:2,exag:1,mode:'2d',l3d:false,lift:0,tab:'sim',diag:'size',metric:'people',basemap:'detail',cmp:'both'};
 let cellFC,bldFC,map,ready=false,markers=[],peakCache={};
 const rp=()=>D.rps[S.sizeIdx];
 function level(T){return T<=0?0:T<0.45?(1-Math.cos(Math.PI*T/0.45))/2:T<0.6?1:Math.max(0,1-(T-0.6)/0.4);} // 0..1 share of the local peak
@@ -769,8 +789,9 @@ function buildSources(){
 // keep=true: highest level reached so far (stays at 1 after the peak) → "water reached here", i.e. likely damage
 function riseExpr(T,keep){ const x=['-',T,['get','lag']];
   return ['case',['<=',x,0],0,['<',x,.45],['/',['-',1,['cos',['/',['*',['pi'],x],.45]]],2],keep||['<',x,.6],1,['max',0,['-',1,['/',['-',x,.6],.4]]]]; }
-const over=()=>['-',['get','r'+rp()],['*',['-',1,riseExpr(S.T)],['get','L'+rp()]]];
-const overMax=()=>['-',['get','r'+rp()],['*',['-',1,riseExpr(S.T,true)],['get','L'+rp()]]];
+const withInit=e=>INIT>0?['max',e,['min',1,['/',INIT,['max',['get','L'+rp()],.01]]]]:e; // water already in the river at the start
+const over=()=>['-',['get','r'+rp()],['*',['-',1,withInit(riseExpr(S.T))],['get','L'+rp()]]];
+const overMax=()=>['-',['get','r'+rp()],['*',['-',1,withInit(riseExpr(S.T,true))],['get','L'+rp()]]];
 const waterColor=()=>['step',over(),css('--w1'),0.5,css('--w2'),1.5,css('--w3')];
 const zoneColor=()=>['match',['get','z'],1,css('--zg'),2,css('--zy'),css('--zr')];
 const bldColor=()=>['step',overMax(),css('--bld'),0.01,css('--hit1'),0.5,css('--hit2'),1.5,css('--hit3')]; // colour = deepest water so far (stays after the water goes down)
@@ -789,7 +810,7 @@ function initMap(){
   const layers=[{id:'bg',type:'background',paint:{'background-color':css('--land')}}];
   for(const k in BASE){sources[k]={type:'raster',tiles:BASE[k].tiles,tileSize:256,maxzoom:19}; layers.push({id:k,type:'raster',source:k,layout:{visibility:'none'}});}
   layers.push(...detailLayers('base'));
-  map=new maplibregl.Map({container:'map',attributionControl:false,style:{version:8,glyphs:'https://tiles.openfreemap.org/fonts/{fontstack}/{range}.pbf',sources,layers},bounds:D.bbox,fitBoundsOptions:{padding:50},maxPitch:80,maxZoom:18});
+  map=new maplibregl.Map({container:'map',attributionControl:false,style:{version:8,glyphs:'https://tiles.openfreemap.org/fonts/{fontstack}/{range}.pbf',sources,layers},bounds:D.bbox,fitBoundsOptions:{padding:50},maxPitch:80,maxZoom:18,preserveDrawingBuffer:true}); // keeps the frame for map figures (Diagrams)
   const isTile=id=>BASE[id]||id==='dem'||id==='osm';
   map.on('error',e=>{ if(e.sourceId&&isTile(e.sourceId)){ tileFail++; if(!tileOk&&tileFail>=2) showNotice(); } });
   map.on('data',e=>{ if(e.dataType==='source'&&e.tile&&isTile(e.sourceId)&&e.sourceId!=='dem'&&e.tile.state==='loaded'){ tileOk=true; $('notice').hidden=true; } });
@@ -863,6 +884,7 @@ function draw(){
   $('sPeople').textContent=fmt(e.people); $('sBld').textContent=fmt(e.bld); $('sArea').textContent=e.area.toFixed(e.area<10?2:1);
   $('classes').innerHTML=e.cc.map((c,k)=>`<div class="crow"><span class="sw" style="background:var(${CLASSES[k].v})"></span><span>${CLASSES[k].name}</span><span class="mono">${fmt(c.people)} people · ${fmt(c.bld)} bld</span></div>`).join('')
     +`<div class="crow"><span class="sw" style="background:var(--cut)"></span><span>Streets closed to cars (≥ ${CAR_DEPTH} m)</span><span class="mono">${cutKm(rp(),true).toFixed(1)} km</span></div>`;
+  checkAlerts(e.people);
   const ph=S.T<0.45?0:S.T<0.6?1:2; [0,1,2].forEach(i=>$('ph'+i).classList.toggle('on',i===ph));
   $('nowLbl').textContent=ph===1?'Peak':`${['Rising','Peak','Going down'][ph]} · ${Math.round(p*100)}% of peak`;
   $('time').value=Math.round(S.T*1000);
@@ -948,7 +970,7 @@ function paintWater(now,_dt,force){
   if(!WV||S.tab==='safety') return; const r=rp(),key=r+':'+S.T.toFixed(4);
   if(reduce&&!force&&key===WV.key) return; WV.key=key; // reduced motion: only repaint when the water level changes
   const {img,fx,fy,wet,lut,noise,W,sc,lag,lvl}=WV,dep=WV.dep[r],Lm=WV.Lm[r],T=S.T,d=img.data,t=reduce?0:now/1000*.22,a=t%1,b=(t+.5)%1,bl=Math.abs(1-2*a),L=40;
-  for(let n=0;n<wet.length;n++){ const q=wet[n],x0=T-lag[q],o=q*4,s=dep[q]-(1-lvl[x0<=-.2?0:x0>=1?1200:((x0+.2)*1000)|0])*Lm[q]; if(s<=0.003){d[o+3]=0; continue;}
+  for(let n=0;n<wet.length;n++){ const q=wet[n],x0=T-lag[q],o=q*4,s=dep[q]-(1-Math.max(lvl[x0<=-.2?0:x0>=1?1200:((x0+.2)*1000)|0],Math.min(1,INIT/(Lm[q]||1))))*Lm[q]; if(s<=0.003){d[o+3]=0; continue;}
     // two ripple layers pushed along the flow, cross-faded so they never stretch
     const x=(q%W)*sc,y=((q/W)|0)*sc,sp=(.5+Math.min(1,s*.5))*L,ux=fx[q]*sp,uy=-fy[q]*sp;
     const n1=noise[((y-uy*a)&255)*256+((x-ux*a)&255)],n2=noise[((y-uy*b+97)&255)*256+((x-ux*b+53)&255)],rip=n1+(n2-n1)*bl;
@@ -964,7 +986,7 @@ FX.push(paintWater);
 // Loaded as a classic script: top-level names are shared between files (order set in index.html).
 
 /* ---------- OpenStreetMap layers (OpenFreeMap vector tiles, OpenMapTiles schema) ---------- */
-const CAR_DEPTH=0.3; // assumption: streets under 0.3 m of water or more count as closed to cars
+let CAR_DEPTH=0.3; // assumption (editable in Evacuate): streets under 0.3 m of water or more count as closed to cars
 const VEH=['motorway','trunk','primary','secondary','tertiary','minor','service'];
 const MAJOR=['motorway','trunk','primary'];
 const roadW=f=>['interpolate',['exponential',1.6],['zoom'],11,['*',f,['match',['get','class'],MAJOR,1.6,['secondary','tertiary'],1.1,.5]],17,['*',f,['match',['get','class'],MAJOR,16,['secondary','tertiary'],12,'minor',8,5]]];
@@ -1085,7 +1107,7 @@ FX.push(stepCars);
 /* ---------- choices (shelter capacity, speed and warning time are user assumptions, not data) ---------- */
 const E={shelters:[],who:'water',cap:500,speed:4,lead:3,adding:false,plan:null,walkers:[]};
 // start from real buildings (schools, sports halls…) when the places file is loaded, else from the safest grid spots
-function evacReset(){ RS.out=null; RS.cmp=null; const sc=shelterCandidates(); E.cands=sc.list; E.out=sc.out; const real=pickShelters(sc.list);
+function evacReset(){ RS.out=null; RS.cmp=null; for(const k in tsCache) delete tsCache[k]; const sc=shelterCandidates(); E.cands=sc.list; E.out=sc.out; const real=pickShelters(sc.list);
   E.shelters=real.length?real.map(asShelter)
     :D.safe.map((s,k)=>({c:s.c,auto:true,name:`Safe place ${k+1}`,cap:null,stay:'overnight',desc:`${s.b} buildings · ${Math.round(s.dmin)} m from flood water`}));
   makePlan(); }
@@ -1204,7 +1226,10 @@ function drawEvacPanel(){ const P=E.plan,r=rp(),pct=n=>P.total?Math.round(n/P.to
   $('evNote').textContent=(P.kind==='streets'?'Routes follow OpenStreetMap streets and avoid deep water. ':P.kind==='ground'?'Routes go over open ground (streets not loaded yet: zoom in on the area). ':'')
     +'Waves: wave 1 is where water arrives first in the video (low ground, upstream sections first). This is an order, not real timing. Capacity, speed and warning time are your assumptions.'; }
 const num=(id,k)=>$(id).onchange=e=>{const v=+e.target.value; if(v>0){E[k]=v; makePlan();}};
-num('evCap','cap'); num('evSpeed','speed'); num('evLead','lead');
+num('evCap','cap'); num('evLead','lead'); E.speed=1.1*3.6;
+$('evSpeedMs').onchange=e=>{const v=+e.target.value; if(v>0){E.speed=v*3.6; makePlan();}}; // stored in km/h
+$('sf-foot').onchange=e=>{const v=+e.target.value; if(v>0){FOOT_DEPTH=v; graphCache={}; if(AB.a) abRoute(false);}};
+$('sf-car').onchange=e=>{const v=+e.target.value; if(v>0){CAR_DEPTH=v; roadsReset(); render(); drawLegend();}};
 $('evWho').onchange=e=>{E.who=e.target.value; makePlan();};
 $('evAdd').onclick=()=>{E.adding=!E.adding; $('evAdd').setAttribute('aria-pressed',E.adding); if(ready) map.getCanvas().style.cursor=E.adding?'crosshair':''; if(E.adding) toast('Click the map where the shelter is');};
 $('evResetS').onclick=()=>{evacReset(); toast('Shelters reset to the safest places');};
@@ -1367,7 +1392,7 @@ function checkPlace(p){ const i=D.G.at(p[0],p[1]),box=$('placeInfo');
 // Loaded as a classic script: top-level names are shared between files (order set in index.html).
 
 /* ---------- assumptions (shown in the app; check before quoting) ---------- */
-const FOOT_DEPTH=0.15;  // water a walker should not cross; US NWS "Turn Around Don't Drown": ~15 cm of moving water can knock an adult down
+let FOOT_DEPTH=0.15;  // (editable in Evacuate) water a walker should not cross; US NWS "Turn Around Don't Drown": ~15 cm of moving water can knock an adult down
 const SPHERE_M2=3.5;    // m² of covered floor per person in a shelter (Sphere humanitarian minimum standard)
 const CAR_KMH=30;       // average car speed in town, for travel times only
 const KINDS={hospital:['H','Hospital'],clinic:['+','Clinic'],care_home:['C','Care home'],fire_station:['F','Fire station'],police:['P','Police'],town_hall:['T','Town hall'],
@@ -1688,11 +1713,72 @@ $('rsIn').onchange=e=>{const k=e.target.dataset.rs; if(k&&e.target.value!==''){R
 
 </script>
 <script>
+// scenario.js - "Your rain scenario": rain, soil and drains → which flood size it matches → a flood map built for it.
+// Plus the event clock and the alert to authorities. Loaded as a classic script (order set in index.html).
+//
+// How rain becomes a flood here (a simple index, NOT a rainfall-runoff model):
+//   rain reaching the river = intensity × duration × (1 − soaked into the ground) × (1 − removed by drains)
+//   → compared with the catchment's real 48-hour rain records (Gumbel levels, data/weather.json) → "1-in-T years"
+//   → flood depths for T interpolated between the EFAS maps on a log scale (below 1-in-10: scaled down to 0 at 1-in-2).
+
+const SC={rain:30,dur:180,init:0,perm:20,drain:10,slope:1,pop:100,mins:2880,alertN:1000,leadMin:180};
+// Gumbel levels → yearly chance for a rain total
+function rainT(mm){ const L=WX.data?.rainLevels?.q; if(!L) return null; const y=T=>-Math.log(-Math.log(1-1/T)),b=(L[100]-L[10])/(y(100)-y(10)),mu=L[10]-b*y(10);
+  const p=1-Math.exp(-Math.exp(-(mm-mu)/b)); return p<=0?1e4:Math.max(1.01,1/p); }
+const effRain=()=>SC.rain*SC.dur/60*(1-SC.perm/100)*(1-SC.drain/100);
+// depth of a cell for any return period T: interpolate the water LEVEL in the nearby channel (L) on a log scale,
+// then depth = level − ground (ground above the channel = L − depth of the mapped flood), so a cell gets water only once the level reaches it.
+function depthAtT(c,T){ const B=D.base||D.rps,d=r=>c.depth[r]||0,L=r=>c.L?.[r]||d(r),lvl=(a,b,f)=>Math.max(0,L(a)+(L(b)-L(a))*f-(L(b)-d(b)));
+  if(T<=2) return 0; if(T<B[0]){ const f=Math.log(T/2)/Math.log(B[0]/2); return Math.max(0,d(B[0])-(1-f)*L(B[0])); }
+  for(let i=0;i<B.length-1;i++) if(T<=B[i+1]){const a=B[i],b=B[i+1]; return lvl(a,b,Math.log(T/a)/Math.log(b/a));}
+  return d(B[B.length-1]); } // rarer than the rarest map: no data beyond it, shown as that map
+function exposureT(T){ let people=0,area=0; for(const c of D.cells) if(depthAtT(c,T)>.01){people+=c.pop; area+=c.area;} return {people,area:area/1e6}; }
+
+function drawScenarioInfo(){ const mm=effRain(),T=rainT(mm),box=$('scInfo');
+  if(T==null){ box.innerHTML='<span style="color:var(--err)">No rain records loaded (data/weather.json): load the July 2021 replay in Alert first.</span>'; return; }
+  const top=Math.max(...(D.base||D.rps)),Tr=Math.round(T),e=exposureT(Math.min(top,Tr));
+  box.innerHTML=`Rain falling: <b>${Math.round(SC.rain*SC.dur/60)} mm</b> · reaching the river: <b>${Math.round(mm)} mm</b><br>
+    That is like a <b>${Tr<2?'normal':`1-in-${Tr}-year`}</b> rain (${Tr<2?'no flood expected':`${sizeWord(Tr).toLowerCase()} flood`})${Tr>top?` — rarer than the rarest map (1-in-${top}): shown as 1-in-${top}, the real flood could be bigger`:''} → about <b>${fmt(e.people)}</b> residents and ${e.area.toFixed(1)} km² in the water at the peak.`; }
+// build the flood map for the scenario and make it the selected flood size
+function buildScenario(){ const T0=rainT(effRain()); if(T0==null){ toast('Rain records not loaded'); return; }
+  D.base=D.base||[...D.rps]; const T=Math.min(Math.max(...D.base),Math.round(T0));
+  if(D.custom) D.cells.forEach(c=>delete c.depth[D.custom]);
+  D.cells.forEach(c=>{ if(c.pop0==null) c.pop0=c.pop; c.pop=c.pop0*SC.pop/100; });
+  D.blds.forEach(b=>{ if(b.pop0==null) b.pop0=b.pop; b.pop=b.pop0*SC.pop/100; });
+  LAG_MAX=.15/SC.slope; INIT=SC.init/100;
+  if(T>=2&&!D.base.includes(T)){ D.cells.forEach(c=>c.depth[T]=+depthAtT(c,T).toFixed(2)); D.custom=T; D.rps=[...D.base,T].sort((a,b)=>a-b); }
+  else { D.custom=null; D.rps=[...D.base]; }
+  load(D,isDemo); const want=T<2?0:D.rps.indexOf(D.custom??D.base.reduce((b,r)=>Math.abs(Math.log(r/T))<Math.abs(Math.log(b/T))?r:b));
+  S.sizeIdx=Math.max(0,want); $('size').value=S.sizeIdx; $('size').oninput({target:$('size')});
+  toast(T<2?'This rain does not flood the valley':`Scenario built: 1-in-${T} years`); }
+const SCF=[['rain','Rain intensity','mm/h',1,150,1],['dur','Rain duration','min',10,2880,10],['init','Water already in the river','cm',0,300,10],
+  ['perm','Soaks into the ground','%',0,90,5],['drain','Removed by drains','%',0,80,5],['slope','Terrain slope effect (how fast the wave runs downhill)','×',.5,3,.1],['pop','People present (100 = residents only)','%',50,200,10]];
+$('scIn').innerHTML=SCF.map(([k,t,u,mi,ma,st])=>`<label class="sl">${t} <span class="mono" id="scv-${k}">${SC[k]} ${u}</span><input type="range" min="${mi}" max="${ma}" step="${st}" value="${SC[k]}" data-sc="${k}" data-u="${u}"></label>`).join('');
+$('scIn').oninput=e=>{const k=e.target.dataset.sc; if(!k) return; SC[k]=+e.target.value; $('scv-'+k).textContent=`${SC[k]} ${e.target.dataset.u}`; drawScenarioInfo();};
+$('scBuild').onclick=buildScenario;
+$('scReset').onclick=()=>{ Object.assign(SC,{init:0,slope:1,pop:100}); LAG_MAX=.15; INIT=0; if(D.custom||D.base){ D.cells.forEach(c=>{if(D.custom) delete c.depth[D.custom]; if(c.pop0!=null) c.pop=c.pop0;}); D.blds.forEach(b=>{if(b.pop0!=null) b.pop=b.pop0;}); D.custom=null; D.rps=[...(D.base||D.rps)]; load(D,isDemo);} toast('Back to the mapped flood sizes'); };
+
+/* ---------- event clock + alert to authorities (live, while the video plays) ---------- */
+const clock=T=>{const m=Math.round(T*SC.mins),h=Math.floor(m/60); return `${h} h ${String(m%60).padStart(2,'0')}`;};
+let alerted=null,warned=null;
+function checkAlerts(nowPeople){ const r=rp(),b=$('alertBar');
+  const first=Math.min(...D.cells.filter(c=>c.pop>0&&c.depth[r]>.01).map(c=>floodStart(c,r))),warnAt=first-SC.leadMin/SC.mins;
+  if(S.T<.02){alerted=warned=null;}
+  if(warned==null&&S.T>=warnAt&&isFinite(warnAt)) warned=S.T;
+  if(alerted==null&&nowPeople>=SC.alertN) alerted=S.T;
+  const parts=[];
+  if(warned!=null) parts.push(`📣 <b>Warning to residents</b> due at ${clock(Math.max(0,warned))} (${SC.leadMin} min before water reaches the first homes at ${clock(first)})${warnAt<0?' — <b>too late</b>: the lead time is longer than the time available':''}`);
+  if(alerted!=null) parts.push(`🔔 <b>Alert sent to authorities</b> at ${clock(alerted)}: ${fmt(nowPeople)} residents in water now (threshold ${fmt(SC.alertN)})`);
+  b.innerHTML=parts.join('<br>'); b.hidden=!parts.length; $('clockLbl').textContent=`Clock ${clock(S.T)} of ${clock(1)}`; }
+['alertN','leadMin','mins'].forEach(k=>$('sc-'+k).onchange=e=>{const v=+e.target.value; if(v>0){SC[k]=v; alerted=warned=null; render();}});
+
+</script>
+<script>
 // player.js - Video-style player: play/pause, restart, timeline, speed, loop.
 // Loaded as a classic script: top-level names are shared between files (order set in index.html).
 
 /* ---------- video player ---------- */
-let anim=null,last=0; const DUR=15000;
+let anim=null,last=0; const DUR=60000; // 1× speed: the whole event in 60 s
 function setPlaying(on){ S.playing=on; $('play').textContent=on?'❚❚':'▶'; $('play').setAttribute('aria-label',on?'Pause':'Play');
   cancelAnimationFrame(anim); if(!on) return; if(S.T>=1) S.T=0; last=performance.now();
   const step=t=>{const dt=t-last; last=t; S.T+=dt*S.speed/DUR; if(S.T>=1){ if($('loop').checked) S.T=0; else {S.T=1; render(); setPlaying(false); return;} } render(); anim=requestAnimationFrame(step);};
@@ -1700,7 +1786,7 @@ function setPlaying(on){ S.playing=on; $('play').textContent=on?'❚❚':'▶'; 
 $('play').onclick=()=>setPlaying(!S.playing);
 $('restart').onclick=()=>{S.T=0; render();};
 $('time').oninput=e=>{S.T=e.target.value/1000; render();};
-$('speed').onchange=e=>S.speed=+e.target.value;
+$('speed').oninput=e=>{S.speed=+e.target.value; $('speedV').textContent='×'+S.speed;};
 
 </script>
 <script>
@@ -1748,7 +1834,7 @@ document.addEventListener('keydown',e=>{ if(e.target.closest('input,select,texta
 function drawSize(){ const r=rp(); $('size').max=D.rps.length-1; $('size').value=S.sizeIdx;
   $('sizeWord').textContent=`${sizeWord(r)} flood`;
   $('sizeHint').textContent=`Expected about once every ${r} years (a ${chance(r)} chance each year).`;
-  $('sizeTicks').innerHTML=D.rps.map(x=>`<span>${sizeWord(x)}</span>`).join(''); }
+  $('sizeTicks').innerHTML=D.rps.map(x=>`<span>${x===D.custom?'<b>Your rain</b>':sizeWord(x)}</span>`).join(''); }
 $('size').oninput=e=>{S.sizeIdx=+e.target.value; drawSize(); render(); drawActor(); drawAgree(); drawCmp(); makePlan(); if(S.tab==='diag') drawDiagram(); if(S.tab==='coord') drawCoord();};
 
 /* ---------- tabs ---------- */
@@ -1808,11 +1894,23 @@ document.querySelector('#cmpSeg').onclick=e=>{const b=e.target.closest('[data-c]
 
 /* ---------- diagrams (for research; downloadable) ---------- */
 const DIAGS=[
-  {k:'size',t:'People & buildings per flood size',s:'How exposure grows from frequent to extreme floods, with the real 2021 flood for reference.',metric:true},
-  {k:'depth',t:'How deep is the water?',s:'People or buildings by water depth, for the flood size you picked.',metric:true},
-  {k:'zones',t:'Safety zones share',s:'Share of residents and buildings in red, yellow and green zones.',metric:false},
-  {k:'agree',t:'Model vs the real 2021 flood',s:'Area flooded in both, only on the hazard map, or only in 2021.',metric:false}];
-function drawDList(){ $('dlist').innerHTML=DIAGS.map(d=>`<button data-k="${d.k}" aria-pressed="${S.diag===d.k}"><b>${d.t}</b><span>${d.s}</span></button>`).join(''); }
+  {g:'Results',k:'size',t:'People & buildings per flood size',s:'How exposure grows from frequent to extreme floods, with the real 2021 flood for reference.',metric:true},
+  {g:'Results',k:'depth',t:'How deep is the water?',s:'People or buildings by water depth, for the flood size you picked.',metric:true},
+  {g:'Results',k:'zones',t:'Safety zones share',s:'Share of residents and buildings in red, yellow and green zones.',metric:false},
+  {g:'Results',k:'scen',t:'Risk comparison: drains and soil',s:'Residents in the water for your rain with different drainage and soil soaking.',metric:false},
+  {g:'Results',k:'agree',t:'Predicted vs observed (2021)',s:'Area flooded in both, only on the hazard map, or only in the 2021 satellite outline.',metric:false},
+  {g:'Over time',k:'rainT',t:'Rainfall vs time (July 2021)',s:'Daily and 48-hour catchment rain, with the 1-in-10/100/500 rain levels.',metric:false},
+  {g:'Over time',k:'depthT',t:'Water depth vs time at a place',s:'At the last place you clicked (or the most populated flooded spot), per flood size.',metric:false},
+  {g:'Over time',k:'areaT',t:'Flooded area vs time',s:'How the area under water grows and shrinks during the event, per flood size.',metric:false},
+  {g:'Maps',k:'mhaz',t:'Flood hazard map',s:'Red / yellow / green safety zones over the real map.',metric:false},
+  {g:'Maps',k:'mheat',t:'Water depth heatmap',s:'Water depth at the peak of the flood size you picked.',metric:false},
+  {g:'Maps',k:'mprog',t:'Flood progression',s:'Three moments: early, rising, peak.',metric:false},
+  {g:'Maps',k:'mevac',t:'Evacuation route map',s:'Closed roads, shelters, evacuation routes and groups.',metric:false},
+  {g:'System design',k:'flow',t:'Flowchart: how the simulation works',s:'The algorithm step by step, as built in this app.',metric:false},
+  {g:'System design',k:'arch',t:'System architecture',s:'From forecasts and data to alerts for authorities and residents.',metric:false},
+  {g:'System design',k:'dfd',t:'Data flow diagram',s:'How rain, sensors, simulation results and alerts move through the system.',metric:false},
+  {g:'System design',k:'erd',t:'Entity–relationship diagram',s:'A database design for a future operational version.',metric:false}];
+function drawDList(){ let g=''; $('dlist').innerHTML=DIAGS.map(d=>(d.g!==g?`<div class="dg">${g=d.g}</div>`:'')+`<button data-k="${d.k}" aria-pressed="${S.diag===d.k}"><b>${d.t}</b><span>${d.s}</span></button>`).join(''); }
 $('dlist').onclick=e=>{const b=e.target.closest('button'); if(!b) return; S.diag=b.dataset.k; drawDList(); drawDiagram();};
 $('metricSeg').onclick=e=>{const b=e.target.closest('button'); if(!b) return; S.metric=b.dataset.m; $('metricSeg').querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',x===b)); drawDiagram();};
 let current=null;
@@ -1832,6 +1930,27 @@ function chartData(){
       legend:order.map(i=>({name:names[i],color:css(cols[i])})),
       rows:[['Residents','people'],['Buildings','bld']].map(([l,k])=>({label:l,parts:order.map(i=>({name:names[i],value:z[i][k]/tot(k)*100,raw:z[i][k],color:css(cols[i])}))})),pct:true,
       csv:[['zone','residents','buildings'],...order.map(i=>[names[i],Math.round(z[i].people),z[i].bld])]};}
+  const steps=Array.from({length:25},(_,i)=>i/24),cat=['--c-mod','--wave2','--crit','--c-obs'],xs=steps.map(t=>clock(t));
+  if(S.diag==='rainT'){ const R=WX.data?.replayRain,L=WX.data?.rainLevels?.q; if(!R) return {kind:'empty',title:'Rainfall vs time',sub:'Load the July 2021 replay in the Alert tab.',src,csv:[['note'],['no rain data']]};
+    return {kind:'line',title:'Rain in the Vesdre catchment, July 2021',sub:'Catchment mean of 4 points (ERA5). Dashed: 48-hour rain levels from 1984–2020 records.',x:R.map(r=>r.t.slice(5)),yTitle:'mm',
+      series:[{name:'Rain per day',color:css('--w2'),values:R.map(r=>r.mm)},{name:'Rain over 48 hours',color:css('--w3'),values:R.map(r=>r.mm48)}],
+      refs:L?[10,100,500].map(T=>({v:L[T],label:'1-in-'+T})):[],src:'Source: Open-Meteo ERA5 archive (external, not challenge data)',
+      csv:[['date','rain_mm','rain_48h_mm'],...R.map(r=>[r.t,r.mm.toFixed(1),r.mm48.toFixed(1)])]};}
+  if(S.diag==='depthT'){ const r0=rp(),p=AB.a||D.cells.filter(c=>c.depth[r0]>.5).sort((a,b)=>b.pop-a.pop)[0]?.c,c=p&&cellAt(p); if(!c) return {kind:'empty',title:'Water depth vs time',sub:'Click a place on the map first.',src,csv:[['note'],['no place']]};
+    return {kind:'line',title:`Water depth over time at ${c.c[1].toFixed(4)}, ${c.c[0].toFixed(4)}`,sub:`${['','Green','Yellow','Red'][c.z]} zone · ${fmt(c.pop)} residents in this cell. Clock = event length set in Evacuate (${SC.mins} min).`,x:xs,yTitle:'m',
+      series:D.rps.map((r,i)=>({name:`1-in-${r}${r===D.custom?' (your rain)':''}`,color:css(cat[i%4]),values:steps.map(t=>nowDepth(c,r,t))})),src,
+      csv:[['clock',...D.rps.map(r=>'depth_m_rp'+r)],...steps.map((t,i)=>[xs[i],...D.rps.map(r=>nowDepth(c,r,t).toFixed(2))])]};}
+  if(S.diag==='areaT'){ const v=D.rps.map(r=>steps.map(t=>D.cells.reduce((a,c)=>a+(nowDepth(c,r,t)>.01?c.area:0),0)/1e6));
+    return {kind:'line',title:'Area under water over time',sub:'Each valley section fills from its riverbed; upstream first. The order follows the data, the timing is illustrative.',x:xs,yTitle:'km²',
+      series:D.rps.map((r,i)=>({name:`1-in-${r}${r===D.custom?' (your rain)':''}`,color:css(cat[i%4]),values:v[i]})),src,
+      csv:[['clock',...D.rps.map(r=>'km2_rp'+r)],...steps.map((t,j)=>[xs[j],...v.map(a=>a[j].toFixed(3))])]};}
+  if(S.diag==='scen'){ if(!WX.data?.rainLevels) return {kind:'empty',title:'Risk comparison',sub:'Needs the rain records (Alert tab, July 2021 replay).',src,csv:[['note'],['no rain data']]};
+    const keep={...SC},rows=[]; for(const [k,lab] of [['drain','Drains remove'],['perm','Soil soaks up']]) for(const v of [0,20,40,60]){ Object.assign(SC,keep,{[k]:v}); const T=Math.min(Math.max(...(D.base||D.rps)),Math.round(rainT(effRain())));
+      rows.push({label:`${lab} ${v}% (1-in-${T})`,value:Math.round(exposureT(T).people),color:css(k==='drain'?'--c-mod':'--c-both')}); } Object.assign(SC,keep);
+    return {kind:'bar',title:'Residents in the water: same rain, different drains and soil',sub:`Your rain: ${SC.rain} mm/h for ${SC.dur} min. Other settings as in "Build your own rain scenario".`,rows,src:src+' · Open-Meteo rain records',
+      csv:[['scenario','residents'],...rows.map(r=>[r.label,r.value])]};}
+  if(S.diag[0]==='m') return {kind:'img',title:DIAGS.find(x=>x.k===S.diag).t,sub:'',src:'Sources: EFAS, GHS-OBAT, GHS-POP, OpenStreetMap, Copernicus DEM'+(isDemo?' · DEMO DATA':''),csv:null};
+  if(['flow','arch','dfd','erd'].includes(S.diag)) return designDiagram(S.diag);
   const names=['Flooded in both','Only on the hazard map','Only in 2021'],cols=['--c-both','--c-mod','--c-obs'];
   if(!D.hasObs) return {kind:'empty',title:'Model vs the real 2021 flood',sub:'Load the 2021 flood file (Copernicus EMS) to draw this diagram.',src,csv:[['note'],['no 2021 file loaded']]};
   return {kind:'stack',title:'Hazard map vs the real 2021 flood (area, km²)',sub:'How much of each flood-size map overlaps the satellite outline of July 2021.',src,
@@ -1850,6 +1969,7 @@ function buildSvg(c){
   <text x="24" y="40" font-size="22" font-weight="700" fill="${ink}">${esc(c.title)}</text>
   <text x="24" y="64" font-size="13" fill="${muted}">${esc(c.sub)}</text>`;
   if(c.kind==='empty') return s+`<text x="24" y="${top+20}" font-size="15" fill="${ink}">No data yet.</text></svg>`;
+  if(c.kind==='img'||c.kind==='boxes'||c.kind==='line') return extraSvg(c,W,F,ink,muted,line,bg);
   let y=top;
   if(c.legend){ let lx=X0; c.legend.forEach(l=>{s+=`<rect x="${lx}" y="${y}" width="12" height="12" rx="2" fill="${l.color}"/><text x="${lx+18}" y="${y+11}" font-size="13" fill="${ink}">${esc(l.name)}</text>`; lx+=18+l.name.length*7.2+22;}); y+=legendH; }
   if(c.kind==='bar'){ const max=niceMax(Math.max(...c.rows.map(r=>r.value))),sx=v=>X0+(X1-X0)*v/max;
@@ -1872,7 +1992,9 @@ function buildSvg(c){
   return s;
 }
 function drawDiagram(){ if(!D) return; drawDList(); const d=DIAGS.find(x=>x.k===S.diag); $('stageTitle').textContent=d.t; $('metricSeg').hidden=!d.metric;
-  current=chartData(); $('chartbox').innerHTML=buildSvg(current); }
+  current=chartData(); $('dlCsv').hidden=!current.csv;
+  if(current.kind==='img'){ $('chartbox').innerHTML='<p class="hint">Drawing the map…</p>'; const want=S.diag; mapFigure(want).then(f=>{ if(S.diag!==want) return; Object.assign(current,f); $('chartbox').innerHTML=buildSvg(current); }); return; }
+  $('chartbox').innerHTML=buildSvg(current); }
 const fileBase=()=>`flood-${S.diag}${DIAGS.find(x=>x.k===S.diag).metric?'-'+S.metric:''}${S.diag==='depth'?'-rp'+rp():''}${isDemo?'-DEMO':''}`;
 async function saveFile(filename,data){
   try{ if(window.claude?.use){ const dl=await window.claude.use('downloads'); if(dl){ await dl.save({filename,data}); toast('Saved '+filename); return; } } }
@@ -1889,6 +2011,99 @@ $('dlPng').onclick=()=>{ const svg=buildSvg(current),img=new Image(),m=svg.match
 
 </script>
 <script>
+// figures.js - Extra figures for the diagram studio: line graphs over time, map figures (captured from the live map),
+// and system-design diagrams (flowchart, architecture, data flow, entity–relationship). All export as PNG / SVG.
+// Loaded as a classic script: top-level names are shared between files (order set in index.html).
+
+/* ---------- shared SVG pieces ---------- */
+const xmlEsc=t=>esc(t).replace(/'/g,'&#39;');
+function legendRow(items,x,y,ink){ let lx=x,o=''; items.forEach(l=>{o+=`<rect x="${lx}" y="${y}" width="14" height="${l.line?3:12}" rx="${l.dot?6:2}" ${l.line?`transform="translate(0,5)"`:''} fill="${l.color}"/><text x="${lx+20}" y="${y+11}" font-size="13" fill="${ink}">${xmlEsc(l.name)}</text>`; lx+=26+l.name.length*7+18;}); return o; }
+function extraSvg(c,W,F,ink,muted,line,bg){
+  if(c.kind==='line'){ const H=430,X0=70,X1=W-90,Y0=110,Y1=H-70,n=c.x.length,all=c.series.flatMap(s=>s.values).concat((c.refs||[]).map(r=>r.v)),max=niceMax(Math.max(...all,0.01));
+    const sx=i=>X0+(X1-X0)*i/Math.max(1,n-1),sy=v=>Y1-(Y1-Y0)*v/max;
+    let o=head(c,W,H,F,ink,muted,bg)+legendRow(c.series.map(s=>({name:s.name,color:s.color,line:1})),X0,82,ink);
+    for(let i=0;i<=4;i++){const v=max*i/4; o+=`<line x1="${X0}" x2="${X1}" y1="${sy(v)}" y2="${sy(v)}" stroke="${line}"/><text x="${X0-8}" y="${sy(v)+4}" font-size="12" fill="${muted}" text-anchor="end">${+v.toFixed(v<10?1:0)}</text>`;}
+    o+=`<text x="${X0-8}" y="${Y0-12}" font-size="12" fill="${muted}" text-anchor="end">${xmlEsc(c.yTitle)}</text>`;
+    (c.refs||[]).forEach(r=>{o+=`<line x1="${X0}" x2="${X1}" y1="${sy(r.v)}" y2="${sy(r.v)}" stroke="${muted}" stroke-dasharray="4 4"/><text x="${X1+6}" y="${sy(r.v)+4}" font-size="12" fill="${muted}">${xmlEsc(r.label)}</text>`;});
+    const tick=Math.ceil(n/8); c.x.forEach((t,i)=>{ if(i%tick===0||i===n-1) o+=`<text x="${sx(i)}" y="${Y1+18}" font-size="11.5" fill="${muted}" text-anchor="middle">${xmlEsc(t)}</text>`; });
+    c.series.forEach(s=>{ o+=`<path d="${s.values.map((v,i)=>`${i?'L':'M'}${sx(i).toFixed(1)},${sy(v).toFixed(1)}`).join('')}" fill="none" stroke="${s.color}" stroke-width="2" stroke-linejoin="round"/>`;
+      s.values.forEach((v,i)=>{o+=`<circle cx="${sx(i)}" cy="${sy(v)}" r="7" fill="transparent"><title>${xmlEsc(s.name)} · ${xmlEsc(c.x[i])}: ${v.toFixed(2)} ${xmlEsc(c.yTitle)}</title></circle>`;}); });
+    return o+foot(c,H,muted)+'</svg>'; }
+  if(c.kind==='img'){ if(!c.img) return head(c,W,200,F,ink,muted,bg)+`<text x="24" y="120" font-size="14" fill="${ink}">Drawing…</text></svg>`;
+    const H=c.h+150; let o=head(c,W,H,F,ink,muted,bg)+`<image href="${c.img}" x="24" y="80" width="${W-48}" height="${c.h}"/>`+(c.overlay||'')+legendRow(c.legend||[],24,c.h+92,ink);
+    return o+foot(c,H,muted)+'</svg>'; }
+  // boxes
+  const H=c.H; let o=head(c,W,H,F,ink,muted,bg)+`<defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0L10,5L0,10z" fill="${muted}"/></marker></defs>`;
+  const N=Object.fromEntries(c.nodes.map(n=>[n.id,n])),edgePt=(a,b)=>{const dx=b.x+b.w/2-(a.x+a.w/2),dy=b.y+b.h/2-(a.y+a.h/2),t=Math.min(Math.abs(a.w/2/(dx||1e-9)),Math.abs(a.h/2/(dy||1e-9)));return [a.x+a.w/2+dx*t,a.y+a.h/2+dy*t];};
+  c.edges.forEach(([a,b,lab,bend])=>{const A=N[a],B=N[b],p=edgePt(A,B),q=edgePt(B,A);
+    if(bend){ const x=bend; o+=`<path d="M${A.x+A.w},${A.y+A.h/2}H${x}V${B.y+B.h/2}H${B.x+B.w}" fill="none" stroke="${muted}" stroke-width="1.5" marker-end="url(#ar)"/>`+(lab?`<text x="${x-6}" y="${(A.y+B.y+B.h)/2}" font-size="11.5" fill="${muted}" text-anchor="end">${xmlEsc(lab)}</text>`:''); return; }
+    o+=`<line x1="${p[0]}" y1="${p[1]}" x2="${q[0]}" y2="${q[1]}" stroke="${muted}" stroke-width="1.5" marker-end="url(#ar)"/>`;
+    if(lab) o+=`<text x="${(p[0]+q[0])/2+4}" y="${(p[1]+q[1])/2-4}" font-size="11.5" fill="${muted}">${xmlEsc(lab)}</text>`;});
+  c.nodes.forEach(n=>{ const sh=n.shape||'box',lines=n.label.split('\n'),fill=n.fill||css('--bg');
+    o+=sh==='store'?`<path d="M${n.x},${n.y}H${n.x+n.w}M${n.x},${n.y+n.h}H${n.x+n.w}" stroke="${ink}" stroke-width="1.5"/><rect x="${n.x}" y="${n.y}" width="${n.w}" height="${n.h}" fill="${fill}" opacity=".6"/>`
+      :`<rect x="${n.x}" y="${n.y}" width="${n.w}" height="${n.h}" rx="${sh==='proc'?n.h/2:8}" fill="${fill}" stroke="${n.stroke||line}" stroke-width="1.5"/>`;
+    lines.forEach((t,i)=>{o+=`<text x="${n.x+(n.left?10:n.w/2)}" y="${n.y+(n.left?20:n.h/2-(lines.length-1)*8+5)+i*(n.left?17:16)}" font-size="${i===0?13.5:12}" font-weight="${i===0?700:400}" fill="${ink}" text-anchor="${n.left?'start':'middle'}">${xmlEsc(t)}</text>`;}); });
+  return o+foot(c,H,muted)+'</svg>'; }
+const head=(c,W,H,F,ink,muted,bg)=>`<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" font-family="${F}" role="img" aria-label="${xmlEsc(c.title)}"><rect width="${W}" height="${H}" fill="${bg}"/>
+  <text x="24" y="40" font-size="22" font-weight="700" fill="${ink}">${xmlEsc(c.title)}</text><text x="24" y="64" font-size="13" fill="${muted}">${xmlEsc(c.sub||'')}</text>`;
+const foot=(c,H,muted)=>`<text x="24" y="${H-16}" font-size="11.5" fill="${muted}">${xmlEsc(c.src)} · Flood Scenario Explorer</text>`;
+
+/* ---------- map figures: set the view, wait for the map to draw, capture the canvas ---------- */
+async function mapFigure(k){ const keep={tab:S.tab,T:S.T,cmp:S.cmp},r=rp(),W=712;
+  const shot=async v=>{ Object.assign(S,v); applyLayers(); draw(); paintWater(performance.now(),0,true); await new Promise(res=>setTimeout(res,1200));
+    return new Promise(res=>{ map.once('render',()=>res(map.getCanvas().toDataURL('image/png'))); map.triggerRepaint(); }); };
+  const cv=map.getCanvas(),ratio=cv.height/cv.width,h=Math.round(W*ratio),f={h,sub:'',legend:[]};
+  const pins=()=>E.shelters.map((s,i)=>{const p=map.project(s.c),x=24+p.x/cv.clientWidth*W,y=80+p.y/cv.clientHeight*h; return x<24||x>24+W||y<80||y>80+h?'':`<circle cx="${x}" cy="${y}" r="9" fill="${css('--zg')}" stroke="#fff" stroke-width="2"/><text x="${x}" y="${y+4}" font-size="11" font-weight="700" fill="#fff" text-anchor="middle">${i+1}</text>`;}).join('');
+  try{
+    if(k==='mhaz'){ f.img=await shot({tab:'safety'}); f.sub='Red: floods in the most frequent flood or deeper than 1.5 m at 1-in-100. Yellow: floods only in rarer floods or in 2021. Green: dry in every flood size.';
+      f.legend=[{name:'Red: high risk',color:css('--zr')},{name:'Yellow: caution',color:css('--zy')},{name:'Green: safer',color:css('--zg')}]; }
+    if(k==='mheat'){ f.img=await shot({tab:'sim',T:.6,cmp:'model'}); f.sub=`Water depth at the peak of the ${sizeWord(r).toLowerCase()} flood (1-in-${r}), EFAS. Darker blue = deeper.`;
+      f.legend=[{name:'Shallow (< 0.5 m)',color:css('--w1')},{name:'Knee to chest (0.5–1.5 m)',color:css('--w2')},{name:'Over head height (> 1.5 m)',color:css('--w3')}]; }
+    if(k==='mprog'){ const t=[.18,.32,.6],imgs=[]; for(const T of t) imgs.push(await shot({tab:'sim',T,cmp:'model'})); const w=(W-16)/3,hh=Math.round(w*ratio);
+      f.h=hh+24; f.img=imgs[0]; f.overlay=imgs.map((u,i)=>`<image href="${u}" x="${24+i*(w+8)}" y="80" width="${w}" height="${hh}"/><text x="${24+i*(w+8)}" y="${80+hh+16}" font-size="12.5" fill="${css('--ink')}">${['Early','Rising','Peak'][i]} · clock ${clock(t[i])}</text>`).join('');
+      f.img='data:image/gif;base64,R0lGODlhAQABAAAAACw='; f.sub=`Area under water at three moments of the ${sizeWord(r).toLowerCase()} flood: upstream sections fill first.`; }
+    if(k==='mevac'){ f.img=await shot({tab:'safety'}); f.overlay=pins(); f.sub=`Evacuation plan for the ${sizeWord(r).toLowerCase()} flood: routes by wave, groups of residents, shelters (numbered).`;
+      f.legend=[{name:'Wave 1 route',color:css('--wave1'),line:1},{name:'Wave 2',color:css('--wave2'),line:1},{name:'Wave 3',color:css('--wave3'),line:1},{name:'Shelter',color:css('--zg'),dot:1}]; }
+  } finally { Object.assign(S,keep); applyLayers(); render(); }
+  return f; }
+
+/* ---------- system-design diagrams ---------- */
+const mix=(a,b,t)=>'#'+hexRgb(a).map((v,i)=>Math.round(v*t+hexRgb(b)[i]*(1-t)).toString(16).padStart(2,'0')).join(''); // plain hex: exported SVGs open everywhere
+function designDiagram(k){ const sf=css('--surface'),blue=mix(css('--accent'),sf,.14),warm=mix(css('--obs'),sf,.18),green=mix(css('--zg'),sf,.16);
+  const src='Design of this prototype · Flood Scenario Explorer',csv=n=>[['element','description'],...n.nodes.map(x=>[x.id,x.label.replace(/\n/g,' — ')]),...n.edges.map(e=>[`${e[0]} → ${e[1]}`,e[2]||''])];
+  let d;
+  if(k==='flow'){ const x=150,w=380,h=46,g=60,steps=[
+      ['load','1 · Load terrain and data','Copernicus DEM, EFAS depths (1-in-10/100/500), GHS people & buildings, OSM roads & shelters'],
+      ['rain','2 · Add rainfall','Forecast, July 2021 replay, or your scenario → rain reaching the river'],
+      ['size','3 · Match rain to a flood size','48-hour rain records → yearly chance → flood map (interpolated)'],
+      ['flow','4 · Water rises section by section','Riverbed depth nearby + downstream delay from terrain'],
+      ['upd','5 · Update water depth','Cells, buildings, roads, people, critical sites'],
+      ['risk','6 · Check flood risk','Zones, closed roads, shelters, routes, alert thresholds'],
+      ['next','7 · Next time step','Until the end of the event']];
+    d={nodes:steps.map(([id,a,b],i)=>({id,label:`${a}\n${b}`,x,y:90+i*(h+g/2+10),w,h:h+6,fill:i===5?warm:blue,shape:i===0||i===6?'proc':'box'})),
+      edges:steps.slice(1).map((s,i)=>[steps[i][0],s[0]]).concat([['next','flow','repeat',x+w+90]]),H:90+7*(h+g/2+10)+40};
+    d.nodes.push({id:'alert',label:'Alert\nauthorities & residents',x:x+w+120,y:d.nodes[5].y-4,w:170,h:58,fill:green}); d.edges.push(['risk','alert','over threshold']); }
+  if(k==='arch'){ const col=(i)=>30+i*178,row=(j)=>110+j*92,b=(id,label,i,j,fill,h=70)=>({id,label,x:col(i),y:row(j),w:158,h,fill});
+    d={nodes:[b('wx','Weather forecasts\nOpen-Meteo, GloFAS',0,0,blue),b('sens','River gauges, sensors\n(future: SPW hydrometry)',0,1,blue),b('data','Hazard & exposure data\nEFAS, GHS, OSM, DEM',0,2,blue),
+      b('sim','Simulation\nscenario → water rise\nover time',1,1,warm,90),b('risk','Risk analysis\nzones, roads, shelters,\nevacuation, teams',2,1,warm,90),
+      b('alert','Alerts\nauthority alert, CAP draft,\nresident messages',3,1,green,90),b('auth','Authorities\nmayor, civil protection',3,0,green),b('res','Residents\nmessages, safe routes',3,2,green)],
+      edges:[['wx','sim'],['sens','sim','not connected yet'],['data','sim'],['sim','risk'],['risk','alert'],['alert','auth'],['alert','res']],H:430}; }
+  if(k==='dfd'){ const n=(id,label,x,y,shape,fill,w=150,h=58)=>({id,label,x,y,w,h,shape,fill});
+    d={nodes:[n('E1','Weather service',24,100,'box',css('--bg')),n('E2','Sensors (future)',24,230,'box',css('--bg')),n('E3','Authorities',590,100,'box',css('--bg')),n('E4','Residents',590,330,'box',css('--bg')),
+      n('P1','1.0 Ingest data',220,100,'proc',blue),n('P2','2.0 Simulate flood',220,230,'proc',blue),n('P3','3.0 Assess risk',400,230,'proc',blue),n('P4','4.0 Plan evacuation',400,360,'proc',blue),n('P5','5.0 Issue alerts',590,230,'proc',warm),
+      n('D1','D1 Hazard maps & terrain',220,360,'store',css('--bg'),160,40),n('D2','D2 Scenarios & results',40,370,'store',css('--bg'),160,40),n('D3','D3 Alert log',400,110,'store',css('--bg'),150,40)],
+      edges:[['E1','P1','rain'],['E2','P1','levels'],['P1','P2','rain index'],['D1','P2','depths'],['P2','D2','results'],['P2','P3','water over time'],['P3','P4','risk areas'],['P4','P5','plan'],['P3','P5','thresholds'],['P5','E3','alert'],['P5','E4','messages'],['P5','D3','log']],H:450}; }
+  if(k==='erd'){ const e=(id,fields,x,y)=>({id,label:`${id}\n${fields.join('\n')}`,x,y,w:160,h:24+fields.length*17,fill:blue,left:true});
+    d={nodes:[e('User',['id','role','municipality'],24,100),e('Simulation',['id','user_id','scenario params','created_at'],230,100),e('FloodEvent',['id','simulation_id','return_period','peak_time'],440,100),
+      e('Sensor',['id','type','location'],24,290),e('Reading',['id','sensor_id','time','value'],230,290),e('Alert',['id','simulation_id','level','audience','sent_at'],440,290),
+      e('Report',['id','simulation_id','format','created_at'],620,100),e('Shelter',['id','name','capacity','location'],620,290)],
+      edges:[['User','Simulation','1 → n'],['Simulation','FloodEvent','1 → n'],['Sensor','Reading','1 → n'],['Simulation','Alert','1 → n'],['Simulation','Report','1 → n'],['Reading','Simulation','feeds'],['Alert','Shelter','points to']],H:440}; }
+  const meta={flow:['Flowchart: how the simulation works','The algorithm as built in this app (not a hydraulic model).'],arch:['System architecture','From forecasts and data to alerts. Sensors are a proposed extension.'],
+    dfd:['Data flow diagram','External entities (rectangles), processes (rounded), data stores (open boxes).'],erd:['Entity–relationship diagram','Proposed database for an operational version: the prototype stores no personal data.']}[k];
+  return {kind:'boxes',title:meta[0],sub:meta[1],...d,src,csv:csv(d)}; }
+
+</script>
+<script>
 // main.js - Start-up: how-to-use guide, load demo data, auto-load team files from /data.
 // Loaded as a classic script: top-level names are shared between files (order set in index.html).
 
@@ -1902,7 +2117,7 @@ function load(data,demo){
   $('dataBadge').textContent=demo?'DEMO DATA':'TEAM DATA'; $('dataBadge').classList.toggle('real',!demo);
   buildSources(); drawSize(); drawLegend(); drawZones(); drawActor(); drawAgree(); drawCmp(); drawDList();
   if(!map) initMap(); else if(ready){ refreshData(); applyLayers(); render(); map.fitBounds(D.bbox,{padding:50}); }
-  if(S.tab==='diag') drawDiagram();
+  if(S.tab==='diag') drawDiagram(); if(typeof drawScenarioInfo==='function') drawScenarioInfo();
 }
 const mq=matchMedia('(prefers-color-scheme: dark)'); mq.addEventListener?.('change',recolor);
 new MutationObserver(recolor).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});

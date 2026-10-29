@@ -14,8 +14,9 @@ function buildSources(){
 // keep=true: highest level reached so far (stays at 1 after the peak) → "water reached here", i.e. likely damage
 function riseExpr(T,keep){ const x=['-',T,['get','lag']];
   return ['case',['<=',x,0],0,['<',x,.45],['/',['-',1,['cos',['/',['*',['pi'],x],.45]]],2],keep||['<',x,.6],1,['max',0,['-',1,['/',['-',x,.6],.4]]]]; }
-const over=()=>['-',['get','r'+rp()],['*',['-',1,riseExpr(S.T)],['get','L'+rp()]]];
-const overMax=()=>['-',['get','r'+rp()],['*',['-',1,riseExpr(S.T,true)],['get','L'+rp()]]];
+const withInit=e=>INIT>0?['max',e,['min',1,['/',INIT,['max',['get','L'+rp()],.01]]]]:e; // water already in the river at the start
+const over=()=>['-',['get','r'+rp()],['*',['-',1,withInit(riseExpr(S.T))],['get','L'+rp()]]];
+const overMax=()=>['-',['get','r'+rp()],['*',['-',1,withInit(riseExpr(S.T,true))],['get','L'+rp()]]];
 const waterColor=()=>['step',over(),css('--w1'),0.5,css('--w2'),1.5,css('--w3')];
 const zoneColor=()=>['match',['get','z'],1,css('--zg'),2,css('--zy'),css('--zr')];
 const bldColor=()=>['step',overMax(),css('--bld'),0.01,css('--hit1'),0.5,css('--hit2'),1.5,css('--hit3')]; // colour = deepest water so far (stays after the water goes down)
@@ -34,7 +35,7 @@ function initMap(){
   const layers=[{id:'bg',type:'background',paint:{'background-color':css('--land')}}];
   for(const k in BASE){sources[k]={type:'raster',tiles:BASE[k].tiles,tileSize:256,maxzoom:19}; layers.push({id:k,type:'raster',source:k,layout:{visibility:'none'}});}
   layers.push(...detailLayers('base'));
-  map=new maplibregl.Map({container:'map',attributionControl:false,style:{version:8,glyphs:'https://tiles.openfreemap.org/fonts/{fontstack}/{range}.pbf',sources,layers},bounds:D.bbox,fitBoundsOptions:{padding:50},maxPitch:80,maxZoom:18});
+  map=new maplibregl.Map({container:'map',attributionControl:false,style:{version:8,glyphs:'https://tiles.openfreemap.org/fonts/{fontstack}/{range}.pbf',sources,layers},bounds:D.bbox,fitBoundsOptions:{padding:50},maxPitch:80,maxZoom:18,preserveDrawingBuffer:true}); // keeps the frame for map figures (Diagrams)
   const isTile=id=>BASE[id]||id==='dem'||id==='osm';
   map.on('error',e=>{ if(e.sourceId&&isTile(e.sourceId)){ tileFail++; if(!tileOk&&tileFail>=2) showNotice(); } });
   map.on('data',e=>{ if(e.dataType==='source'&&e.tile&&isTile(e.sourceId)&&e.sourceId!=='dem'&&e.tile.state==='loaded'){ tileOk=true; $('notice').hidden=true; } });
@@ -108,6 +109,7 @@ function draw(){
   $('sPeople').textContent=fmt(e.people); $('sBld').textContent=fmt(e.bld); $('sArea').textContent=e.area.toFixed(e.area<10?2:1);
   $('classes').innerHTML=e.cc.map((c,k)=>`<div class="crow"><span class="sw" style="background:var(${CLASSES[k].v})"></span><span>${CLASSES[k].name}</span><span class="mono">${fmt(c.people)} people · ${fmt(c.bld)} bld</span></div>`).join('')
     +`<div class="crow"><span class="sw" style="background:var(--cut)"></span><span>Streets closed to cars (≥ ${CAR_DEPTH} m)</span><span class="mono">${cutKm(rp(),true).toFixed(1)} km</span></div>`;
+  checkAlerts(e.people);
   const ph=S.T<0.45?0:S.T<0.6?1:2; [0,1,2].forEach(i=>$('ph'+i).classList.toggle('on',i===ph));
   $('nowLbl').textContent=ph===1?'Peak':`${['Rising','Peak','Going down'][ph]} · ${Math.round(p*100)}% of peak`;
   $('time').value=Math.round(S.T*1000);

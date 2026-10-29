@@ -59,6 +59,7 @@
         <div class="ov hint3d" id="hint3d" hidden>Drag to move · Right-drag or Ctrl+drag to turn · Scroll to zoom</div>
         <div class="ov attr" id="attr"></div>
         <div class="ov tip" id="tip" hidden></div>
+        <div class="ov alertbar" id="alertBar" hidden></div>
         <div class="ov stage" id="stage" hidden>
           <div class="head">
             <b id="stageTitle" style="font-family:var(--f-display);font-size:18px;text-transform:uppercase;letter-spacing:.04em">Diagram</b>
@@ -84,10 +85,8 @@
           <div class="phases"><span id="ph0">Water rising</span><span id="ph1">Peak</span><span id="ph2">Water going down</span></div>
         </div>
         <div class="pright">
-          <span class="now" id="nowLbl">Peak</span>
-          <select class="btn" id="speed" aria-label="Speed">
-            <option value="0.25">0.25×</option><option value="0.5">0.5×</option><option value="1" selected>1× speed</option><option value="2">2×</option><option value="4">4×</option>
-          </select>
+          <span class="now"><span id="nowLbl">Peak</span><br><span id="clockLbl" class="mono"></span></span>
+          <label class="spd">Speed <input type="range" id="speed" min="1" max="10" step="1" value="2" aria-label="Simulation speed"><span class="mono" id="speedV">×2</span></label>
           <label style="font-size:13.5px;display:flex;gap:4px;align-items:center"><input type="checkbox" id="loop"> Loop</label>
         </div>
       </div>
@@ -110,6 +109,13 @@
           <input type="range" id="size" min="0" max="2" step="1" value="1" aria-label="Flood size">
           <div class="ticks" id="sizeTicks"></div>
         </div>
+        <details class="cands scen">
+          <summary><b>Or build your own rain scenario</b></summary>
+          <div class="form" id="scIn" style="margin-top:8px"></div>
+          <p id="scInfo" style="font-size:13.5px;margin:8px 0"></p>
+          <div class="row" style="justify-content:flex-start"><button class="btn primary sm" id="scBuild">Build this flood</button><button class="btn sm" id="scReset">Back to mapped sizes</button></div>
+          <p class="hint">Rain reaching the river = rain × duration × (1 − soaked up) × (1 − drained), compared with 37 years of real 48-hour rain in the Vesdre catchment to find its yearly chance; the flood map for that chance is interpolated between the EFAS maps. A simple index, not a hydrological model: short storms on small streams, snowmelt and blocked bridges are not represented.</p>
+        </details>
         <div>
           <h2><span class="step">2</span>Press ▶ under the map</h2>
           <p class="hint" style="margin:0">Each valley section fills from its riverbed, and upstream sections rise first (real terrain heights). The order is from the data; the timing is illustrative.</p>
@@ -185,9 +191,14 @@
           <h2>Evacuation plan</h2>
           <p class="hint" style="margin:0 0 8px" id="evScen"></p>
           <div class="form">
+            <label>Event length (clock), min <span class="tag">your assumption</span><input class="btn" type="number" id="sc-mins" min="30" step="30" value="2880"></label>
+            <label>Warning lead time, min <span class="tag">your assumption</span><input class="btn" type="number" id="sc-leadMin" min="0" step="15" value="180"></label>
+            <label>Alert authorities when residents in water reach <span class="tag">your assumption</span><input class="btn" type="number" id="sc-alertN" min="1" step="100" value="1000"></label>
+            <label>Max safe water for walkers, m <span class="tag">your assumption</span><input class="btn" type="number" id="sf-foot" min="0.05" step="0.05" value="0.15"></label>
+            <label>Close roads to cars from, m <span class="tag">your assumption</span><input class="btn" type="number" id="sf-car" min="0.05" step="0.05" value="0.3"></label>
             <label>Who leaves<select class="btn" id="evWho"><option value="water">Everyone in the water at this flood size</option><option value="red">Red-zone residents only</option></select></label>
             <label>Places when size unknown <span class="tag">your assumption</span><input class="btn" type="number" id="evCap" min="10" step="10" value="500"></label>
-            <label>Walking speed, km/h <span class="tag">your assumption</span><input class="btn" type="number" id="evSpeed" min="0.5" max="8" step="0.5" value="4"></label>
+            <label>Walking speed, m/s <span class="tag">your assumption</span><input class="btn" type="number" id="evSpeedMs" min="0.2" max="2.5" step="0.1" value="1.1"></label>
             <label>Warning time, hours <span class="tag">your assumption</span><input class="btn" type="number" id="evLead" min="0.25" max="72" step="0.25" value="3"></label>
           </div>
           <div class="stats" id="evStats" style="margin-top:12px"></div>
@@ -355,10 +366,12 @@
 <script src="js/weather.js"></script>
 <script src="js/impact.js"></script>
 <script src="js/response.js"></script>
+<script src="js/scenario.js"></script>
 <script src="js/player.js"></script>
 <script src="js/camera.js"></script>
 <script src="js/panels.js"></script>
 <script src="js/diagrams.js"></script>
+<script src="js/figures.js"></script>
 <script src="js/main.js"></script>
 </body>
 </html>

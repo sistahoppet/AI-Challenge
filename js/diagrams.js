@@ -3,11 +3,23 @@
 
 /* ---------- diagrams (for research; downloadable) ---------- */
 const DIAGS=[
-  {k:'size',t:'People & buildings per flood size',s:'How exposure grows from frequent to extreme floods, with the real 2021 flood for reference.',metric:true},
-  {k:'depth',t:'How deep is the water?',s:'People or buildings by water depth, for the flood size you picked.',metric:true},
-  {k:'zones',t:'Safety zones share',s:'Share of residents and buildings in red, yellow and green zones.',metric:false},
-  {k:'agree',t:'Model vs the real 2021 flood',s:'Area flooded in both, only on the hazard map, or only in 2021.',metric:false}];
-function drawDList(){ $('dlist').innerHTML=DIAGS.map(d=>`<button data-k="${d.k}" aria-pressed="${S.diag===d.k}"><b>${d.t}</b><span>${d.s}</span></button>`).join(''); }
+  {g:'Results',k:'size',t:'People & buildings per flood size',s:'How exposure grows from frequent to extreme floods, with the real 2021 flood for reference.',metric:true},
+  {g:'Results',k:'depth',t:'How deep is the water?',s:'People or buildings by water depth, for the flood size you picked.',metric:true},
+  {g:'Results',k:'zones',t:'Safety zones share',s:'Share of residents and buildings in red, yellow and green zones.',metric:false},
+  {g:'Results',k:'scen',t:'Risk comparison: drains and soil',s:'Residents in the water for your rain with different drainage and soil soaking.',metric:false},
+  {g:'Results',k:'agree',t:'Predicted vs observed (2021)',s:'Area flooded in both, only on the hazard map, or only in the 2021 satellite outline.',metric:false},
+  {g:'Over time',k:'rainT',t:'Rainfall vs time (July 2021)',s:'Daily and 48-hour catchment rain, with the 1-in-10/100/500 rain levels.',metric:false},
+  {g:'Over time',k:'depthT',t:'Water depth vs time at a place',s:'At the last place you clicked (or the most populated flooded spot), per flood size.',metric:false},
+  {g:'Over time',k:'areaT',t:'Flooded area vs time',s:'How the area under water grows and shrinks during the event, per flood size.',metric:false},
+  {g:'Maps',k:'mhaz',t:'Flood hazard map',s:'Red / yellow / green safety zones over the real map.',metric:false},
+  {g:'Maps',k:'mheat',t:'Water depth heatmap',s:'Water depth at the peak of the flood size you picked.',metric:false},
+  {g:'Maps',k:'mprog',t:'Flood progression',s:'Three moments: early, rising, peak.',metric:false},
+  {g:'Maps',k:'mevac',t:'Evacuation route map',s:'Closed roads, shelters, evacuation routes and groups.',metric:false},
+  {g:'System design',k:'flow',t:'Flowchart: how the simulation works',s:'The algorithm step by step, as built in this app.',metric:false},
+  {g:'System design',k:'arch',t:'System architecture',s:'From forecasts and data to alerts for authorities and residents.',metric:false},
+  {g:'System design',k:'dfd',t:'Data flow diagram',s:'How rain, sensors, simulation results and alerts move through the system.',metric:false},
+  {g:'System design',k:'erd',t:'Entity–relationship diagram',s:'A database design for a future operational version.',metric:false}];
+function drawDList(){ let g=''; $('dlist').innerHTML=DIAGS.map(d=>(d.g!==g?`<div class="dg">${g=d.g}</div>`:'')+`<button data-k="${d.k}" aria-pressed="${S.diag===d.k}"><b>${d.t}</b><span>${d.s}</span></button>`).join(''); }
 $('dlist').onclick=e=>{const b=e.target.closest('button'); if(!b) return; S.diag=b.dataset.k; drawDList(); drawDiagram();};
 $('metricSeg').onclick=e=>{const b=e.target.closest('button'); if(!b) return; S.metric=b.dataset.m; $('metricSeg').querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',x===b)); drawDiagram();};
 let current=null;
@@ -27,6 +39,27 @@ function chartData(){
       legend:order.map(i=>({name:names[i],color:css(cols[i])})),
       rows:[['Residents','people'],['Buildings','bld']].map(([l,k])=>({label:l,parts:order.map(i=>({name:names[i],value:z[i][k]/tot(k)*100,raw:z[i][k],color:css(cols[i])}))})),pct:true,
       csv:[['zone','residents','buildings'],...order.map(i=>[names[i],Math.round(z[i].people),z[i].bld])]};}
+  const steps=Array.from({length:25},(_,i)=>i/24),cat=['--c-mod','--wave2','--crit','--c-obs'],xs=steps.map(t=>clock(t));
+  if(S.diag==='rainT'){ const R=WX.data?.replayRain,L=WX.data?.rainLevels?.q; if(!R) return {kind:'empty',title:'Rainfall vs time',sub:'Load the July 2021 replay in the Alert tab.',src,csv:[['note'],['no rain data']]};
+    return {kind:'line',title:'Rain in the Vesdre catchment, July 2021',sub:'Catchment mean of 4 points (ERA5). Dashed: 48-hour rain levels from 1984–2020 records.',x:R.map(r=>r.t.slice(5)),yTitle:'mm',
+      series:[{name:'Rain per day',color:css('--w2'),values:R.map(r=>r.mm)},{name:'Rain over 48 hours',color:css('--w3'),values:R.map(r=>r.mm48)}],
+      refs:L?[10,100,500].map(T=>({v:L[T],label:'1-in-'+T})):[],src:'Source: Open-Meteo ERA5 archive (external, not challenge data)',
+      csv:[['date','rain_mm','rain_48h_mm'],...R.map(r=>[r.t,r.mm.toFixed(1),r.mm48.toFixed(1)])]};}
+  if(S.diag==='depthT'){ const r0=rp(),p=AB.a||D.cells.filter(c=>c.depth[r0]>.5).sort((a,b)=>b.pop-a.pop)[0]?.c,c=p&&cellAt(p); if(!c) return {kind:'empty',title:'Water depth vs time',sub:'Click a place on the map first.',src,csv:[['note'],['no place']]};
+    return {kind:'line',title:`Water depth over time at ${c.c[1].toFixed(4)}, ${c.c[0].toFixed(4)}`,sub:`${['','Green','Yellow','Red'][c.z]} zone · ${fmt(c.pop)} residents in this cell. Clock = event length set in Evacuate (${SC.mins} min).`,x:xs,yTitle:'m',
+      series:D.rps.map((r,i)=>({name:`1-in-${r}${r===D.custom?' (your rain)':''}`,color:css(cat[i%4]),values:steps.map(t=>nowDepth(c,r,t))})),src,
+      csv:[['clock',...D.rps.map(r=>'depth_m_rp'+r)],...steps.map((t,i)=>[xs[i],...D.rps.map(r=>nowDepth(c,r,t).toFixed(2))])]};}
+  if(S.diag==='areaT'){ const v=D.rps.map(r=>steps.map(t=>D.cells.reduce((a,c)=>a+(nowDepth(c,r,t)>.01?c.area:0),0)/1e6));
+    return {kind:'line',title:'Area under water over time',sub:'Each valley section fills from its riverbed; upstream first. The order follows the data, the timing is illustrative.',x:xs,yTitle:'km²',
+      series:D.rps.map((r,i)=>({name:`1-in-${r}${r===D.custom?' (your rain)':''}`,color:css(cat[i%4]),values:v[i]})),src,
+      csv:[['clock',...D.rps.map(r=>'km2_rp'+r)],...steps.map((t,j)=>[xs[j],...v.map(a=>a[j].toFixed(3))])]};}
+  if(S.diag==='scen'){ if(!WX.data?.rainLevels) return {kind:'empty',title:'Risk comparison',sub:'Needs the rain records (Alert tab, July 2021 replay).',src,csv:[['note'],['no rain data']]};
+    const keep={...SC},rows=[]; for(const [k,lab] of [['drain','Drains remove'],['perm','Soil soaks up']]) for(const v of [0,20,40,60]){ Object.assign(SC,keep,{[k]:v}); const T=Math.min(Math.max(...(D.base||D.rps)),Math.round(rainT(effRain())));
+      rows.push({label:`${lab} ${v}% (1-in-${T})`,value:Math.round(exposureT(T).people),color:css(k==='drain'?'--c-mod':'--c-both')}); } Object.assign(SC,keep);
+    return {kind:'bar',title:'Residents in the water: same rain, different drains and soil',sub:`Your rain: ${SC.rain} mm/h for ${SC.dur} min. Other settings as in "Build your own rain scenario".`,rows,src:src+' · Open-Meteo rain records',
+      csv:[['scenario','residents'],...rows.map(r=>[r.label,r.value])]};}
+  if(S.diag[0]==='m') return {kind:'img',title:DIAGS.find(x=>x.k===S.diag).t,sub:'',src:'Sources: EFAS, GHS-OBAT, GHS-POP, OpenStreetMap, Copernicus DEM'+(isDemo?' · DEMO DATA':''),csv:null};
+  if(['flow','arch','dfd','erd'].includes(S.diag)) return designDiagram(S.diag);
   const names=['Flooded in both','Only on the hazard map','Only in 2021'],cols=['--c-both','--c-mod','--c-obs'];
   if(!D.hasObs) return {kind:'empty',title:'Model vs the real 2021 flood',sub:'Load the 2021 flood file (Copernicus EMS) to draw this diagram.',src,csv:[['note'],['no 2021 file loaded']]};
   return {kind:'stack',title:'Hazard map vs the real 2021 flood (area, km²)',sub:'How much of each flood-size map overlaps the satellite outline of July 2021.',src,
@@ -45,6 +78,7 @@ function buildSvg(c){
   <text x="24" y="40" font-size="22" font-weight="700" fill="${ink}">${esc(c.title)}</text>
   <text x="24" y="64" font-size="13" fill="${muted}">${esc(c.sub)}</text>`;
   if(c.kind==='empty') return s+`<text x="24" y="${top+20}" font-size="15" fill="${ink}">No data yet.</text></svg>`;
+  if(c.kind==='img'||c.kind==='boxes'||c.kind==='line') return extraSvg(c,W,F,ink,muted,line,bg);
   let y=top;
   if(c.legend){ let lx=X0; c.legend.forEach(l=>{s+=`<rect x="${lx}" y="${y}" width="12" height="12" rx="2" fill="${l.color}"/><text x="${lx+18}" y="${y+11}" font-size="13" fill="${ink}">${esc(l.name)}</text>`; lx+=18+l.name.length*7.2+22;}); y+=legendH; }
   if(c.kind==='bar'){ const max=niceMax(Math.max(...c.rows.map(r=>r.value))),sx=v=>X0+(X1-X0)*v/max;
@@ -67,7 +101,9 @@ function buildSvg(c){
   return s;
 }
 function drawDiagram(){ if(!D) return; drawDList(); const d=DIAGS.find(x=>x.k===S.diag); $('stageTitle').textContent=d.t; $('metricSeg').hidden=!d.metric;
-  current=chartData(); $('chartbox').innerHTML=buildSvg(current); }
+  current=chartData(); $('dlCsv').hidden=!current.csv;
+  if(current.kind==='img'){ $('chartbox').innerHTML='<p class="hint">Drawing the map…</p>'; const want=S.diag; mapFigure(want).then(f=>{ if(S.diag!==want) return; Object.assign(current,f); $('chartbox').innerHTML=buildSvg(current); }); return; }
+  $('chartbox').innerHTML=buildSvg(current); }
 const fileBase=()=>`flood-${S.diag}${DIAGS.find(x=>x.k===S.diag).metric?'-'+S.metric:''}${S.diag==='depth'?'-rp'+rp():''}${isDemo?'-DEMO':''}`;
 async function saveFile(filename,data){
   try{ if(window.claude?.use){ const dl=await window.claude.use('downloads'); if(dl){ await dl.save({filename,data}); toast('Saved '+filename); return; } } }

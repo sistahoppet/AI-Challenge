@@ -11,7 +11,7 @@ function load(data,demo){
   $('dataBadge').textContent=demo?'DEMO DATA':'TEAM DATA'; $('dataBadge').classList.toggle('real',!demo);
   buildSources(); drawSize(); drawLegend(); drawZones(); drawActor(); drawAgree(); drawCmp(); drawDList();
   if(!map) initMap(); else if(ready){ refreshData(); applyLayers(); render(); map.fitBounds(D.bbox,{padding:50}); }
-  if(S.tab==='diag') drawDiagram();
+  if(S.tab==='diag') drawDiagram(); if(typeof drawScenarioInfo==='function') drawScenarioInfo();
 }
 const mq=matchMedia('(prefers-color-scheme: dark)'); mq.addEventListener?.('change',recolor);
 new MutationObserver(recolor).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});

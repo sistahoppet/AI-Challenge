@@ -54,7 +54,7 @@ function paintWater(now,_dt,force){
   if(!WV||S.tab==='safety') return; const r=rp(),key=r+':'+S.T.toFixed(4);
   if(reduce&&!force&&key===WV.key) return; WV.key=key; // reduced motion: only repaint when the water level changes
   const {img,fx,fy,wet,lut,noise,W,sc,lag,lvl}=WV,dep=WV.dep[r],Lm=WV.Lm[r],T=S.T,d=img.data,t=reduce?0:now/1000*.22,a=t%1,b=(t+.5)%1,bl=Math.abs(1-2*a),L=40;
-  for(let n=0;n<wet.length;n++){ const q=wet[n],x0=T-lag[q],o=q*4,s=dep[q]-(1-lvl[x0<=-.2?0:x0>=1?1200:((x0+.2)*1000)|0])*Lm[q]; if(s<=0.003){d[o+3]=0; continue;}
+  for(let n=0;n<wet.length;n++){ const q=wet[n],x0=T-lag[q],o=q*4,s=dep[q]-(1-Math.max(lvl[x0<=-.2?0:x0>=1?1200:((x0+.2)*1000)|0],Math.min(1,INIT/(Lm[q]||1))))*Lm[q]; if(s<=0.003){d[o+3]=0; continue;}
     // two ripple layers pushed along the flow, cross-faded so they never stretch
     const x=(q%W)*sc,y=((q/W)|0)*sc,sp=(.5+Math.min(1,s*.5))*L,ux=fx[q]*sp,uy=-fy[q]*sp;
     const n1=noise[((y-uy*a)&255)*256+((x-ux*a)&255)],n2=noise[((y-uy*b+97)&255)*256+((x-ux*b+53)&255)],rip=n1+(n2-n1)*bl;

@@ -16,7 +16,8 @@ function buildGrid(D){
    level has risen by (L − its own depth), so its depth at a moment = depth − (1 − rise) × L, and at the peak it equals the EFAS depth.
    Upstream sections rise first: delay ∝ how far down the channel is (ground height of the lowest flooded cell nearby, Copernicus DEM).
    The order follows the terrain; the timing itself is illustrative (no hydraulic model). */
-const LAG_MAX=.15; // share of the video by which the most downstream section rises after the most upstream one
+let LAG_MAX=.15; // share of the video by which the most downstream section rises after the most upstream one (scenario "terrain slope" changes it)
+let INIT=0;      // scenario: water already in the river at the start (m): low ground near the channel is wet from the first minute
 function stageModel(D){ const G=D.G,kx=Math.max(1,Math.round(250/G.m)),ky=Math.max(1,Math.round(250/(G.h*110540))),hasZ=D.cells.some(c=>c.elev!=null);
   D.cells.forEach(c=>{ c.L={}; D.rps.forEach(r=>c.L[r]=c.depth[r]); c.ech=c.elev;
     for(let dy=-ky;dy<=ky;dy++) for(let dx=-kx;dx<=kx;dx++){ const x=c.gx+dx,y=c.gy+dy; if(x<0||y<0||x>=G.nx||y>=G.ny) continue; const j=G.idx[y*G.nx+x]; if(j<0) continue; const o=D.cells[j];
@@ -24,7 +25,8 @@ function stageModel(D){ const G=D.G,kx=Math.max(1,Math.round(250/G.m)),ky=Math.m
   const wz=D.cells.filter(c=>c.ech!=null&&D.rps.some(r=>c.depth[r]>0)).map(c=>c.ech),hi=wz.length?Math.max(...wz):0,lo=wz.length?Math.min(...wz):0;
   D.cells.forEach(c=>c.lag=hasZ&&hi>lo&&c.ech!=null?LAG_MAX*Math.min(1,Math.max(0,(hi-c.ech)/(hi-lo))):0);
   D.hasTerrain=hasZ; }
-function nowDepth(c,r,T=S.T){ const d=c.depth[r]; if(!d) return 0; return Math.max(0,d-(1-level(T-c.lag))*c.L[r]); }
+const riseAt=(c,r,T)=>Math.max(level(T-c.lag),Math.min(1,INIT/(c.L[r]||1)));
+function nowDepth(c,r,T=S.T){ const d=c.depth[r]; if(!d) return 0; return Math.max(0,d-(1-riseAt(c,r,T))*c.L[r]); }
 // moment (0..1 of the video) when the cell starts to get water: used for evacuation waves
 function floodStart(c,r){ const d=c.depth[r]; if(!d) return Infinity; const v=1-d/c.L[r]; return c.lag+.45*Math.acos(1-2*v)/Math.PI; }
 const KX=y=>111320*Math.cos(y*Math.PI/180);
@@ -33,8 +35,8 @@ function mDist(a,b){return Math.hypot((a[0]-b[0])*KX(a[1]),(a[1]-b[1])*110540);}
 /* ---------- safety zones + safest places ---------- */
 function computeZones(D){
   buildGrid(D);
-  const lo=D.rps[0],mid=D.rps.includes(100)?100:D.rps[Math.floor(D.rps.length/2)]; D.zoneRule={lo,mid};
-  D.cells.forEach(c=>{const any=D.rps.some(rp=>c.depth[rp]>0); c.z=(c.depth[lo]>0||c.depth[mid]>1.5)?3:(any||c.obs)?2:1;});
+  const R=D.base||D.rps,lo=R[0],mid=R.includes(100)?100:R[Math.floor(R.length/2)]; D.zoneRule={lo,mid}; // zones use the mapped flood sizes only, not a user scenario
+  D.cells.forEach(c=>{const any=R.some(rp=>c.depth[rp]>0); c.z=(c.depth[lo]>0||c.depth[mid]>1.5)?3:(any||c.obs)?2:1;});
   const lat0=D.cells[0]?.c[1]||50,kx=111320*Math.cos(lat0*Math.PI/180),ky=110540,dist=(a,b)=>Math.hypot((a[0]-b[0])*kx,(a[1]-b[1])*ky);
   const wet=D.cells.filter(c=>c.z>1),red=D.cells.filter(c=>c.z===3),bCount=new Map();
   D.blds.forEach(b=>{if(b.ci>=0) bCount.set(b.ci,(bCount.get(b.ci)||0)+1);});
@@ -47,7 +49,7 @@ function computeZones(D){
 
 /* ---------- state ---------- */
 let D=null,isDemo=true;
-const S={sizeIdx:1,T:0.5,playing:false,speed:1,exag:1,mode:'2d',l3d:false,lift:0,tab:'sim',diag:'size',metric:'people',basemap:'detail',cmp:'both'};
+const S={sizeIdx:1,T:0.5,playing:false,speed:2,exag:1,mode:'2d',l3d:false,lift:0,tab:'sim',diag:'size',metric:'people',basemap:'detail',cmp:'both'};
 let cellFC,bldFC,map,ready=false,markers=[],peakCache={};
 const rp=()=>D.rps[S.sizeIdx];
 function level(T){return T<=0?0:T<0.45?(1-Math.cos(Math.PI*T/0.45))/2:T<0.6?1:Math.max(0,1-(T-0.6)/0.4);} // 0..1 share of the local peak

@@ -5,7 +5,7 @@
 function drawSize(){ const r=rp(); $('size').max=D.rps.length-1; $('size').value=S.sizeIdx;
   $('sizeWord').textContent=`${sizeWord(r)} flood`;
   $('sizeHint').textContent=`Expected about once every ${r} years (a ${chance(r)} chance each year).`;
-  $('sizeTicks').innerHTML=D.rps.map(x=>`<span>${sizeWord(x)}</span>`).join(''); }
+  $('sizeTicks').innerHTML=D.rps.map(x=>`<span>${x===D.custom?'<b>Your rain</b>':sizeWord(x)}</span>`).join(''); }
 $('size').oninput=e=>{S.sizeIdx=+e.target.value; drawSize(); render(); drawActor(); drawAgree(); drawCmp(); makePlan(); if(S.tab==='diag') drawDiagram(); if(S.tab==='coord') drawCoord();};
 
 /* ---------- tabs ---------- */

@@ -4,7 +4,7 @@
 /* ---------- choices (shelter capacity, speed and warning time are user assumptions, not data) ---------- */
 const E={shelters:[],who:'water',cap:500,speed:4,lead:3,adding:false,plan:null,walkers:[]};
 // start from real buildings (schools, sports halls…) when the places file is loaded, else from the safest grid spots
-function evacReset(){ RS.out=null; RS.cmp=null; const sc=shelterCandidates(); E.cands=sc.list; E.out=sc.out; const real=pickShelters(sc.list);
+function evacReset(){ RS.out=null; RS.cmp=null; for(const k in tsCache) delete tsCache[k]; const sc=shelterCandidates(); E.cands=sc.list; E.out=sc.out; const real=pickShelters(sc.list);
   E.shelters=real.length?real.map(asShelter)
     :D.safe.map((s,k)=>({c:s.c,auto:true,name:`Safe place ${k+1}`,cap:null,stay:'overnight',desc:`${s.b} buildings · ${Math.round(s.dmin)} m from flood water`}));
   makePlan(); }
@@ -123,7 +123,10 @@ function drawEvacPanel(){ const P=E.plan,r=rp(),pct=n=>P.total?Math.round(n/P.to
   $('evNote').textContent=(P.kind==='streets'?'Routes follow OpenStreetMap streets and avoid deep water. ':P.kind==='ground'?'Routes go over open ground (streets not loaded yet: zoom in on the area). ':'')
     +'Waves: wave 1 is where water arrives first in the video (low ground, upstream sections first). This is an order, not real timing. Capacity, speed and warning time are your assumptions.'; }
 const num=(id,k)=>$(id).onchange=e=>{const v=+e.target.value; if(v>0){E[k]=v; makePlan();}};
-num('evCap','cap'); num('evSpeed','speed'); num('evLead','lead');
+num('evCap','cap'); num('evLead','lead'); E.speed=1.1*3.6;
+$('evSpeedMs').onchange=e=>{const v=+e.target.value; if(v>0){E.speed=v*3.6; makePlan();}}; // stored in km/h
+$('sf-foot').onchange=e=>{const v=+e.target.value; if(v>0){FOOT_DEPTH=v; graphCache={}; if(AB.a) abRoute(false);}};
+$('sf-car').onchange=e=>{const v=+e.target.value; if(v>0){CAR_DEPTH=v; roadsReset(); render(); drawLegend();}};
 $('evWho').onchange=e=>{E.who=e.target.value; makePlan();};
 $('evAdd').onclick=()=>{E.adding=!E.adding; $('evAdd').setAttribute('aria-pressed',E.adding); if(ready) map.getCanvas().style.cursor=E.adding?'crosshair':''; if(E.adding) toast('Click the map where the shelter is');};
 $('evResetS').onclick=()=>{evacReset(); toast('Shelters reset to the safest places');};

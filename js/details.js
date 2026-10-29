@@ -2,7 +2,7 @@
 // Loaded as a classic script: top-level names are shared between files (order set in index.html).
 
 /* ---------- OpenStreetMap layers (OpenFreeMap vector tiles, OpenMapTiles schema) ---------- */
-const CAR_DEPTH=0.3; // assumption: streets under 0.3 m of water or more count as closed to cars
+let CAR_DEPTH=0.3; // assumption (editable in Evacuate): streets under 0.3 m of water or more count as closed to cars
 const VEH=['motorway','trunk','primary','secondary','tertiary','minor','service'];
 const MAJOR=['motorway','trunk','primary'];
 const roadW=f=>['interpolate',['exponential',1.6],['zoom'],11,['*',f,['match',['get','class'],MAJOR,1.6,['secondary','tertiary'],1.1,.5]],17,['*',f,['match',['get','class'],MAJOR,16,['secondary','tertiary'],12,'minor',8,5]]];
