@@ -29,4 +29,4 @@ document.querySelectorAll('.tabbody p.hint, .tabbody .secbody > .hint').forEach(
 /* ---------- legend: folds to a small button ---------- */
 (()=>{ const L=$('legend'); let open=false; const btn=document.createElement('button'); btn.className='ov legbtn'; btn.textContent='Legend ▸'; L.after(btn);
   const set=on=>{open=on; L.classList.toggle('folded',!on); btn.textContent=on?'Legend ▾':'Legend ▸'; btn.setAttribute('aria-expanded',on);}; set(false);
-  btn.onclick=()=>set(!open); })();
+  btn.onclick=()=>set(!open); set(true); })(); // legend visible by default; the button folds it

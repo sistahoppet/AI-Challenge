@@ -4,7 +4,7 @@
   --land:#e4e9e4; --accent:#0b6e8a; --accent-ink:#ffffff;
   --w1:#9fd3ea; --w2:#3b93c4; --w3:#0d3f78; --obs:#e0a21b;
   --bld:#8c979b; --hit1:#e7a33c; --hit2:#d4612b; --hit3:#a8231c;
-  --zg:#3fa34d; --zy:#e8c21e; --zr:#d63b2f;
+  --zg:#0e8f7e; --zy:#a87b00; --zr:#c0262d; /* risk colours checked for colour-blind separation (dataviz validator) */
   --c-both:#1f5f99; --c-mod:#3d9bd6; --c-obs:#c98612;
   --demo:#fff1c7; --demo-ink:#6b4b00; --err:#a8231c;
   --osm-urban:#e9e6e1; --osm-grass:#d9e8c8; --osm-wood:#b9d6a3; --osm-wood3:#7fae6a; --osm-river:#5aa9df; --osm-river-ink:#1d5f93;
@@ -21,14 +21,14 @@
   --c-both:#2a66a6; --c-mod:#4f9bd2; --c-obs:#c4851f;
   --osm-urban:#222f35; --osm-grass:#1f3226; --osm-wood:#24402c; --osm-wood3:#2f5a3a; --osm-river:#2b6e9c; --osm-river-ink:#9fd0f2;
   --osm-road:#3a4a51; --osm-major:#6b5a32; --osm-case:#2a373d; --osm-bld:#34434a; --osm-label:#b5c6cc; --osm-halo:#0f181c;
-  --people:#c9d6db; --people-risk:#ff8a4c; --car:#6aa3ff; --cut:#ff4d63; --walk:#ffffff; --dmg:#c08a5a; --unit:#7aa7ff; color-scheme:dark}}
+  --people:#c9d6db; --people-risk:#ff8a4c; --car:#6aa3ff; --cut:#ff4d63; --walk:#ffffff; --dmg:#c08a5a; --unit:#7aa7ff; --zr:#e5535d; --zy:#a8812a; --zg:#2aa595; color-scheme:dark}}
 :root[data-theme="dark"]{
   --bg:#0f181c; --surface:#16232a; --ink:#e3edf0; --muted:#97abb2; --line:#2a3b42; --land:#1b272c;
   --accent:#4fb6d6; --accent-ink:#06222c; --bld:#66747a; --demo:#3b3014; --demo-ink:#f3d58a; --err:#ff8a7a;
   --c-both:#2a66a6; --c-mod:#4f9bd2; --c-obs:#c4851f;
   --osm-urban:#222f35; --osm-grass:#1f3226; --osm-wood:#24402c; --osm-wood3:#2f5a3a; --osm-river:#2b6e9c; --osm-river-ink:#9fd0f2;
   --osm-road:#3a4a51; --osm-major:#6b5a32; --osm-case:#2a373d; --osm-bld:#34434a; --osm-label:#b5c6cc; --osm-halo:#0f181c;
-  --people:#c9d6db; --people-risk:#ff8a4c; --car:#6aa3ff; --cut:#ff4d63; --walk:#ffffff; --dmg:#c08a5a; --unit:#7aa7ff; color-scheme:dark}
+  --people:#c9d6db; --people-risk:#ff8a4c; --car:#6aa3ff; --cut:#ff4d63; --walk:#ffffff; --dmg:#c08a5a; --unit:#7aa7ff; --zr:#e5535d; --zy:#a8812a; --zg:#2aa595; color-scheme:dark}
 html,body{height:100%} body{margin:0} [hidden]{display:none!important}
 body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.45}
 *{box-sizing:border-box}
@@ -233,3 +233,24 @@ details.info>summary::-webkit-details-marker{display:none}
 .legend.folded{display:none}
 .legbtn{top:12px;left:12px;padding:4px 10px;font-size:12.5px;cursor:pointer;font-family:var(--f-display);text-transform:uppercase;letter-spacing:.05em}
 .legend{top:46px;max-height:calc(100% - 140px);overflow:auto}
+/* ---------- UX layer: icons, tooltips, presets, validation, empty states, consistent controls ---------- */
+.ic{width:16px;height:16px;flex:none;vertical-align:-3px}
+.btn,.tabs button,.seg button{display:inline-flex;align-items:center;gap:6px;justify-content:center}
+.btn{min-height:34px} .btn.sm{min-height:30px}
+.tabs button{flex-direction:column;gap:2px;font-size:13.5px;padding:8px 2px 6px}
+.tabs button .ic{width:18px;height:18px}
+.panel h2{display:flex;align-items:center;gap:7px}
+.panel h2 .h2ic{color:var(--accent)}
+.stat .ic{width:18px;height:18px;color:var(--accent);margin-bottom:2px}
+input[type=number].btn,.form input,.capbox input,select.btn{min-height:32px;font-size:14px}
+.form{gap:10px}
+.term{border-bottom:1px dotted currentColor;cursor:help}
+.term:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.uxtip{position:fixed;z-index:40;max-width:280px;background:var(--ink);color:var(--surface);font-size:12.5px;line-height:1.4;padding:6px 9px;border-radius:6px;pointer-events:none;box-shadow:0 4px 14px rgb(0 0 0 / .25)}
+.presets{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}
+[aria-invalid="true"]{border-color:var(--err)!important;outline:1px solid var(--err)}
+.vmsg{grid-column:1 / -1;color:var(--err);font-size:12px}
+.empty{display:flex;gap:8px;align-items:center;color:var(--muted);font-size:13px;padding:10px;border:1px dashed var(--line);border-radius:8px}
+.empty .ic{width:20px;height:20px;color:var(--accent)}
+.zs{font-size:11px;width:12px;text-align:center;color:var(--ink)}
+#resetAll .ic,#helpBtn .ic,#openData .ic{width:15px;height:15px}
