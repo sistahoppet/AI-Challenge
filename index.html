@@ -91,6 +91,7 @@
         <div class="ov alertbar" id="alertBar" hidden></div>
         <div class="ov hud" id="hud" hidden aria-live="off" aria-label="People right now"></div>
         <div class="ov shelcard" id="shelCard" hidden aria-label="Shelter"></div>
+        <div class="ov inject tour" id="runEnd" hidden role="dialog" aria-label="Run finished"></div>
         <div class="ov tools" id="tools" role="toolbar" aria-label="Map layers"></div>
         <div class="ov inject tour" id="tour" hidden role="dialog" aria-label="Guided demo"></div>
         <div class="ov stage" id="drillStage" hidden>
@@ -132,6 +133,7 @@
           <span class="now"><span id="nowLbl">Peak</span><br><span id="clockLbl" class="mono"></span></span>
           <label class="spd">Speed <input type="range" id="speed" min="0" max="7" step="1" value="4" aria-label="Playback speed"><span class="mono" id="speedV">×2</span></label>
           <label style="font-size:13.5px;display:flex;gap:4px;align-items:center"><input type="checkbox" id="loop"> Loop</label>
+          <button class="btn sm" id="reportBtn" title="Report of this run (PDF) for Anna">Report</button>
 
         </div>
       </div>
@@ -338,6 +340,11 @@
           <button class="btn primary sm" id="cardBtn">Open the decision card</button>
         </div>
         <div>
+          <h2>Q2 notes: what has been done since 2021</h2>
+          <p class="hint" style="margin:0 0 8px">Your desk research (new defences, rebuilt or abandoned buildings, plans, alert campaigns), with sources. Printed in the report.</p>
+          <textarea id="q2Notes" class="btn" rows="6" style="width:100%" aria-label="What has been done since 2021"></textarea>
+        </div>
+        <div>
           <h2>Cost of this flood</h2>
           <div id="costOut"></div>
         </div>
@@ -444,6 +451,7 @@
 <script src="js/drill.js"></script>
 <script src="js/brief.js"></script>
 <script src="js/howto.js"></script>
+<script src="js/report.js"></script>
 <script src="js/ui.js"></script>
 <script src="js/ux.js"></script>
 <script src="js/main.js"></script>

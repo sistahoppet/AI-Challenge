@@ -1,65 +1,125 @@
 # Flood Scenario Explorer
 
-Browser app that shows how floods like July 2021 could hit an area: flood size slider,
-video-style water rise, 2D/3D map on real streets or satellite photos, safety zones,
-safest places, and downloadable diagrams for the policy brief.
+Browser app for Anna, cross-border crisis coordinator: what would happen if the July 2021 flood came back to the
+Vesdre valley (BE)? Water rising on real streets and buildings, who must leave, which shelters take them, cars
+looking for the next shelter when one is full, the best sequence of actions, and a PDF report after each run.
 
 European AI Challenge 2026 · Team project.
 
-## Run it in VS Code
+## Launch the app yourself
 
-1. Open this folder in VS Code (**File → Open Folder…**).
-2. Install the **Live Server** extension (VS Code suggests it automatically).
-3. Right-click `index.html` → **Open with Live Server**. The app opens in your browser.
-4. Edit any file and save: the page reloads by itself.
+The app needs a small local web server (so it can read the `data/` folder). Pick one way.
 
-Double-clicking `index.html` also works, but then the app can't read the `data/` folder
-(use the **Load team data** button instead).
+### A. From the WSL / Ubuntu terminal (simplest)
+
+```bash
+cd "/root/ai challenge/flood-scenario-explorer-project"
+python3 -m http.server 8000
+```
+
+Then open **http://localhost:8000** in Chrome or Edge on Windows. Leave the terminal open; `Ctrl+C` stops it.
+After changing a file, reload the page with **Ctrl+Shift+R**.
+
+### B. From VS Code
+
+1. In the WSL terminal: `code "/root/ai challenge/flood-scenario-explorer-project"` (opens the folder in VS Code).
+2. Install the **Live Server** extension.
+3. Right-click `index.html` → **Open with Live Server**. The page reloads by itself when you save a file.
+
+### C. Without a server
+
+Double-click `dist/flood-scenario-explorer.html`. It opens with demo data only: use **Load team data** to pick
+the files in `data/` by hand.
+
+**Needs internet** for the background maps, fonts and the map library (MapLibre). The flood data is local.
+
+## Using it (1 minute)
+
+1. **Guided demo** (top bar) walks through the story in 7 steps. **Explain** opens a menu with what every colour,
+   counter and slider means.
+2. Under the map: set the **flood**, how fast the **water rises**, the **warning** time, how many people **follow**
+   the order, **shelter places**, **speed**, **rescue** capacity, and the 3 choices (order, shelter full, rescue).
+   Every change puts the clock back to 0.
+3. Press **▶** (speed ×0.1 to ×10). Cars drive to shelters; shelter pins fill up and turn red when full; the
+   counters at the top show home / driving / sheltered / upstairs / danger / no place / rescued.
+4. **Click a shelter pin**: the area it serves and why it was chosen. **Double-click the map** twice: safe route A → B.
+5. At the end of the run: **PDF report** (Anna's 4 questions, shelters, towns, best actions, sensitivity, methods,
+   run comparison) and **Data files** (CSV / GeoJSON / JSON). The **Report** button under the map does the same any time.
+6. **Best actions** tests every combination of choices and shows the sequence that leaves the fewest people unsafe.
+7. Policy tab: mayor's decision card, Q2 notes (your desk research, printed in the report), costs.
 
 ## Folder map
 
 ```
-flood-scenario-explorer/
-├── index.html            page layout (header, map, player, tabs)
-├── css/style.css         all colours, fonts and layout (colours = variables at the top)
-├── js/                   loaded in this order:
+flood-scenario-explorer-project/
+├── index.html            page layout (header, map, controls, tabs)
+├── css/style.css         colours (variables at the top), fonts, layout
+├── js/                   loaded in this order (see the <script> tags at the end of index.html)
 │   ├── utils.js          helpers: formatting, geometry
-│   ├── demo-data.js      fake test data (same format as the real files)
-│   ├── data-loader.js    reads + checks the GeoJSON files, auto-loads data/
-│   ├── analysis.js       the numbers: exposure, safety zones, safest places
-│   ├── map.js            map, real background maps, layers, legend, tooltip
-│   ├── player.js         play / pause / speed / loop
-│   ├── camera.js         smooth 2D ↔ 3D, zoom, turn, tilt, auto-orbit
-│   ├── panels.js         Simulate / Safety / Policy tabs
-│   ├── diagrams.js       charts + PNG / SVG / CSV downloads
+│   ├── demo-data.js      synthetic test data (same format as the real files)
+│   ├── data-loader.js    reads + checks the files, auto-loads data/
+│   ├── analysis.js       exposure, safety zones (one rule, with the reason per cell), water over time
+│   ├── map.js            map, layers, buildings (real outlines, type colours, 3D roofs, water around them), legend
+│   ├── water.js          animated water image; the same water is used for closed streets and routes
+│   ├── details.js        OpenStreetMap streets, people dots, closed streets
+│   ├── evac.js           evacuation plan: groups, car routes, shelters (chosen by the app)
+│   ├── respond.js        Alert tab: share files with emergency services, check a place
+│   ├── places.js         hospitals, schools…; shelter scoring; safe route A → B (double-click)
+│   ├── weather.js        rain records, July 2021 replay, live forecast
+│   ├── impact.js         impact for the mayor
+│   ├── response.js       emergency teams: nearest vs priority dispatch
+│   ├── scenario.js       your own rain → flood size; event clock; alerts
+│   ├── player.js         play / pause / speed (×0.1 → ×10) / loop
+│   ├── camera.js         2D ↔ 3D, zoom, turn, tilt
+│   ├── panels.js         tab contents, 2021 satellite check
+│   ├── diagrams.js, figures.js, framework.js, costs.js   diagrams (PNG / SVG / CSV), costs, Anna's framework
+│   ├── data-view.js      Data tab: every dataset, tables, CSV
+│   ├── drill.js          evacuation over time: cars, shelters filling, next best shelter, best actions, controls bar
+│   ├── brief.js          number sources (click a dotted number), decision card, guided demo
+│   ├── howto.js          30-second "what to do" video (EN / FR / NL / DE)
+│   ├── report.js         PDF report after each run, data files, sensitivity, run comparison
+│   ├── ui.js, ux.js      folding sections, icons, tooltips, map toolbox
 │   └── main.js           start-up
-├── data/                 put grid.geojson (+ observed_2021, buildings) here
-├── scripts/
-│   └── colab_export_for_app.py   for the data person (Colab)
-├── build.py              bundles everything into ONE html file
-└── dist/                 output of build.py (the file to submit)
+├── data/                 grid, buildings (+ real outlines), roads, places, towns, 2021 outline, rain
+├── scripts/              how the data/ files were made (see below)
+├── build.py              bundles the code into ONE html file → dist/
+└── dist/                 output of build.py
 ```
 
-## Make the file to submit
+## Remake the data files
 
+Needs Python with `requests mapbox-vector-tile shapely pyproj` (and the challenge bucket for export_area.py).
+
+| Script | Makes | Source |
+|---|---|---|
+| `scripts/export_area.py` | grid.geojson, buildings.geojson, observed_2021.geojson | EFAS, GHS-POP, GHS-OBAT, Copernicus EMS, DEM (challenge data) |
+| `scripts/export_tiles.py` | places.geojson, roads.geojson | OpenStreetMap via OpenFreeMap tiles |
+| `scripts/export_footprints.py` | buildings_fp.geojson (real building outlines) | OpenStreetMap tiles + GHS-OBAT |
+| `scripts/export_towns.py` | towns.geojson (town and village names) | OpenStreetMap tiles |
+| `scripts/export_weather.py` | weather.json (rain records, July 2021) | Open-Meteo / ERA5 |
+
+## Make the single file
+
+```bash
+python3 build.py
 ```
-python build.py
-```
-→ `dist/flood-scenario-explorer.html` (one file, works offline except the background maps).
+→ `dist/flood-scenario-explorer.html`.
 
 ## Where to change things
 
 | I want to… | File |
 |---|---|
-| change colours or fonts | `css/style.css` (top) |
-| change safety-zone rules (red / yellow / green) | `js/analysis.js` → `computeZones` |
-| change depth classes (0.5 m, 1.5 m) | `js/utils.js` → `CLASSES`, `cls` |
-| change video length | `js/player.js` → `DUR` |
-| add a diagram | `js/diagrams.js` → `DIAGS` + `chartData` |
-| change texts for each public actor | `js/panels.js` → `drawActor` |
+| colours or fonts | `css/style.css` (top) |
+| safety-zone rule (red / yellow / green) | `js/analysis.js` → `computeZones` |
+| shelter choice (distance, capacity, height…) | `js/places.js` → `shelterCandidates`, `pickShelters` |
+| evacuation model (speeds, rescue, "unsafe") | `js/drill.js` (comments at the top) |
+| report content | `js/report.js` → `openReport` |
+| sliders and choices under the map | `js/drill.js` → `DOCK`, `CHOICES` |
 
-## Data honesty (jury criterion 1)
+## Data honesty
 
-- Flood sizes come from model hazard maps (EFAS), not forecasts.
-- The video is illustrative: low ground floods first, real timing is not modelled.
-- Demo data is synthetic and marked **DEMO DATA** everywhere, including downloaded diagrams.
+- Flood sizes come from model hazard maps (EFAS), not forecasts. The water timing is illustrative.
+- Behaviour settings (follow rate, speeds, rescue) are assumptions, marked as such everywhere.
+- "Unsafe" is not a count of casualties.
+- The 2021 satellite outline covers only a small part of this valley: the app says the check is inconclusive.
+- Demo data is synthetic and marked **DEMO DATA**.

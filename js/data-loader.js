@@ -34,7 +34,7 @@ function ingest(files){
   if(places.length) ok(`Places: ${places.length} (hospitals, schools, sports halls…).`);
   const roads=(files.roads?.features||[]).filter(f=>f.geometry?.type==='LineString');
   if(roads.length) ok(`Roads: ${roads.length.toLocaleString()} from OpenStreetMap.`);
-  return {log,data:{cells,rps,blds,places,roads,observed:files.observed||null,hasObs:obsPolys.length>0,hasFp:blds.filter(b=>b.fp).length>blds.length/2,bbox:bboxOf(cells.map(c=>c.ring))}};
+  return {log,data:{cells,rps,blds,places,roads,observed:files.observed||null,hasObs:obsPolys.length>0,hasFp:blds.filter(b=>b.fp).length>blds.length/2,towns:(files.towns?.features||[]).map(f=>({name:f.properties.name,cls:f.properties.class,c:f.geometry.coordinates})),bbox:bboxOf(cells.map(c=>c.ring))}};
 }
 
 /* ---------- data loading modal ---------- */
@@ -59,7 +59,7 @@ async function tryAutoLoad(){
   if(!/^https?:$/.test(location.protocol)) return;
   const get=async n=>{ try{ const r=await fetch('data/'+n,{cache:'no-store'}); return r.ok?await r.json():null; }catch(e){ return null; } };
   const grid=await get('grid.geojson'); if(!grid) return;
-  const r=ingest({grid,observed:await get('observed_2021.geojson'),buildings:await get('buildings_fp.geojson')||await get('buildings.geojson'),places:await get('places.geojson'),roads:await get('roads.geojson')});
+  const r=ingest({grid,observed:await get('observed_2021.geojson'),buildings:await get('buildings_fp.geojson')||await get('buildings.geojson'),places:await get('places.geojson'),roads:await get('roads.geojson'),towns:await get('towns.geojson')});
   if(r.data){ load(r.data,false); toast('Team data loaded from the data folder'); }
   else toast('data/grid.geojson has a problem: '+r.log.filter(l=>l.e).map(l=>l.m).join(' '));
 }
