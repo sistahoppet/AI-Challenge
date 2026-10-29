@@ -102,7 +102,9 @@ function recolor(){ if(!ready) return;
   map.setPaintProperty('zones','fill-color',zoneColor()); map.setPaintProperty('obs-line','line-color',css('--obs')); map.setPaintProperty('obs-fill','fill-color',css('--obs'));
   recolorDetails(); recolorEvac(); recolorPlaces(); if(WV) WV.lut=waterLut(); setBasemap(S.basemap); drawLegend(); if(S.tab==='diag') drawDiagram();
 }
-let pending=false; function render(){ if(pending) return; pending=true; requestAnimationFrame(()=>{pending=false; draw();}); }
+// while playing, numbers and building/road colours refresh 10×/s (the water image keeps its own 30 fps loop); paused or scrubbing: next frame
+let pending=false,lastDraw=0; function render(){ if(pending) return; pending=true; const wait=S.playing?Math.max(0,100-(performance.now()-lastDraw)):0;
+  setTimeout(()=>requestAnimationFrame(()=>{pending=false; lastDraw=performance.now(); draw();}),wait); }
 function draw(){
   if(!D) return; const p=level(S.T),e=exposure(rp(),true);
   paintDynamic();

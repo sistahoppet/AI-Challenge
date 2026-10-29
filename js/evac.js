@@ -63,8 +63,9 @@ function planFor(r){
     const order=trees.map((t,k)=>k).filter(k=>isFinite(trees[k].dist[st])).sort((a,b)=>trees[a].dist[st]-trees[b].dist[st]);
     for(const k of order){ if(left<=0) break; const take=Math.min(left,capOf(k)-load[k]); if(take<=0) continue; load[k]+=take; left-=take; // fills the closest shelter with room
       const path=[gr.c]; for(let u=st;u>=0;u=trees[k].prev[u]) path.push(g.pts[u]); path.push(E.shelters[k].c);
-      const l=prepLine(path),min=l.len/(E.speed*1000/60),ok=min<=E.lead*60; moved+=take; if(!ok) slow+=take;
-      routes.push({...l,min,people:take,wave:gr.wave,k,ok}); if(!ok) gr.slow=(gr.slow||0)+take; }
+      // in time = get ready + walk + delay fits in the time available: the warning lead time, or less if the water arrives sooner
+      const l=prepLine(path),min=l.len/(E.speed*1000/60),avail=Math.min(SC.leadMin,isFinite(gr.ts)?gr.ts*SC.mins:Infinity),clear=FW.mob+min+FW.delay,ok=clear<=avail; moved+=take; if(!ok) slow+=take;
+      routes.push({...l,min,avail,clear,people:take,wave:gr.wave,k,ok}); if(!ok) gr.slow=(gr.slow||0)+take; }
     gr.left=left; over+=left; }
   return {r,kind:g.kind,groups,routes,load,total,moved,over,slow};
 }
@@ -123,7 +124,7 @@ function drawEvacPanel(){ const P=E.plan,r=rp(),pct=n=>P.total?Math.round(n/P.to
   $('evNote').textContent=(P.kind==='streets'?'Routes follow OpenStreetMap streets and avoid deep water. ':P.kind==='ground'?'Routes go over open ground (streets not loaded yet: zoom in on the area). ':'')
     +'Waves: wave 1 is where water arrives first in the video (low ground, upstream sections first). This is an order, not real timing. Capacity, speed and warning time are your assumptions.'; }
 const num=(id,k)=>$(id).onchange=e=>{const v=+e.target.value; if(v>0){E[k]=v; makePlan();}};
-num('evCap','cap'); num('evLead','lead'); E.speed=1.1*3.6;
+num('evCap','cap'); E.speed=1.1*3.6;
 $('evSpeedMs').onchange=e=>{const v=+e.target.value; if(v>0){E.speed=v*3.6; makePlan();}}; // stored in km/h
 $('sf-foot').onchange=e=>{const v=+e.target.value; if(v>0){FOOT_DEPTH=v; graphCache={}; if(AB.a) abRoute(false);}};
 $('sf-car').onchange=e=>{const v=+e.target.value; if(v>0){CAR_DEPTH=v; roadsReset(); render(); drawLegend();}};

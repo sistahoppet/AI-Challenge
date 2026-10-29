@@ -458,7 +458,6 @@ input[type=number].btn,.form input,.capbox input,select.btn{min-height:32px;font
             <label>Who leaves<select class="btn" id="evWho"><option value="water">Everyone in the water at this flood size</option><option value="red">Red-zone residents only</option></select></label>
             <label>Places when size unknown <span class="tag">your assumption</span><input class="btn" type="number" id="evCap" min="10" step="10" value="500"></label>
             <label>Walking speed, m/s <span class="tag">your assumption</span><input class="btn" type="number" id="evSpeedMs" min="0.2" max="2.5" step="0.1" value="1.1"></label>
-            <label>Warning time, hours <span class="tag">your assumption</span><input class="btn" type="number" id="evLead" min="0.25" max="72" step="0.25" value="3"></label>
           </div>
           <div class="stats" id="evStats" style="margin-top:12px"></div>
           <ol class="safe groups" id="evGroups" style="margin-top:10px"></ol>
@@ -919,7 +918,9 @@ function recolor(){ if(!ready) return;
   map.setPaintProperty('zones','fill-color',zoneColor()); map.setPaintProperty('obs-line','line-color',css('--obs')); map.setPaintProperty('obs-fill','fill-color',css('--obs'));
   recolorDetails(); recolorEvac(); recolorPlaces(); if(WV) WV.lut=waterLut(); setBasemap(S.basemap); drawLegend(); if(S.tab==='diag') drawDiagram();
 }
-let pending=false; function render(){ if(pending) return; pending=true; requestAnimationFrame(()=>{pending=false; draw();}); }
+// while playing, numbers and building/road colours refresh 10×/s (the water image keeps its own 30 fps loop); paused or scrubbing: next frame
+let pending=false,lastDraw=0; function render(){ if(pending) return; pending=true; const wait=S.playing?Math.max(0,100-(performance.now()-lastDraw)):0;
+  setTimeout(()=>requestAnimationFrame(()=>{pending=false; lastDraw=performance.now(); draw();}),wait); }
 function draw(){
   if(!D) return; const p=level(S.T),e=exposure(rp(),true);
   paintDynamic();
@@ -1208,8 +1209,9 @@ function planFor(r){
     const order=trees.map((t,k)=>k).filter(k=>isFinite(trees[k].dist[st])).sort((a,b)=>trees[a].dist[st]-trees[b].dist[st]);
     for(const k of order){ if(left<=0) break; const take=Math.min(left,capOf(k)-load[k]); if(take<=0) continue; load[k]+=take; left-=take; // fills the closest shelter with room
       const path=[gr.c]; for(let u=st;u>=0;u=trees[k].prev[u]) path.push(g.pts[u]); path.push(E.shelters[k].c);
-      const l=prepLine(path),min=l.len/(E.speed*1000/60),ok=min<=E.lead*60; moved+=take; if(!ok) slow+=take;
-      routes.push({...l,min,people:take,wave:gr.wave,k,ok}); if(!ok) gr.slow=(gr.slow||0)+take; }
+      // in time = get ready + walk + delay fits in the time available: the warning lead time, or less if the water arrives sooner
+      const l=prepLine(path),min=l.len/(E.speed*1000/60),avail=Math.min(SC.leadMin,isFinite(gr.ts)?gr.ts*SC.mins:Infinity),clear=FW.mob+min+FW.delay,ok=clear<=avail; moved+=take; if(!ok) slow+=take;
+      routes.push({...l,min,avail,clear,people:take,wave:gr.wave,k,ok}); if(!ok) gr.slow=(gr.slow||0)+take; }
     gr.left=left; over+=left; }
   return {r,kind:g.kind,groups,routes,load,total,moved,over,slow};
 }
@@ -1268,7 +1270,7 @@ function drawEvacPanel(){ const P=E.plan,r=rp(),pct=n=>P.total?Math.round(n/P.to
   $('evNote').textContent=(P.kind==='streets'?'Routes follow OpenStreetMap streets and avoid deep water. ':P.kind==='ground'?'Routes go over open ground (streets not loaded yet: zoom in on the area). ':'')
     +'Waves: wave 1 is where water arrives first in the video (low ground, upstream sections first). This is an order, not real timing. Capacity, speed and warning time are your assumptions.'; }
 const num=(id,k)=>$(id).onchange=e=>{const v=+e.target.value; if(v>0){E[k]=v; makePlan();}};
-num('evCap','cap'); num('evLead','lead'); E.speed=1.1*3.6;
+num('evCap','cap'); E.speed=1.1*3.6;
 $('evSpeedMs').onchange=e=>{const v=+e.target.value; if(v>0){E.speed=v*3.6; makePlan();}}; // stored in km/h
 $('sf-foot').onchange=e=>{const v=+e.target.value; if(v>0){FOOT_DEPTH=v; graphCache={}; if(AB.a) abRoute(false);}};
 $('sf-car').onchange=e=>{const v=+e.target.value; if(v>0){CAR_DEPTH=v; roadsReset(); render(); drawLegend();}};
@@ -1359,7 +1361,7 @@ ${(D.places||[]).filter(p=>p.group==='critical'&&p.ci>=0&&D.cells[p.ci].depth[r]
 ${P.routes.map(x=>`| ${x.wave} | ${fmtFull(x.people)} | ${x.k+1} | ${(x.len/1000).toFixed(1)} km | ${Math.round(x.min)} min | ${x.ok?'yes':'no'} |`).join('\n')}
 
 ## Assumptions (team choices, not data)
-- Shelter capacity: floor area ÷ ${SPHERE_M2} m² per person (Sphere standard) when the building size is known, else ${E.cap} people · walking speed ${E.speed} km/h · warning time ${E.lead} h
+- Shelter capacity: floor area ÷ ${SPHERE_M2} m² per person (Sphere standard) when the building size is known, else ${E.cap} people · walking speed ${E.speed} km/h · warning lead time ${SC.leadMin} min, ${FW.mob} min to get ready, ${FW.delay} min delay
 - Streets under ${CAR_DEPTH} m of water or more count as closed to cars
 - Waves follow the order water arrives in the model (lowest ground first), not real timing
 
@@ -1645,10 +1647,10 @@ const IM={R0:60,Q0:70,R1:90,Q1:80,T0:6,T1:2,C:2,D0:30,D1:18}; // %, %, %, %, hou
 // expected residents in flooded areas per year: area under the (probability, residents) curve between the mapped flood sizes
 function expectedAnnual(){ const pts=D.rps.map(r=>[1/r,peak(r).people]).sort((a,b)=>b[0]-a[0]); let s=0;
   for(let i=0;i<pts.length-1;i++) s+=(pts[i][0]-pts[i+1][0])*(pts[i][1]+pts[i+1][1])/2; return s+pts[pts.length-1][0]*pts[pts.length-1][1]; }
-function planWithLead(h){ const keep=E.lead; E.lead=h; const P=planFor(rp()); E.lead=keep; return P; }
+function planWithLead(m){ const keep=SC.leadMin; SC.leadMin=m; const P=planFor(rp()); SC.leadMin=keep; return P; } // m = warning lead time in minutes
 function drawImpact(){ if(!D||!E.plan) return; const P=E.plan,r=rp(),N=P.total,K=E.shelters.reduce((s,_,k)=>s+capOf(k),0);
   const ev=(R,Q)=>Math.min(N*R/100*Q/100,K),b=ev(IM.R0,IM.Q0),a=ev(IM.R1,IM.Q1),gain=Math.max(0,IM.T0-IM.T1);
-  const pb=planWithLead(E.lead),pa=planWithLead(E.lead+gain),inTime=x=>x.moved-x.slow,dD=IM.D0-IM.D1,thr=dD>0?IM.C/dD*100:null,pf=1/r*100;
+  const pb=planWithLead(SC.leadMin),pa=planWithLead(SC.leadMin+gain*60),inTime=x=>x.moved-x.slow,dD=IM.D0-IM.D1,thr=dD>0?IM.C/dD*100:null,pf=1/r*100;
   const row=(k,v,src)=>`<tr><td>${k}</td><td class="mono">${v}</td><td>${src==='data'?'<span class="tag data">data</span>':src==='mix'?'<span class="tag data">data</span> <span class="tag">assumption</span>':'<span class="tag">assumption</span>'}</td></tr>`;
   $('impOut').innerHTML=`<table class="tbl"><tbody>
     <tr><th colspan="3">1 · Anticipation</th></tr>
@@ -1663,7 +1665,7 @@ function drawImpact(){ if(!D||!E.plan) return; const P=E.plan,r=rp(),N=P.total,K
     ${row('Extra people evacuated',`+${fmtFull(a-b)}`,'mix')}
     <tr><th colspan="3">3 · Institutions</th></tr>
     ${row(`Decision time ${IM.T0} h → ${IM.T1} h`,IM.T0?`−${Math.round(gain/IM.T0*100)}%`:'–','assumption')}
-    ${row(`Reach a shelter in time on foot: warning ${E.lead} h → ${E.lead+gain} h`,`${fmtFull(inTime(pb))} → ${fmtFull(inTime(pa))} (+${fmtFull(inTime(pa)-inTime(pb))})`,'mix')}
+    ${row(`Reach a shelter in time on foot: warning ${SC.leadMin} → ${SC.leadMin+gain*60} min`,`${fmtFull(inTime(pb))} → ${fmtFull(inTime(pa))} (+${fmtFull(inTime(pa)-inTime(pb))})`,'mix')}
   </tbody></table>
   <p style="font-size:14px;margin:8px 0 0"><b>For the mayor:</b> ${N?`at a ${sizeWord(r).toLowerCase()} flood ${fmtFull(N)} residents must leave, but the shelters in the plan hold ${fmtFull(K)} (${Math.round(K/N*100)}%). `:''}
    ${N&&a-b<1&&K<N*IM.R1/100*IM.Q1/100?`Better alerts add nobody while the shelters are full: <b>shelter capacity is the bottleneck</b>. `:''}
@@ -1812,7 +1814,7 @@ function checkAlerts(nowPeople){ const r=rp(),b=$('alertBar');
   if(warned!=null) parts.push(`📣 <b>Warning to residents</b> due at ${clock(Math.max(0,warned))} (${SC.leadMin} min before water reaches the first homes at ${clock(first)})${warnAt<0?' — <b>too late</b>: the lead time is longer than the time available':''}`);
   if(alerted!=null) parts.push(`🔔 <b>Alert sent to authorities</b> at ${clock(alerted)}: ${fmt(nowPeople)} residents in water now (threshold ${fmt(SC.alertN)})`);
   b.innerHTML=parts.join('<br>'); b.hidden=!parts.length; $('clockLbl').textContent=`Clock ${clock(S.T)} of ${clock(1)}`; }
-['alertN','leadMin','mins'].forEach(k=>$('sc-'+k).onchange=e=>{const v=+e.target.value; if(v>0){SC[k]=v; alerted=warned=null; render();}});
+['alertN','leadMin','mins'].forEach(k=>$('sc-'+k).onchange=e=>{const v=+e.target.value; if(v>0){SC[k]=v; alerted=warned=null; render(); makePlan();}}); // lead time and event length also change who is "in time"
 
 </script>
 <script>
@@ -2161,15 +2163,13 @@ function fwChart(k){ const r=rp(),dataSrc=isDemo?'DEMO DATA':'Data: EFAS, GHS-PO
       ['7 · Institutional resilience','Disaster Resilience Scorecard (UNDRR)','○ Checklist only; scorecard not computed'],
       ['8 · Economic evaluation','NPV and BCR (European Commission)','◐ Single-intervention BCR with hypothetical €']]};
   if(k==='fwClear'){ const P=E.plan; if(!P) return {kind:'empty',title:'Evacuation clearance time',sub:'The evacuation plan is not ready yet.',src:dataSrc,csv:[['note'],['no plan']]};
-    const rows=P.routes.map(x=>{ const g=P.groups.find(g=>mDist(g.c,x.pts[0])<1),avail=g&&isFinite(g.ts)?g.ts*SC.mins:null;
-      return {label:`Wave ${x.wave} · ${fmtFull(x.people)} people → shelter ${x.k+1}`,a:avail,b:FW.mob+x.min+FW.delay,people:x.people}; }).filter(x=>x.a!=null).sort((a,b)=>(a.a-a.b)-(b.a-b.b)).slice(0,14);
-    const late=rows.filter(x=>x.b>x.a).length;
-    return {kind:'dumbbell',title:'Can people leave before the water arrives?',sub:`T clearance = ${FW.mob} min to get ready + walking time (real route) + ${FW.delay} min delay, vs T available = when water reaches the group (event = ${SC.mins} min). ${late} of these ${rows.length} groups are too late.`,
-      rows,aName:'Time available (water arrives)',bName:'Clearance time',xTitle:'minutes',src:dataSrc+' · mobilisation and delay are assumptions (Evacuate tab)',
+    const rows=P.routes.filter(x=>isFinite(x.avail)).map(x=>({label:`Wave ${x.wave} · ${fmtFull(x.people)} people → shelter ${x.k+1}`,a:x.avail,b:x.clear,people:x.people})).sort((a,b)=>(a.a-a.b)-(b.a-b.b)).slice(0,14),late=rows.filter(x=>x.b>x.a).length;
+    return {kind:'dumbbell',title:'Can people leave before the water arrives?',sub:`T clearance = ${FW.mob} min to get ready + walking time (real route) + ${FW.delay} min delay. T available = warning lead time (${SC.leadMin} min) or less if the water arrives sooner. ${late} of these ${rows.length} are too late.`,
+      rows,aName:'Time available',bName:'Clearance time',xTitle:'minutes',src:dataSrc+' · same rule as the evacuation plan; mobilisation, delay and lead time are assumptions (Evacuate tab)',
       csv:[['group','available_min','clearance_min','people'],...rows.map(x=>[x.label,Math.round(x.a),Math.round(x.b),Math.round(x.people)])]}; }
-  if(k==='fwG6'){ const rows=D.rps.map(rr=>{const P=planFor(rr),prot=P.routes.filter(x=>FW.mob+x.min+FW.delay<=(P.groups.find(g=>mDist(g.c,x.pts[0])<1)?.ts??0)*SC.mins).reduce((s,x)=>s+x.people,0);
-      const v=Math.round(P.total?prot/P.total*100:0); return {label:`${sizeWord(rr)} (1-in-${rr})`,value:v,txt:`${v}% (${fmt(prot)} of ${fmt(P.total)})`,people:prot,total:P.total,color:css('--c-mod')};});
-    return {kind:'bar',title:'UNDRR G-6: share of at-risk residents protected by pre-emptive evacuation (%)',sub:'Protected = has a shelter place and can clear before the water arrives (same assumptions as the clearance chart).',rows,src:dataSrc+' · estimate from the evacuation plan, not HEC-FIA',
+  if(k==='fwG6'){ const rows=D.rps.map(rr=>{const P=planFor(rr),prot=P.moved-P.slow,v=Math.round(P.total?prot/P.total*100:0);
+      return {label:`${sizeWord(rr)} (1-in-${rr})`,value:v,txt:`${v}% (${fmt(prot)} of ${fmt(P.total)})`,people:prot,total:P.total,color:css('--c-mod')};});
+    return {kind:'bar',title:'UNDRR G-6: share of at-risk residents protected by pre-emptive evacuation (%)',sub:'Protected = has a shelter place and clears before the time available runs out (same rule as the evacuation plan).',rows,src:dataSrc+' · estimate from the evacuation plan, not HEC-FIA',
       csv:[['flood_size','protected','at_risk','G6_percent'],...rows.map(x=>[x.label,Math.round(x.people),Math.round(x.total),x.value])]}; }
   if(k==='fwAAL'){ const pts=D.rps.map(rr=>({r:rr,p:100/rr,n:peak(rr).people})).sort((a,b)=>b.p-a.p);
     return {kind:'line',title:'Risk curve: residents in flooded areas vs yearly chance',sub:`AAL logic (UNDRR) applied to people, as no € damage data is loaded: area under the curve ≈ ${fmt(expectedAnnual())} residents affected per year on average.`,
@@ -2203,7 +2203,7 @@ function fwSvg(c,W,F,ink,muted,line,bg){
     <line x1="${sx(r.a)}" x2="${sx(r.b)}" y1="${y}" y2="${y}" stroke="${late?cb:muted}" stroke-width="2"/><circle cx="${sx(r.a)}" cy="${y}" r="6" fill="${ca}"><title>Available: ${Math.round(r.a)} min</title></circle>
     <circle cx="${sx(r.b)}" cy="${y}" r="6" fill="${cb}"><title>Clearance: ${Math.round(r.b)} min${late?' (too late)':''}</title></circle>`;});
   return o+foot(c,H,muted)+'</svg>'; }
-['mob','delay'].forEach(k=>$('fw-'+k).onchange=e=>{const v=+e.target.value; if(v>=0){FW[k]=v; if(S.tab==='diag') drawDiagram();}});
+['mob','delay'].forEach(k=>$('fw-'+k).onchange=e=>{const v=+e.target.value; if(v>=0){FW[k]=v; makePlan(); if(S.tab==='diag') drawDiagram();}});
 
 </script>
 <script>

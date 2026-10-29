@@ -34,15 +34,13 @@ function fwChart(k){ const r=rp(),dataSrc=isDemo?'DEMO DATA':'Data: EFAS, GHS-PO
       ['7 · Institutional resilience','Disaster Resilience Scorecard (UNDRR)','○ Checklist only; scorecard not computed'],
       ['8 · Economic evaluation','NPV and BCR (European Commission)','◐ Single-intervention BCR with hypothetical €']]};
   if(k==='fwClear'){ const P=E.plan; if(!P) return {kind:'empty',title:'Evacuation clearance time',sub:'The evacuation plan is not ready yet.',src:dataSrc,csv:[['note'],['no plan']]};
-    const rows=P.routes.map(x=>{ const g=P.groups.find(g=>mDist(g.c,x.pts[0])<1),avail=g&&isFinite(g.ts)?g.ts*SC.mins:null;
-      return {label:`Wave ${x.wave} · ${fmtFull(x.people)} people → shelter ${x.k+1}`,a:avail,b:FW.mob+x.min+FW.delay,people:x.people}; }).filter(x=>x.a!=null).sort((a,b)=>(a.a-a.b)-(b.a-b.b)).slice(0,14);
-    const late=rows.filter(x=>x.b>x.a).length;
-    return {kind:'dumbbell',title:'Can people leave before the water arrives?',sub:`T clearance = ${FW.mob} min to get ready + walking time (real route) + ${FW.delay} min delay, vs T available = when water reaches the group (event = ${SC.mins} min). ${late} of these ${rows.length} groups are too late.`,
-      rows,aName:'Time available (water arrives)',bName:'Clearance time',xTitle:'minutes',src:dataSrc+' · mobilisation and delay are assumptions (Evacuate tab)',
+    const rows=P.routes.filter(x=>isFinite(x.avail)).map(x=>({label:`Wave ${x.wave} · ${fmtFull(x.people)} people → shelter ${x.k+1}`,a:x.avail,b:x.clear,people:x.people})).sort((a,b)=>(a.a-a.b)-(b.a-b.b)).slice(0,14),late=rows.filter(x=>x.b>x.a).length;
+    return {kind:'dumbbell',title:'Can people leave before the water arrives?',sub:`T clearance = ${FW.mob} min to get ready + walking time (real route) + ${FW.delay} min delay. T available = warning lead time (${SC.leadMin} min) or less if the water arrives sooner. ${late} of these ${rows.length} are too late.`,
+      rows,aName:'Time available',bName:'Clearance time',xTitle:'minutes',src:dataSrc+' · same rule as the evacuation plan; mobilisation, delay and lead time are assumptions (Evacuate tab)',
       csv:[['group','available_min','clearance_min','people'],...rows.map(x=>[x.label,Math.round(x.a),Math.round(x.b),Math.round(x.people)])]}; }
-  if(k==='fwG6'){ const rows=D.rps.map(rr=>{const P=planFor(rr),prot=P.routes.filter(x=>FW.mob+x.min+FW.delay<=(P.groups.find(g=>mDist(g.c,x.pts[0])<1)?.ts??0)*SC.mins).reduce((s,x)=>s+x.people,0);
-      const v=Math.round(P.total?prot/P.total*100:0); return {label:`${sizeWord(rr)} (1-in-${rr})`,value:v,txt:`${v}% (${fmt(prot)} of ${fmt(P.total)})`,people:prot,total:P.total,color:css('--c-mod')};});
-    return {kind:'bar',title:'UNDRR G-6: share of at-risk residents protected by pre-emptive evacuation (%)',sub:'Protected = has a shelter place and can clear before the water arrives (same assumptions as the clearance chart).',rows,src:dataSrc+' · estimate from the evacuation plan, not HEC-FIA',
+  if(k==='fwG6'){ const rows=D.rps.map(rr=>{const P=planFor(rr),prot=P.moved-P.slow,v=Math.round(P.total?prot/P.total*100:0);
+      return {label:`${sizeWord(rr)} (1-in-${rr})`,value:v,txt:`${v}% (${fmt(prot)} of ${fmt(P.total)})`,people:prot,total:P.total,color:css('--c-mod')};});
+    return {kind:'bar',title:'UNDRR G-6: share of at-risk residents protected by pre-emptive evacuation (%)',sub:'Protected = has a shelter place and clears before the time available runs out (same rule as the evacuation plan).',rows,src:dataSrc+' · estimate from the evacuation plan, not HEC-FIA',
       csv:[['flood_size','protected','at_risk','G6_percent'],...rows.map(x=>[x.label,Math.round(x.people),Math.round(x.total),x.value])]}; }
   if(k==='fwAAL'){ const pts=D.rps.map(rr=>({r:rr,p:100/rr,n:peak(rr).people})).sort((a,b)=>b.p-a.p);
     return {kind:'line',title:'Risk curve: residents in flooded areas vs yearly chance',sub:`AAL logic (UNDRR) applied to people, as no € damage data is loaded: area under the curve ≈ ${fmt(expectedAnnual())} residents affected per year on average.`,
@@ -76,4 +74,4 @@ function fwSvg(c,W,F,ink,muted,line,bg){
     <line x1="${sx(r.a)}" x2="${sx(r.b)}" y1="${y}" y2="${y}" stroke="${late?cb:muted}" stroke-width="2"/><circle cx="${sx(r.a)}" cy="${y}" r="6" fill="${ca}"><title>Available: ${Math.round(r.a)} min</title></circle>
     <circle cx="${sx(r.b)}" cy="${y}" r="6" fill="${cb}"><title>Clearance: ${Math.round(r.b)} min${late?' (too late)':''}</title></circle>`;});
   return o+foot(c,H,muted)+'</svg>'; }
-['mob','delay'].forEach(k=>$('fw-'+k).onchange=e=>{const v=+e.target.value; if(v>=0){FW[k]=v; if(S.tab==='diag') drawDiagram();}});
+['mob','delay'].forEach(k=>$('fw-'+k).onchange=e=>{const v=+e.target.value; if(v>=0){FW[k]=v; makePlan(); if(S.tab==='diag') drawDiagram();}});

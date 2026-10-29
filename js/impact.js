@@ -6,10 +6,10 @@ const IM={R0:60,Q0:70,R1:90,Q1:80,T0:6,T1:2,C:2,D0:30,D1:18}; // %, %, %, %, hou
 // expected residents in flooded areas per year: area under the (probability, residents) curve between the mapped flood sizes
 function expectedAnnual(){ const pts=D.rps.map(r=>[1/r,peak(r).people]).sort((a,b)=>b[0]-a[0]); let s=0;
   for(let i=0;i<pts.length-1;i++) s+=(pts[i][0]-pts[i+1][0])*(pts[i][1]+pts[i+1][1])/2; return s+pts[pts.length-1][0]*pts[pts.length-1][1]; }
-function planWithLead(h){ const keep=E.lead; E.lead=h; const P=planFor(rp()); E.lead=keep; return P; }
+function planWithLead(m){ const keep=SC.leadMin; SC.leadMin=m; const P=planFor(rp()); SC.leadMin=keep; return P; } // m = warning lead time in minutes
 function drawImpact(){ if(!D||!E.plan) return; const P=E.plan,r=rp(),N=P.total,K=E.shelters.reduce((s,_,k)=>s+capOf(k),0);
   const ev=(R,Q)=>Math.min(N*R/100*Q/100,K),b=ev(IM.R0,IM.Q0),a=ev(IM.R1,IM.Q1),gain=Math.max(0,IM.T0-IM.T1);
-  const pb=planWithLead(E.lead),pa=planWithLead(E.lead+gain),inTime=x=>x.moved-x.slow,dD=IM.D0-IM.D1,thr=dD>0?IM.C/dD*100:null,pf=1/r*100;
+  const pb=planWithLead(SC.leadMin),pa=planWithLead(SC.leadMin+gain*60),inTime=x=>x.moved-x.slow,dD=IM.D0-IM.D1,thr=dD>0?IM.C/dD*100:null,pf=1/r*100;
   const row=(k,v,src)=>`<tr><td>${k}</td><td class="mono">${v}</td><td>${src==='data'?'<span class="tag data">data</span>':src==='mix'?'<span class="tag data">data</span> <span class="tag">assumption</span>':'<span class="tag">assumption</span>'}</td></tr>`;
   $('impOut').innerHTML=`<table class="tbl"><tbody>
     <tr><th colspan="3">1 · Anticipation</th></tr>
@@ -24,7 +24,7 @@ function drawImpact(){ if(!D||!E.plan) return; const P=E.plan,r=rp(),N=P.total,K
     ${row('Extra people evacuated',`+${fmtFull(a-b)}`,'mix')}
     <tr><th colspan="3">3 · Institutions</th></tr>
     ${row(`Decision time ${IM.T0} h → ${IM.T1} h`,IM.T0?`−${Math.round(gain/IM.T0*100)}%`:'–','assumption')}
-    ${row(`Reach a shelter in time on foot: warning ${E.lead} h → ${E.lead+gain} h`,`${fmtFull(inTime(pb))} → ${fmtFull(inTime(pa))} (+${fmtFull(inTime(pa)-inTime(pb))})`,'mix')}
+    ${row(`Reach a shelter in time on foot: warning ${SC.leadMin} → ${SC.leadMin+gain*60} min`,`${fmtFull(inTime(pb))} → ${fmtFull(inTime(pa))} (+${fmtFull(inTime(pa)-inTime(pb))})`,'mix')}
   </tbody></table>
   <p style="font-size:14px;margin:8px 0 0"><b>For the mayor:</b> ${N?`at a ${sizeWord(r).toLowerCase()} flood ${fmtFull(N)} residents must leave, but the shelters in the plan hold ${fmtFull(K)} (${Math.round(K/N*100)}%). `:''}
    ${N&&a-b<1&&K<N*IM.R1/100*IM.Q1/100?`Better alerts add nobody while the shelters are full: <b>shelter capacity is the bottleneck</b>. `:''}

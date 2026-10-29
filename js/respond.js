@@ -70,7 +70,7 @@ ${(D.places||[]).filter(p=>p.group==='critical'&&p.ci>=0&&D.cells[p.ci].depth[r]
 ${P.routes.map(x=>`| ${x.wave} | ${fmtFull(x.people)} | ${x.k+1} | ${(x.len/1000).toFixed(1)} km | ${Math.round(x.min)} min | ${x.ok?'yes':'no'} |`).join('\n')}
 
 ## Assumptions (team choices, not data)
-- Shelter capacity: floor area ÷ ${SPHERE_M2} m² per person (Sphere standard) when the building size is known, else ${E.cap} people · walking speed ${E.speed} km/h · warning time ${E.lead} h
+- Shelter capacity: floor area ÷ ${SPHERE_M2} m² per person (Sphere standard) when the building size is known, else ${E.cap} people · walking speed ${E.speed} km/h · warning lead time ${SC.leadMin} min, ${FW.mob} min to get ready, ${FW.delay} min delay
 - Streets under ${CAR_DEPTH} m of water or more count as closed to cars
 - Waves follow the order water arrives in the model (lowest ground first), not real timing
 
