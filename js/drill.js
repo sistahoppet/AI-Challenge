@@ -133,10 +133,11 @@ function askInject(k,at){ setPlaying(false); const I=INJ[k],b=$('inject'); DR.as
 // (exception "wait": the order itself moves one hour later; the question is then not asked again)
 
 /* ---------- on screen: live counts, shelter fill, walkers ---------- */
+const HUDT={home:'At home, water not there yet',walk:'Walking to a shelter',shel:'In a shelter / places available',up:'Water at home, building has a floor above it',danger:'Trapped without a safe floor, or stuck in a flooded street',noplace:'Reached a full shelter, no room nearby',resc:'Taken out by rescue teams'};
 function drawHud(){ const h=$('hud'),R=DR.run; if(!R){ h.hidden=true; return; } const k=countAt(R,S.T*R.M),used=R.sh.reduce((s,x)=>s+Math.min(x.load,x.cap),0);
   const room=R.sh.filter(x=>x.from<=S.T*R.M).reduce((s,x)=>s+x.cap,0),lo=v=>`<b data-src="drill">${fmt(v)}</b>`;
-  h.innerHTML=[['home','At home, dry',k.home],['walk','On the way',k.walk],['shel',`In shelters (${fmt(room)} places)`,k.shel],['up','Upstairs at home',k.up],['danger','In danger',k.danger],['noplace','No shelter place',k.noplace],['resc','Rescued',k.resc]]
-    .map(([c,t,v])=>`<span class="hi ${c}${v>=1&&(c==='danger'||c==='noplace')?' bad':''}">${lo(v)}<i>${t}</i></span>`).join(''); h.hidden=false; }
+  h.innerHTML=[['home','home',k.home],['walk','walking',k.walk],['shel',`sheltered /${fmt(room)}`,k.shel],['up','upstairs',k.up],['danger','danger',k.danger],['noplace','no place',k.noplace],['resc','rescued',k.resc]]
+    .map(([c,t,v])=>`<span title="${HUDT[c]}" class="hi ${c}${v>=1&&(c==='danger'||c==='noplace')?' bad':''}">${lo(v)}<i>${t}</i></span>`).join(''); h.hidden=false; }
 function drawPins(){ const R=DR.run; if(!R) return; const t=S.T*R.M;
   markers.forEach((m,k)=>{ const s=R.sh[k]; if(!s) return; let ld=0; for(const [tt,l] of s.tl){ if(tt>t) break; ld=l; } const el=m.getElement(),pc=s.cap?Math.min(1,ld/s.cap):0;
     el.style.setProperty('--fill',Math.round(pc*100)+'%'); el.classList.toggle('full',pc>=.999); el.title=`${s.name}: ${fmtFull(ld)} of ${fmtFull(s.cap)} places taken`; }); }
@@ -166,22 +167,22 @@ function showDebrief(){ const B=DR.best,R=DR.run,st=$('drillStage'); if(!B||!R){
   st.hidden=false; $('drillClose').focus(); }
 
 /* ---------- controls in front of the map (dock) ---------- */
-const DOCK=[['size','Flood size',0,2,1,()=>S.sizeIdx,v=>{$('size').value=v; $('size').oninput({target:$('size')});},v=>sizeWord(D.rps[v])+` (1-in-${D.rps[v]})`],
+const DOCK=[['size','Flood',0,2,1,()=>S.sizeIdx,v=>{$('size').value=v; $('size').oninput({target:$('size')});},v=>`1-in-${D.rps[v]}`],
   ['rain','Rain',1,150,1,()=>SC.rain,v=>{SC.rain=v; drawScenarioInfo();},v=>v+' mm/h'],
-  ['dur','Rain lasts',1,48,1,()=>SC.dur/60,v=>{SC.dur=v*60; drawScenarioInfo();},v=>v+' h'],
-  ['lead','Warning before water',0,720,15,()=>SC.leadMin,v=>{SC.leadMin=v; $('sc-leadMin').value=v; alerted=warned=null; makePlan();},v=>`${Math.floor(v/60)} h ${v%60?String(v%60).padStart(2,'0'):''}`],
-  ['comply','People who follow the order',30,100,5,()=>DR.comply,v=>{DR.comply=v; drillRun();},v=>v+'%'],
-  ['cap','Shelter places',50,300,10,()=>DR.capX,v=>{DR.capX=v; drillRun();},v=>v+'% of planned'],
-  ['walk','Walking speed',.5,1.6,.1,()=>E.speed/3.6,v=>{E.speed=v*3.6; $('evSpeedMs').value=v; makePlan();},v=>v.toFixed(1)+' m/s'],
-  ['resc','Rescue capacity',0,500,10,()=>DR.rescue,v=>{DR.rescue=v; drillRun();},v=>v+' people/h']];
+  ['dur','Hours',1,48,1,()=>SC.dur/60,v=>{SC.dur=v*60; drawScenarioInfo();},v=>v+' h'],
+  ['lead','Warning',0,720,15,()=>SC.leadMin,v=>{SC.leadMin=v; $('sc-leadMin').value=v; alerted=warned=null; makePlan();},v=>`${Math.floor(v/60)} h ${v%60?String(v%60).padStart(2,'0'):''}`],
+  ['comply','Follow',30,100,5,()=>DR.comply,v=>{DR.comply=v; drillRun();},v=>v+'%'],
+  ['cap','Places',50,300,10,()=>DR.capX,v=>{DR.capX=v; drillRun();},v=>v+'%'],
+  ['walk','Walk',.5,1.6,.1,()=>E.speed/3.6,v=>{E.speed=v*3.6; $('evSpeedMs').value=v; makePlan();},v=>v.toFixed(1)+' m/s'],
+  ['resc','Rescue',0,500,10,()=>DR.rescue,v=>{DR.rescue=v; drillRun();},v=>v+'/h']];
 function drawDock(){ $('dockIn').innerHTML=DOCK.map(([k,t,mi,ma,st,get,,lab])=>{ const v=get(),mx=k==='size'?D.rps.length-1:ma;
   return `<label class="dk"><span>${t}</span><b class="mono" id="dkv-${k}">${lab(v)}</b><input type="range" id="dk-${k}" min="${mi}" max="${mx}" step="${st}" value="${v}" aria-label="${t}"></label>`; }).join('')
-  +`<button class="btn sm primary" id="dkBuild" title="Turn this rain into a flood (compared with 37 years of rain records)">Build flood from rain</button>`; }
+  +`<button class="btn sm" id="dkBuild" title="Turn this rain into a flood (compared with 37 years of rain records)">Build</button>`; }
 let dkT={};
 $('dockIn').oninput=e=>{ const k=e.target.id?.slice(3),d=DOCK.find(x=>x[0]===k); if(!d) return; const v=+e.target.value; $('dkv-'+k).textContent=d[7](v);
   clearTimeout(dkT[k]); dkT[k]=setTimeout(()=>d[6](v),k==='size'?0:200); };
 $('dockIn').onclick=e=>{ if(e.target.id==='dkBuild') buildScenario(); };
-$('dockHide').onclick=()=>{ const on=$('dock').classList.toggle('min'); $('dockHide').textContent=on?'Show controls':'Hide'; $('dockHide').setAttribute('aria-expanded',!on); };
+$('dockHide').onclick=()=>{ const on=$('dock').classList.toggle('min'); $('dockHide').textContent=on?'Controls ▴':'▾'; $('dockHide').setAttribute('aria-expanded',!on); };
 function syncDock(){ if(!$('dk-size')) return; DOCK.forEach(([k,,,,,get,,lab])=>{ const el=$('dk-'+k); if(el&&document.activeElement!==el&&+el.value!==get()){ el.value=get(); $('dkv-'+k).textContent=lab(get()); } }); }
 
 /* ---------- training on/off, restart, end of the run ---------- */

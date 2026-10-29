@@ -3,7 +3,7 @@
 
 /* ---------- guide ---------- */
 const store={get(k){try{return localStorage.getItem(k);}catch(e){return null;}},set(k,v){try{localStorage.setItem(k,v);}catch(e){}}};
-function showGuide(on){$('guide').hidden=!on; $('legend').hidden=on;}
+function showGuide(on){$('guide').hidden=!on; document.body.classList.toggle('explain',on); $('helpBtn').setAttribute('aria-expanded',on);} // also shows the explanations in the side panel
 $('helpBtn').onclick=()=>showGuide($('guide').hidden); $('guideOk').onclick=()=>{showGuide(false); store.set('fse-guide','1');};
 
 function load(data,demo){

@@ -16,7 +16,7 @@
     <span id="dataBadge" class="badge">DEMO DATA</span>
     <span class="spacer"></span>
     <button class="btn" id="tourBtn">Guided demo</button>
-    <button class="btn" id="helpBtn">How to use</button>
+    <button class="btn" id="helpBtn" aria-expanded="false">Explain</button>
     <button class="btn primary" id="openData">Load team data</button>
   </header>
   <div class="layout">
@@ -25,17 +25,45 @@
         <div id="map"></div>
         <div class="ov notice" id="notice" hidden></div>
         <div class="ov legend" id="legend" aria-label="Legend"></div>
-        <div class="ov guide" id="guide" hidden>
-          <h3>How to use</h3>
+        <aside class="ov guide" id="guide" hidden aria-label="Explain">
+          <div class="ghead"><h3>Explain</h3><button class="btn sm" id="guideOk" aria-label="Close">✕</button></div>
+          <h4>Start</h4>
           <ol>
-            <li>Pick <b>how big the flood is</b> on the right.</li>
-            <li>Press <b>▶</b> below the map to watch the water rise and fall. Change the speed if you like.</li>
-            <li>Press <b>3D</b> to see it in 3D. Scroll or use <b>+ / −</b> to zoom.</li>
-            <li><b>Pause</b> (space bar) and <b>click the map</b>: water here, zone, and the safe walking route to the nearest shelter at that moment.</li>
-            <li>Open <b>Evacuate</b> to plan shelters and routes, <b>Alert</b> to prepare messages and files for emergency services.</li>
+            <li>Set the flood and the scenario in the bar under the map.</li>
+            <li>Press <b>▶</b>. Pause (space) and click the map to check a place.</li>
+            <li><b>Training mode</b>: the run stops when you must decide.</li>
+            <li><b>Debrief</b>: the best sequence of actions.</li>
+            <li><b>Policy</b> tab: the mayor's decision card.</li>
           </ol>
-          <button class="btn primary sm" id="guideOk" style="justify-self:start">Got it</button>
-        </div>
+          <h4>Counters on the map</h4>
+          <dl>
+            <dt>Home</dt><dd>still at home, water not there yet</dd>
+            <dt>Walking</dt><dd>on the way to a shelter</dd>
+            <dt>Sheltered</dt><dd>arrived in a shelter (places in brackets)</dd>
+            <dt>Upstairs</dt><dd>water at home, building has a floor above it</dd>
+            <dt>Danger</dt><dd>trapped without a safe floor, or stuck in a flooded street</dd>
+            <dt>No place</dt><dd>reached a full shelter, no room nearby</dd>
+            <dt>Rescued</dt><dd>taken out by rescue teams</dd>
+          </dl>
+          <h4>Bar under the map</h4>
+          <dl>
+            <dt>Flood</dt><dd>how rare the flood is (EFAS maps)</dd>
+            <dt>Rain, Hours, Build</dt><dd>your own rain, turned into a flood with 37 years of rain records</dd>
+            <dt>Warning</dt><dd>time between the warning and the water</dd>
+            <dt>Follow</dt><dd>share of people who leave when told</dd>
+            <dt>Places</dt><dd>shelter places, % of the planned ones</dd>
+            <dt>Walk, Rescue</dt><dd>walking speed; people rescued per hour</dd>
+          </dl>
+          <h4>Map</h4>
+          <dl>
+            <dt>Blue</dt><dd>water, darker = deeper</dd>
+            <dt>Red street</dt><dd>closed to cars</dd>
+            <dt>Pins</dt><dd>shelters; bar = how full, red = full</dd>
+            <dt>Dots</dt><dd>white walking · red stuck · orange no place</dd>
+          </dl>
+          <p>Numbers with a dotted line: click to see the source. <b>Legend</b> button (top left): all map colours.</p>
+          <p class="muted">Shows explanations in the side panel too while open. Water timing is illustrative; behaviour settings are assumptions.</p>
+        </aside>
         <div class="ctrls ov">
           <div class="grp">
             <button id="zin" title="Zoom in (+)" aria-label="Zoom in">+</button>
@@ -91,7 +119,7 @@
           </div>
         </div>
       </section>
-      <div class="dock" id="dock" aria-label="Scenario controls"><div class="dockin" id="dockIn"></div><button class="btn sm" id="dockHide" aria-expanded="true">Hide</button></div>
+      <div class="dock" id="dock" aria-label="Scenario controls"><div class="dockin" id="dockIn"></div><button class="btn sm" id="dockHide" aria-expanded="true" title="Hide or show the controls">▾</button></div>
       <div class="player" aria-label="Simulation player">
         <button class="pbtn" id="restart" title="Back to start" aria-label="Back to start">⏮</button>
         <button class="pbtn main" id="play" aria-label="Play">▶</button>

@@ -52,7 +52,8 @@ function checkAlerts(nowPeople){ const r=rp(),b=$('alertBar');
   if(warned==null&&S.T>=warnAt&&isFinite(warnAt)) warned=S.T;
   if(alerted==null&&nowPeople>=SC.alertN) alerted=S.T;
   const parts=[];
+  const short=[]; if(warned!=null) short.push(`📣 Warn ${clock(Math.max(0,warned))}${warnAt<0?' (late)':''}`); if(alerted!=null) short.push(`🔔 Alert ${clock(alerted)}`);
   if(warned!=null) parts.push(`📣 <b>Warning to residents</b> due at ${clock(Math.max(0,warned))} (${SC.leadMin} min before water reaches the first homes at ${clock(first)})${warnAt<0?' — <b>too late</b>: the lead time is longer than the time available':''}`);
   if(alerted!=null) parts.push(`🔔 <b>Alert sent to authorities</b> at ${clock(alerted)}: ${fmt(nowPeople)} residents in water now (threshold ${fmt(SC.alertN)})`);
-  b.innerHTML=parts.join('<br>'); b.hidden=!parts.length; $('clockLbl').textContent=`Clock ${clock(S.T)} of ${clock(1)}`; }
+  b.innerHTML=short.join(' · '); b.title=parts.join('\n').replace(/<[^>]+>/g,''); b.hidden=!parts.length; $('clockLbl').textContent=`Clock ${clock(S.T)} of ${clock(1)}`; }
 ['alertN','leadMin','mins'].forEach(k=>$('sc-'+k).onchange=e=>{const v=+e.target.value; if(v>0){SC[k]=v; alerted=warned=null; render(); makePlan();}}); // lead time and event length also change who is "in time"
