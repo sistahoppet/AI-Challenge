@@ -515,6 +515,10 @@ details.info>summary::-webkit-details-marker{display:none}
 
       <div class="tabbody" id="tab-policy" hidden>
         <div>
+          <h2>Cost of this flood</h2>
+          <div id="costOut"></div>
+        </div>
+        <div>
           <h2>Impact for the mayor</h2>
           <p class="hint" style="margin:0 0 8px">Three stages: anticipation, coordination, institutions. Uses the flood size and plan from Evacuate. Change the assumptions below.</p>
           <div id="impOut"></div>
@@ -1080,7 +1084,7 @@ let roadSegs=new Map(),roadLines=[],cutPieces=[],roadT=null,graphCache={};
 const kk=p=>p[0].toFixed(5)+','+p[1].toFixed(5);
 function roadsReset(){ roadSegs=new Map(); roadLines=[]; cutPieces=[]; cars=[]; graphCache={};
   if(ready){map.getSource('cut').setData(empty()); map.getSource('cars').setData(empty());}
-  if(D.roads?.length){ addRoads(D.roads.map(f=>({pts:f.geometry.coordinates,car:f.properties.car!==0,foot:f.properties.foot!==0,bridge:!!f.properties.bridge}))); finishRoads(); } }
+  if(D.roads?.length){ addRoads(D.roads.map(f=>({pts:f.geometry.coordinates,car:f.properties.car!==0,foot:f.properties.foot!==0,bridge:!!f.properties.bridge,cls:f.properties.hw||f.properties.cls}))); finishRoads(); } }
 function cellAt(p){const i=D.G.at(p[0],p[1]); return i<0?null:D.cells[i];}
 function depthAt(p){return cellAt(p)?.depth||null;}
 function addRoads(lines){ let added=0;
@@ -1090,7 +1094,7 @@ function addRoads(lines){ let added=0;
       for(let s=0;s<n;s++){ const t0=s/n,t1=(s+1)/n,q=[a[0]+(b[0]-a[0])*t0,a[1]+(b[1]-a[1])*t0],e=[a[0]+(b[0]-a[0])*t1,a[1]+(b[1]-a[1])*t1],c=cellAt([(q[0]+e[0])/2,(q[1]+e[1])/2]);
         if(!c) continue; D.rps.forEach(r=>dep[r]=Math.max(dep[r]||0,c.depth[r])); if(D.rps.some(r=>c.depth[r]>0)) cs.add(c);
         if(L.car&&D.rps.some(r=>c.depth[r]>CAR_DEPTH)) cutPieces.push({a:q,b:e,len:len/n,dep:c.depth,c}); }
-      roadSegs.set(key,{a,b,len,dep,cs:[...cs],car:L.car,foot:L.foot,bridge:L.bridge}); added++; } }
+      roadSegs.set(key,{a,b,len,dep,cs:[...cs],car:L.car,foot:L.foot,bridge:L.bridge,cls:L.cls}); added++; } }
   return added; }
 function finishRoads(){ graphCache={}; if(!ready) return;
   map.getSource('cut').setData({type:'FeatureCollection',features:cutPieces.map(s=>({type:'Feature',geometry:{type:'LineString',coordinates:[s.a,s.b]},properties:depthProps(s.c)}))});
@@ -1098,7 +1102,7 @@ function finishRoads(){ graphCache={}; if(!ready) return;
 function collectRoads(){ if(D?.roads?.length) return; clearTimeout(roadT); roadT=setTimeout(()=>{ if(!ready||!D) return;
   const [x0,y0,x1,y1]=D.bbox,inB=p=>p[0]>=x0&&p[0]<=x1&&p[1]>=y0&&p[1]<=y1,lines=[];
   for(const f of map.querySourceFeatures('osm',{sourceLayer:'transportation'})){ if(!VEH.includes(f.properties.class)) continue;
-    const g=f.geometry; for(const pts of g.type==='LineString'?[g.coordinates]:g.type==='MultiLineString'?g.coordinates:[]) if(pts.some(inB)) lines.push({pts,car:true,foot:!MAJOR.slice(0,2).includes(f.properties.class),bridge:f.properties.brunnel==='bridge'}); }
+    const g=f.geometry; for(const pts of g.type==='LineString'?[g.coordinates]:g.type==='MultiLineString'?g.coordinates:[]) if(pts.some(inB)) lines.push({pts,cls:f.properties.class,car:true,foot:!MAJOR.slice(0,2).includes(f.properties.class),bridge:f.properties.brunnel==='bridge'}); }
   if(addRoads(lines)) finishRoads(); },500); }
 function cutKm(r,now){let m=0; for(const s of cutPieces) if((now?nowDepth(s.c,r):s.dep[r])>CAR_DEPTH) m+=s.len; return m/1000;}
 
@@ -1203,7 +1207,7 @@ function addEvacLayers(){
 function evacVisibility(){ const on=S.tab==='safety'&&!!E.plan; ['routes-case','routes','groups','groups-lab','walkers'].forEach(id=>map.setLayoutProperty(id,'visibility',on?'visible':'none')); }
 function recolorEvac(){ ['routes','groups'].forEach(id=>map.setPaintProperty(id,id==='routes'?'line-color':'circle-color',waveCol()));
   map.setPaintProperty('walkers','circle-color',css('--walk')); map.setPaintProperty('walkers','circle-stroke-color',waveCol()); }
-function drawPlan(){ const P=E.plan; if(!P) return; drawShelterList(); drawEvacPanel(); drawCritical(); if(S.tab==='policy') drawImpact();
+function drawPlan(){ const P=E.plan; if(!P) return; drawShelterList(); drawEvacPanel(); drawCritical(); if(S.tab==='policy'){ drawCosts(); drawImpact(); }
   if(!ready) return; const F=fs=>({type:'FeatureCollection',features:fs}),pt=(c,p)=>({type:'Feature',geometry:{type:'Point',coordinates:c},properties:p});
   map.getSource('routes').setData(F(P.routes.map(r=>({type:'Feature',geometry:{type:'LineString',coordinates:r.pts},properties:{wave:r.wave,ok:r.ok?1:0}}))));
   map.getSource('groups').setData(F(P.groups.map(g=>pt(g.c,{pop:g.pop,wave:g.wave,lab:fmt(g.pop)}))));
@@ -1857,7 +1861,7 @@ $('size').oninput=e=>{S.sizeIdx=+e.target.value; drawSize(); render(); drawActor
 /* ---------- tabs ---------- */
 function setTab(t){ S.tab=t; document.querySelectorAll('.tabs [data-t]').forEach(b=>b.setAttribute('aria-selected',b.dataset.t===t));
   ['sim','safety','coord','diag','policy'].forEach(k=>$('tab-'+k).hidden=k!==t);
-  $('stage').hidden=t!=='diag'; if(t==='diag') drawDiagram(); if(t==='coord') drawCoord(); if(t==='policy') drawImpact(); drawLegend(); applyLayers(); }
+  $('stage').hidden=t!=='diag'; if(t==='diag') drawDiagram(); if(t==='coord') drawCoord(); if(t==='policy'){ drawCosts(); drawImpact(); } drawLegend(); applyLayers(); }
 document.querySelector('.tabs').onclick=e=>{const b=e.target.closest('[data-t]'); if(b) setTab(b.dataset.t);};
 $('stageClose').onclick=()=>setTab('sim');
 
@@ -1923,6 +1927,9 @@ const DIAGS=[
   {g:'Maps',k:'mheat',t:'Water depth heatmap',s:'Water depth at the peak of the flood size you picked.',metric:false},
   {g:'Maps',k:'mprog',t:'Flood progression',s:'Three moments: early, rising, peak.',metric:false},
   {g:'Maps',k:'mevac',t:'Evacuation route map',s:'Closed roads, shelters, evacuation routes and groups.',metric:false},
+  {g:'Costs',k:'costItems',t:'Cost of this flood, item by item',s:'Damage to homes, businesses, roads, and response costs (2022 €).',metric:false},
+  {g:'Costs',k:'costRP',t:'Damage per flood size',s:'Direct damage for each flood size, with the average per year (AAL).',metric:false},
+  {g:'Costs',k:'costCurves',t:'Depth–damage curves used',s:'Share of value lost by water depth (JRC 2017, Europe).',metric:false},
   {g:'Policy framework',k:'fwArch',t:'Five modules and what the app covers',s:'Architecture of the AI-assisted crisis management framework.',metric:false},
   {g:'Policy framework',k:'fwMethods',t:'Review of the calculation methods',s:'Which formulas are supported and what replaces the rest.',metric:false},
   {g:'Policy framework',k:'fwStages',t:'Framework stages and status in the app',s:'8 stages, methods, references, and what is built.',metric:false},
@@ -1931,11 +1938,7 @@ const DIAGS=[
   {g:'Policy framework',k:'fwAAL',t:'Risk curve (AAL logic)',s:'Residents in flooded areas vs yearly chance (real data).',metric:false},
   {g:'Policy framework',k:'fwCost',t:'Cost–loss model (ECMWF)',s:'When acting is worth it: p* = C / L (hypothetical €).',metric:false},
   {g:'Policy framework',k:'fwBCR',t:'Benefit–cost ratio',s:'Avoided damage vs cost (hypothetical €).',metric:false},
-  {g:'Policy framework',k:'fwFill',t:'Fill rate of emergency teams',s:'Requests for help that get a team, nearest vs priority.',metric:false},
-  {g:'System design',k:'flow',t:'Flowchart: how the simulation works',s:'The algorithm step by step, as built in this app.',metric:false},
-  {g:'System design',k:'arch',t:'System architecture',s:'From forecasts and data to alerts for authorities and residents.',metric:false},
-  {g:'System design',k:'dfd',t:'Data flow diagram',s:'How rain, sensors, simulation results and alerts move through the system.',metric:false},
-  {g:'System design',k:'erd',t:'Entity–relationship diagram',s:'A database design for a future operational version.',metric:false}];
+  {g:'Policy framework',k:'fwFill',t:'Fill rate of emergency teams',s:'Requests for help that get a team, nearest vs priority.',metric:false}];
 function drawDList(){ let g=''; $('dlist').innerHTML=DIAGS.map(d=>(d.g!==g?`<div class="dg">${g=d.g}</div>`:'')+`<button data-k="${d.k}" aria-pressed="${S.diag===d.k}"><b>${d.t}</b><span>${d.s}</span></button>`).join(''); }
 $('dlist').onclick=e=>{const b=e.target.closest('button'); if(!b) return; S.diag=b.dataset.k; drawDList(); drawDiagram();};
 $('metricSeg').onclick=e=>{const b=e.target.closest('button'); if(!b) return; S.metric=b.dataset.m; $('metricSeg').querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',x===b)); drawDiagram();};
@@ -1976,8 +1979,8 @@ function chartData(){
     return {kind:'bar',title:'Residents in the water: same rain, different drains and soil',sub:`Your rain: ${SC.rain} mm/h for ${SC.dur} min. Other settings as in "Build your own rain scenario".`,rows,src:src+' · Open-Meteo rain records',
       csv:[['scenario','residents'],...rows.map(r=>[r.label,r.value])]};}
   if(S.diag[0]==='m') return {kind:'img',title:DIAGS.find(x=>x.k===S.diag).t,sub:'',src:'Sources: EFAS, GHS-OBAT, GHS-POP, OpenStreetMap, Copernicus DEM'+(isDemo?' · DEMO DATA':''),csv:null};
-  if(['flow','arch','dfd','erd'].includes(S.diag)) return designDiagram(S.diag);
   if(S.diag.startsWith('fw')) return fwChart(S.diag);
+  if(S.diag.startsWith('cost')) return costChart(S.diag);
   const names=['Flooded in both','Only on the hazard map','Only in 2021'],cols=['--c-both','--c-mod','--c-obs'];
   if(!D.hasObs) return {kind:'empty',title:'Model vs the real 2021 flood',sub:'Load the 2021 flood file (Copernicus EMS) to draw this diagram.',src,csv:[['note'],['no 2021 file loaded']]};
   return {kind:'stack',title:'Hazard map vs the real 2021 flood (area, km²)',sub:'How much of each flood-size map overlaps the satellite outline of July 2021.',src,
@@ -2040,7 +2043,7 @@ $('dlPng').onclick=()=>{ const svg=buildSvg(current),img=new Image(),m=svg.match
 </script>
 <script>
 // figures.js - Extra figures for the diagram studio: line graphs over time, map figures (captured from the live map),
-// and system-design diagrams (flowchart, architecture, data flow, entity–relationship). All export as PNG / SVG.
+// and a colour helper. All export as PNG / SVG.
 // Loaded as a classic script: top-level names are shared between files (order set in index.html).
 
 /* ---------- shared SVG pieces ---------- */
@@ -2096,40 +2099,8 @@ async function mapFigure(k){ const keep={tab:S.tab,T:S.T,cmp:S.cmp},r=rp(),W=712
   } finally { Object.assign(S,keep); applyLayers(); render(); }
   return f; }
 
-/* ---------- system-design diagrams ---------- */
+/* ---------- colour helper ---------- */
 const mix=(a,b,t)=>'#'+hexRgb(a).map((v,i)=>Math.round(v*t+hexRgb(b)[i]*(1-t)).toString(16).padStart(2,'0')).join(''); // plain hex: exported SVGs open everywhere
-function designDiagram(k){ const sf=css('--surface'),blue=mix(css('--accent'),sf,.14),warm=mix(css('--obs'),sf,.18),green=mix(css('--zg'),sf,.16);
-  const src='Design of this prototype · Flood Scenario Explorer',csv=n=>[['element','description'],...n.nodes.map(x=>[x.id,x.label.replace(/\n/g,' — ')]),...n.edges.map(e=>[`${e[0]} → ${e[1]}`,e[2]||''])];
-  let d;
-  if(k==='flow'){ const x=150,w=380,h=46,g=60,steps=[
-      ['load','1 · Load terrain and data','Copernicus DEM, EFAS depths (1-in-10/100/500), GHS people & buildings, OSM roads & shelters'],
-      ['rain','2 · Add rainfall','Forecast, July 2021 replay, or your scenario → rain reaching the river'],
-      ['size','3 · Match rain to a flood size','48-hour rain records → yearly chance → flood map (interpolated)'],
-      ['flow','4 · Water rises section by section','Riverbed depth nearby + downstream delay from terrain'],
-      ['upd','5 · Update water depth','Cells, buildings, roads, people, critical sites'],
-      ['risk','6 · Check flood risk','Zones, closed roads, shelters, routes, alert thresholds'],
-      ['next','7 · Next time step','Until the end of the event']];
-    d={nodes:steps.map(([id,a,b],i)=>({id,label:`${a}\n${b}`,x,y:90+i*(h+g/2+10),w,h:h+6,fill:i===5?warm:blue,shape:i===0||i===6?'proc':'box'})),
-      edges:steps.slice(1).map((s,i)=>[steps[i][0],s[0]]).concat([['next','flow','repeat',x+w+90]]),H:90+7*(h+g/2+10)+40};
-    d.nodes.push({id:'alert',label:'Alert\nauthorities & residents',x:x+w+120,y:d.nodes[5].y-4,w:170,h:58,fill:green}); d.edges.push(['risk','alert','over threshold']); }
-  if(k==='arch'){ const col=(i)=>30+i*178,row=(j)=>110+j*92,b=(id,label,i,j,fill,h=70)=>({id,label,x:col(i),y:row(j),w:158,h,fill});
-    d={nodes:[b('wx','Weather forecasts\nOpen-Meteo, GloFAS',0,0,blue),b('sens','River gauges, sensors\n(future: SPW hydrometry)',0,1,blue),b('data','Hazard & exposure data\nEFAS, GHS, OSM, DEM',0,2,blue),
-      b('sim','Simulation\nscenario → water rise\nover time',1,1,warm,90),b('risk','Risk analysis\nzones, roads, shelters,\nevacuation, teams',2,1,warm,90),
-      b('alert','Alerts\nauthority alert, CAP draft,\nresident messages',3,1,green,90),b('auth','Authorities\nmayor, civil protection',3,0,green),b('res','Residents\nmessages, safe routes',3,2,green)],
-      edges:[['wx','sim'],['sens','sim','not connected yet'],['data','sim'],['sim','risk'],['risk','alert'],['alert','auth'],['alert','res']],H:430}; }
-  if(k==='dfd'){ const n=(id,label,x,y,shape,fill,w=150,h=58)=>({id,label,x,y,w,h,shape,fill});
-    d={nodes:[n('E1','Weather service',24,100,'box',css('--bg')),n('E2','Sensors (future)',24,230,'box',css('--bg')),n('E3','Authorities',590,100,'box',css('--bg')),n('E4','Residents',590,330,'box',css('--bg')),
-      n('P1','1.0 Ingest data',220,100,'proc',blue),n('P2','2.0 Simulate flood',220,230,'proc',blue),n('P3','3.0 Assess risk',400,230,'proc',blue),n('P4','4.0 Plan evacuation',400,360,'proc',blue),n('P5','5.0 Issue alerts',590,230,'proc',warm),
-      n('D1','D1 Hazard maps & terrain',220,360,'store',css('--bg'),160,40),n('D2','D2 Scenarios & results',40,370,'store',css('--bg'),160,40),n('D3','D3 Alert log',400,110,'store',css('--bg'),150,40)],
-      edges:[['E1','P1','rain'],['E2','P1','levels'],['P1','P2','rain index'],['D1','P2','depths'],['P2','D2','results'],['P2','P3','water over time'],['P3','P4','risk areas'],['P4','P5','plan'],['P3','P5','thresholds'],['P5','E3','alert'],['P5','E4','messages'],['P5','D3','log']],H:450}; }
-  if(k==='erd'){ const e=(id,fields,x,y)=>({id,label:`${id}\n${fields.join('\n')}`,x,y,w:160,h:24+fields.length*17,fill:blue,left:true});
-    d={nodes:[e('User',['id','role','municipality'],24,100),e('Simulation',['id','user_id','scenario params','created_at'],230,100),e('FloodEvent',['id','simulation_id','return_period','peak_time'],440,100),
-      e('Sensor',['id','type','location'],24,290),e('Reading',['id','sensor_id','time','value'],230,290),e('Alert',['id','simulation_id','level','audience','sent_at'],440,290),
-      e('Report',['id','simulation_id','format','created_at'],620,100),e('Shelter',['id','name','capacity','location'],620,290)],
-      edges:[['User','Simulation','1 → n'],['Simulation','FloodEvent','1 → n'],['Sensor','Reading','1 → n'],['Simulation','Alert','1 → n'],['Simulation','Report','1 → n'],['Reading','Simulation','feeds'],['Alert','Shelter','points to']],H:440}; }
-  const meta={flow:['Flowchart: how the simulation works','The algorithm as built in this app (not a hydraulic model).'],arch:['System architecture','From forecasts and data to alerts. Sensors are a proposed extension.'],
-    dfd:['Data flow diagram','External entities (rectangles), processes (rounded), data stores (open boxes).'],erd:['Entity–relationship diagram','Proposed database for an operational version: the prototype stores no personal data.']}[k];
-  return {kind:'boxes',title:meta[0],sub:meta[1],...d,src,csv:csv(d)}; }
 
 </script>
 <script>
@@ -2212,6 +2183,86 @@ function fwSvg(c,W,F,ink,muted,line,bg){
     <circle cx="${sx(r.b)}" cy="${y}" r="6" fill="${cb}"><title>Clearance: ${Math.round(r.b)} min${late?' (too late)':''}</title></circle>`;});
   return o+foot(c,H,muted)+'</svg>'; }
 ['mob','delay'].forEach(k=>$('fw-'+k).onchange=e=>{const v=+e.target.value; if(v>=0){FW[k]=v; if(S.tab==='diag') drawDiagram();}});
+
+</script>
+<script>
+// costs.js - What the flood costs, item by item: direct damage from water depth (JRC depth–damage functions) and the cost of the response.
+// Every unit cost carries its source; anything without a published figure is an input the team must fill in.
+// Loaded as a classic script: top-level names are shared between files (order set in index.html).
+
+/* ---------- research values ---------- */
+// JRC depth–damage functions for Europe (Huizinga, de Moel & Szewczyk 2017, EUR 28552 EN, doi 10.2760/16510), as polynomials
+// published in the EU CLIMAAX handbook (highest power first; depth clipped to 0–6 m, damage share to 0–1).
+const DDF={res:[0.0005869,-0.01077,0.07497,-0.2602,0.5959,0],com:[0,0,-0.0009149,-0.02021,0.3216,0],ind:[0,0,-0.001202,-0.01225,0.2852,0],road:[0,-0.00938,0.07734,-0.2906,0.7625,0]};
+const ddf=(k,h)=>{ const x=Math.max(0,Math.min(6,h)); let y=0; for(const a of DDF[k]) y=y*x+a; return Math.max(0,Math.min(1,y)); };
+const COST={
+  cpi:1.218,      // 2010 → 2022 prices: EU consumer price index ratio used by CLIMAAX
+  res:792,        // €/m² 2010, Belgium, residential building incl. contents (JRC 2017, Table 3-22)
+  com:1004,       // €/m² 2010, commercial: 502 structure + 502 contents (JRC 2017 via CLIMAAX)
+  ind:820,        // €/m² 2010, industrial: 328 structure + 492 contents (JRC 2017 via CLIMAAX)
+  road:24,        // €/m² 2010, roads, Europe average (JRC 2017, Table 3-21)
+  shelterNight:125, // € per person per night: weak proxy (Dutch emergency shelters 2015–16, NL Times); replace with a Belgian figure
+  nights:3,       // assumption: nights in the shelter
+  teamHour:0      // € per emergency-team hour: no published Belgian figure found, enter the official rate
+};
+// road surface widths by class (m): assumption, typical Belgian cross-sections
+const ROADW={motorway:25,motorway_link:8,trunk:15,trunk_link:8,primary:12,primary_link:7,secondary:9,secondary_link:7,tertiary:7,tertiary_link:6,
+  minor:6,unclassified:6,residential:6,living_street:5,service:4,pedestrian:3,track:3,footway:2,path:2,cycleway:2,steps:2,bridleway:2};
+const REAL2021=[['Insured claims, Belgium (30 Sept 2021)','€2.164 bn (Wallonia €2.07 bn)','Assuralia, via The Insurer'],
+  ['Estimated total damage, Belgium (≈1 year later)','≈ €2.5 bn (Wallonia €2.44 bn)','Assuralia, via Brussels Times'],
+  ['Walloon reconstruction investment','≈ €1.125 bn, of which €998 M roads, energy, telecom; €98 M public buildings','Le Soir, via Brussels Times'],
+  ['Walloon government bill after insurance','≥ €3 bn, up to €4 bn with emergency costs','Brussels Times (2022)']];
+
+/* ---------- the bill for one flood size (peak water) ---------- */
+function floodCost(r){ const e=v=>v*COST.cpi,out={items:[],r};
+  const grp={res:{n:0,m2:0,eur:0},non:{n:0,m2:0,eur:0}};
+  for(const b of D.blds){ if(b.ci<0) continue; const h=D.cells[b.ci].depth[r]; if(!(h>.01)||!b.area) continue;
+    if(b.use===2){ const v=b.area*(COST.com*ddf('com',h)+COST.ind*ddf('ind',h))/2; grp.non.n++; grp.non.m2+=b.area; grp.non.eur+=e(v); }
+    else { grp.res.n++; grp.res.m2+=b.area; grp.res.eur+=e(b.area*COST.res*ddf('res',h)); } }
+  let rm2=0,rkm=0,reur=0,rmiss=0; for(const s of roadSegs.values()){ const h=s.dep[r]||0; if(h<=.01) continue; const w=ROADW[s.cls]; if(!w){rmiss++; continue;}
+    rkm+=s.len/1000; rm2+=s.len*w; reur+=e(s.len*w*COST.road*ddf('road',h)); }
+  const P=r===rp()?E.plan:planFor(r),placed=P?P.moved:0,teamH=RS.cmp?.[RS.mode]?.st.reduce((s,t)=>s+(t.trips.length?(t.trips[t.trips.length-1].a+RS.scene)/60:0),0)??0; // each team busy until its last job ends
+  out.items=[
+    {g:'Damage',k:'Homes (structure + contents)',q:`${fmtFull(grp.res.n)} buildings · ${fmtFull(grp.res.m2)} m²`,unit:`€${COST.res}/m² (2010) × damage share by depth`,eur:grp.res.eur,src:'JRC 2017 Table 3-22 (Belgium) + JRC residential curve',kind:'data'},
+    {g:'Damage',k:'Shops, offices, industry (structure + contents)',q:`${fmtFull(grp.non.n)} buildings · ${fmtFull(grp.non.m2)} m²`,unit:`avg of €${COST.com} and €${COST.ind}/m² (2010) × curves`,eur:grp.non.eur,src:'JRC 2017 via CLIMAAX (EU values); use code 2 = non-residential (check Annex 2)',kind:'data'},
+    {g:'Damage',k:'Roads and paths',q:`${rkm.toFixed(1)} km · ${fmtFull(rm2)} m²`,unit:`€${COST.road}/m² (2010) × road curve`,eur:reur,src:'JRC 2017 Table 3-21 (Europe); widths by road class are assumptions',kind:'mix'},
+    {g:'Response',k:'Shelter (people placed × nights)',q:`${fmtFull(placed)} people × ${COST.nights} nights`,unit:`€${COST.shelterNight} per person-night`,eur:placed*COST.nights*COST.shelterNight,src:'Weak proxy: Dutch emergency shelters 2015–16; replace with Red Cross / civil protection figure',kind:'proxy'},
+    {g:'Response',k:'Emergency teams (driving + time on scene)',q:RS.cmp?`${teamH.toFixed(0)} team-hours`:'run Dispatch in Alert',unit:COST.teamHour?`€${COST.teamHour} per team-hour`:'rate not set',eur:teamH*COST.teamHour,src:'No published Belgian rate found: enter the official one',kind:'missing'}];
+  out.notCounted=['Vehicles (no data)','Agriculture and gardens (no land-use data loaded)','Bridges, rail, energy and telecom networks (no asset data; in 2021 these were a large share, see Walloon reconstruction)','Business interruption, health, clean-up, temporary housing'];
+  out.damage=out.items.filter(x=>x.g==='Damage').reduce((s,x)=>s+x.eur,0); out.response=out.items.filter(x=>x.g==='Response').reduce((s,x)=>s+x.eur,0);
+  return out; }
+const eur=v=>v>=1e9?`€${(v/1e9).toFixed(2)} bn`:v>=1e6?`€${(v/1e6).toFixed(1)} M`:v>=1e3?`€${Math.round(v/1e3)} k`:`€${Math.round(v)}`;
+// average annual damage (UNDRR AAL): area under the damage–probability curve between the mapped flood sizes
+function costAAL(){ const pts=(D.base||D.rps).map(r=>[1/r,floodCost(r).damage]).sort((a,b)=>b[0]-a[0]); let s=0;
+  for(let i=0;i<pts.length-1;i++) s+=(pts[i][0]-pts[i+1][0])*(pts[i][1]+pts[i+1][1])/2; return s+pts[pts.length-1][0]*pts[pts.length-1][1]; }
+
+/* ---------- panel (Policy tab) ---------- */
+function drawCosts(){ if(!D||!$('costOut')) return; const r=rp(),c=floodCost(r),tag=k=>({data:'<span class="tag data">data + research</span>',mix:'<span class="tag data">data</span> <span class="tag">width assumed</span>',proxy:'<span class="tag">proxy</span>',missing:'<span class="tag">needs a rate</span>'}[k]);
+  $('costOut').innerHTML=`<div class="stats"><div class="stat"><b>${eur(c.damage)}</b><span>direct damage, ${sizeWord(r).toLowerCase()} flood (2022 €)</span></div><div class="stat"><b>${eur(c.response)}</b><span>response costs counted</span></div><div class="stat"><b>${eur(costAAL())}</b><span>average damage per year (AAL)</span></div></div>
+   <table class="tbl" style="margin-top:8px"><thead><tr><th>Item</th><th>Quantity</th><th>Unit cost</th><th>Total</th></tr></thead><tbody>
+   ${c.items.map(x=>`<tr><td><b>${x.k}</b><br>${tag(x.kind)}</td><td>${x.q}</td><td>${x.unit}</td><td class="mono"><b>${eur(x.eur)}</b></td></tr>`).join('')}</tbody></table>
+   <details class="info"><summary>ⓘ Sources, method and what is not counted</summary>
+   <ul class="limits">${c.items.map(x=>`<li><b>${x.k}:</b> ${x.src}</li>`).join('')}
+   <li>Damage = floor area × maximum damage per m² × share damaged at the water depth (JRC depth–damage curve), at peak water; prices ×${COST.cpi} from 2010 to 2022 (EU CPI, as in CLIMAAX).</li>
+   <li><b>Not counted:</b> ${c.notCounted.join('; ')}.</li></ul></details>
+   <h3 class="sub">Real July 2021 costs (for comparison, all Belgium / Wallonia, not only this valley)</h3>
+   <table class="tbl"><tbody>${REAL2021.map(x=>`<tr><td>${x[0]}</td><td class="mono">${x[1]}</td><td class="hint">${x[2]}</td></tr>`).join('')}</tbody></table>
+   <details class="cands"><summary>Change unit costs</summary><div class="form" style="margin-top:8px">${[['shelterNight','Shelter, € per person-night'],['nights','Nights in shelter'],['teamHour','Emergency team, € per hour'],['res','Homes, €/m² (2010)'],['com','Commercial, €/m² (2010)'],['ind','Industrial, €/m² (2010)'],['road','Roads, €/m² (2010)'],['cpi','Price update 2010→today']].map(([k,t])=>`<label>${t}<input class="btn" type="number" step="any" min="0" data-cost="${k}" value="${COST[k]}"></label>`).join('')}</div></details>`; }
+document.addEventListener('change',e=>{const k=e.target.dataset?.cost; if(k&&e.target.value!==''){COST[k]=+e.target.value; drawCosts(); if(S.tab==='diag') drawDiagram();}});
+
+/* ---------- diagrams ---------- */
+function costChart(k){ const src='JRC depth–damage functions (Huizinga et al. 2017) · GHS-OBAT buildings · OpenStreetMap roads · EFAS depths · prices 2022 €';
+  if(k==='costItems'){ const c=floodCost(rp()),cols=['--c-mod','--c-both','--wave2','--c-obs','--crit'];
+    const rows=c.items.map((x,i)=>({label:x.k,value:x.eur/1e6,txt:eur(x.eur),color:css(cols[i])}));
+    return {kind:'bar',title:`Cost of a ${sizeWord(rp()).toLowerCase()} flood (1-in-${rp()}), € million`,sub:`Direct damage ${eur(c.damage)} + response ${eur(c.response)}. Not counted: vehicles, agriculture, bridges and networks, business interruption.`,rows,src,
+      csv:[['item','quantity','unit_cost','total_EUR','source'],...c.items.map(x=>[x.k,x.q,x.unit,Math.round(x.eur),x.src])]}; }
+  if(k==='costRP'){ const B=D.base||D.rps,rows=B.map(r=>{const v=floodCost(r).damage; return {label:`${sizeWord(r)} (1-in-${r})`,value:v/1e6,txt:eur(v),color:css('--c-mod')};});
+    return {kind:'bar',title:'Direct damage per flood size, € million',sub:`Average damage per year (AAL, UNDRR method): ${eur(costAAL())}. Same unit costs and curves for every size.`,rows,src,
+      csv:[['flood_size','damage_EUR'],...B.map((r,i)=>[r,Math.round(rows[i].value*1e6)])]}; }
+  const hs=Array.from({length:13},(_,i)=>i/2);
+  return {kind:'line',title:'Depth–damage curves (share of value lost)',sub:'JRC Europe curves (Huizinga et al. 2017), as published in the EU CLIMAAX handbook.',x:hs.map(h=>h+' m'),yTitle:'share',
+    series:[['res','Homes',css('--c-mod')],['com','Commercial',css('--c-both')],['ind','Industrial',css('--wave2')],['road','Roads',css('--c-obs')]].map(([k,n,c])=>({name:n,color:c,values:hs.map(h=>ddf(k,h))})),
+    src:'Huizinga, de Moel & Szewczyk (2017), EUR 28552 EN, doi 10.2760/16510',csv:[['depth_m','homes','commercial','industrial','roads'],...hs.map(h=>[h,...['res','com','ind','road'].map(k=>ddf(k,h).toFixed(3))])]}; }
 
 </script>
 <script>

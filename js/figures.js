@@ -1,5 +1,5 @@
 // figures.js - Extra figures for the diagram studio: line graphs over time, map figures (captured from the live map),
-// and system-design diagrams (flowchart, architecture, data flow, entity–relationship). All export as PNG / SVG.
+// and a colour helper. All export as PNG / SVG.
 // Loaded as a classic script: top-level names are shared between files (order set in index.html).
 
 /* ---------- shared SVG pieces ---------- */
@@ -55,37 +55,5 @@ async function mapFigure(k){ const keep={tab:S.tab,T:S.T,cmp:S.cmp},r=rp(),W=712
   } finally { Object.assign(S,keep); applyLayers(); render(); }
   return f; }
 
-/* ---------- system-design diagrams ---------- */
+/* ---------- colour helper ---------- */
 const mix=(a,b,t)=>'#'+hexRgb(a).map((v,i)=>Math.round(v*t+hexRgb(b)[i]*(1-t)).toString(16).padStart(2,'0')).join(''); // plain hex: exported SVGs open everywhere
-function designDiagram(k){ const sf=css('--surface'),blue=mix(css('--accent'),sf,.14),warm=mix(css('--obs'),sf,.18),green=mix(css('--zg'),sf,.16);
-  const src='Design of this prototype · Flood Scenario Explorer',csv=n=>[['element','description'],...n.nodes.map(x=>[x.id,x.label.replace(/\n/g,' — ')]),...n.edges.map(e=>[`${e[0]} → ${e[1]}`,e[2]||''])];
-  let d;
-  if(k==='flow'){ const x=150,w=380,h=46,g=60,steps=[
-      ['load','1 · Load terrain and data','Copernicus DEM, EFAS depths (1-in-10/100/500), GHS people & buildings, OSM roads & shelters'],
-      ['rain','2 · Add rainfall','Forecast, July 2021 replay, or your scenario → rain reaching the river'],
-      ['size','3 · Match rain to a flood size','48-hour rain records → yearly chance → flood map (interpolated)'],
-      ['flow','4 · Water rises section by section','Riverbed depth nearby + downstream delay from terrain'],
-      ['upd','5 · Update water depth','Cells, buildings, roads, people, critical sites'],
-      ['risk','6 · Check flood risk','Zones, closed roads, shelters, routes, alert thresholds'],
-      ['next','7 · Next time step','Until the end of the event']];
-    d={nodes:steps.map(([id,a,b],i)=>({id,label:`${a}\n${b}`,x,y:90+i*(h+g/2+10),w,h:h+6,fill:i===5?warm:blue,shape:i===0||i===6?'proc':'box'})),
-      edges:steps.slice(1).map((s,i)=>[steps[i][0],s[0]]).concat([['next','flow','repeat',x+w+90]]),H:90+7*(h+g/2+10)+40};
-    d.nodes.push({id:'alert',label:'Alert\nauthorities & residents',x:x+w+120,y:d.nodes[5].y-4,w:170,h:58,fill:green}); d.edges.push(['risk','alert','over threshold']); }
-  if(k==='arch'){ const col=(i)=>30+i*178,row=(j)=>110+j*92,b=(id,label,i,j,fill,h=70)=>({id,label,x:col(i),y:row(j),w:158,h,fill});
-    d={nodes:[b('wx','Weather forecasts\nOpen-Meteo, GloFAS',0,0,blue),b('sens','River gauges, sensors\n(future: SPW hydrometry)',0,1,blue),b('data','Hazard & exposure data\nEFAS, GHS, OSM, DEM',0,2,blue),
-      b('sim','Simulation\nscenario → water rise\nover time',1,1,warm,90),b('risk','Risk analysis\nzones, roads, shelters,\nevacuation, teams',2,1,warm,90),
-      b('alert','Alerts\nauthority alert, CAP draft,\nresident messages',3,1,green,90),b('auth','Authorities\nmayor, civil protection',3,0,green),b('res','Residents\nmessages, safe routes',3,2,green)],
-      edges:[['wx','sim'],['sens','sim','not connected yet'],['data','sim'],['sim','risk'],['risk','alert'],['alert','auth'],['alert','res']],H:430}; }
-  if(k==='dfd'){ const n=(id,label,x,y,shape,fill,w=150,h=58)=>({id,label,x,y,w,h,shape,fill});
-    d={nodes:[n('E1','Weather service',24,100,'box',css('--bg')),n('E2','Sensors (future)',24,230,'box',css('--bg')),n('E3','Authorities',590,100,'box',css('--bg')),n('E4','Residents',590,330,'box',css('--bg')),
-      n('P1','1.0 Ingest data',220,100,'proc',blue),n('P2','2.0 Simulate flood',220,230,'proc',blue),n('P3','3.0 Assess risk',400,230,'proc',blue),n('P4','4.0 Plan evacuation',400,360,'proc',blue),n('P5','5.0 Issue alerts',590,230,'proc',warm),
-      n('D1','D1 Hazard maps & terrain',220,360,'store',css('--bg'),160,40),n('D2','D2 Scenarios & results',40,370,'store',css('--bg'),160,40),n('D3','D3 Alert log',400,110,'store',css('--bg'),150,40)],
-      edges:[['E1','P1','rain'],['E2','P1','levels'],['P1','P2','rain index'],['D1','P2','depths'],['P2','D2','results'],['P2','P3','water over time'],['P3','P4','risk areas'],['P4','P5','plan'],['P3','P5','thresholds'],['P5','E3','alert'],['P5','E4','messages'],['P5','D3','log']],H:450}; }
-  if(k==='erd'){ const e=(id,fields,x,y)=>({id,label:`${id}\n${fields.join('\n')}`,x,y,w:160,h:24+fields.length*17,fill:blue,left:true});
-    d={nodes:[e('User',['id','role','municipality'],24,100),e('Simulation',['id','user_id','scenario params','created_at'],230,100),e('FloodEvent',['id','simulation_id','return_period','peak_time'],440,100),
-      e('Sensor',['id','type','location'],24,290),e('Reading',['id','sensor_id','time','value'],230,290),e('Alert',['id','simulation_id','level','audience','sent_at'],440,290),
-      e('Report',['id','simulation_id','format','created_at'],620,100),e('Shelter',['id','name','capacity','location'],620,290)],
-      edges:[['User','Simulation','1 → n'],['Simulation','FloodEvent','1 → n'],['Sensor','Reading','1 → n'],['Simulation','Alert','1 → n'],['Simulation','Report','1 → n'],['Reading','Simulation','feeds'],['Alert','Shelter','points to']],H:440}; }
-  const meta={flow:['Flowchart: how the simulation works','The algorithm as built in this app (not a hydraulic model).'],arch:['System architecture','From forecasts and data to alerts. Sensors are a proposed extension.'],
-    dfd:['Data flow diagram','External entities (rectangles), processes (rounded), data stores (open boxes).'],erd:['Entity–relationship diagram','Proposed database for an operational version: the prototype stores no personal data.']}[k];
-  return {kind:'boxes',title:meta[0],sub:meta[1],...d,src,csv:csv(d)}; }

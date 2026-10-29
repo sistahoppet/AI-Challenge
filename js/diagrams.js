@@ -15,6 +15,9 @@ const DIAGS=[
   {g:'Maps',k:'mheat',t:'Water depth heatmap',s:'Water depth at the peak of the flood size you picked.',metric:false},
   {g:'Maps',k:'mprog',t:'Flood progression',s:'Three moments: early, rising, peak.',metric:false},
   {g:'Maps',k:'mevac',t:'Evacuation route map',s:'Closed roads, shelters, evacuation routes and groups.',metric:false},
+  {g:'Costs',k:'costItems',t:'Cost of this flood, item by item',s:'Damage to homes, businesses, roads, and response costs (2022 €).',metric:false},
+  {g:'Costs',k:'costRP',t:'Damage per flood size',s:'Direct damage for each flood size, with the average per year (AAL).',metric:false},
+  {g:'Costs',k:'costCurves',t:'Depth–damage curves used',s:'Share of value lost by water depth (JRC 2017, Europe).',metric:false},
   {g:'Policy framework',k:'fwArch',t:'Five modules and what the app covers',s:'Architecture of the AI-assisted crisis management framework.',metric:false},
   {g:'Policy framework',k:'fwMethods',t:'Review of the calculation methods',s:'Which formulas are supported and what replaces the rest.',metric:false},
   {g:'Policy framework',k:'fwStages',t:'Framework stages and status in the app',s:'8 stages, methods, references, and what is built.',metric:false},
@@ -23,11 +26,7 @@ const DIAGS=[
   {g:'Policy framework',k:'fwAAL',t:'Risk curve (AAL logic)',s:'Residents in flooded areas vs yearly chance (real data).',metric:false},
   {g:'Policy framework',k:'fwCost',t:'Cost–loss model (ECMWF)',s:'When acting is worth it: p* = C / L (hypothetical €).',metric:false},
   {g:'Policy framework',k:'fwBCR',t:'Benefit–cost ratio',s:'Avoided damage vs cost (hypothetical €).',metric:false},
-  {g:'Policy framework',k:'fwFill',t:'Fill rate of emergency teams',s:'Requests for help that get a team, nearest vs priority.',metric:false},
-  {g:'System design',k:'flow',t:'Flowchart: how the simulation works',s:'The algorithm step by step, as built in this app.',metric:false},
-  {g:'System design',k:'arch',t:'System architecture',s:'From forecasts and data to alerts for authorities and residents.',metric:false},
-  {g:'System design',k:'dfd',t:'Data flow diagram',s:'How rain, sensors, simulation results and alerts move through the system.',metric:false},
-  {g:'System design',k:'erd',t:'Entity–relationship diagram',s:'A database design for a future operational version.',metric:false}];
+  {g:'Policy framework',k:'fwFill',t:'Fill rate of emergency teams',s:'Requests for help that get a team, nearest vs priority.',metric:false}];
 function drawDList(){ let g=''; $('dlist').innerHTML=DIAGS.map(d=>(d.g!==g?`<div class="dg">${g=d.g}</div>`:'')+`<button data-k="${d.k}" aria-pressed="${S.diag===d.k}"><b>${d.t}</b><span>${d.s}</span></button>`).join(''); }
 $('dlist').onclick=e=>{const b=e.target.closest('button'); if(!b) return; S.diag=b.dataset.k; drawDList(); drawDiagram();};
 $('metricSeg').onclick=e=>{const b=e.target.closest('button'); if(!b) return; S.metric=b.dataset.m; $('metricSeg').querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',x===b)); drawDiagram();};
@@ -68,8 +67,8 @@ function chartData(){
     return {kind:'bar',title:'Residents in the water: same rain, different drains and soil',sub:`Your rain: ${SC.rain} mm/h for ${SC.dur} min. Other settings as in "Build your own rain scenario".`,rows,src:src+' · Open-Meteo rain records',
       csv:[['scenario','residents'],...rows.map(r=>[r.label,r.value])]};}
   if(S.diag[0]==='m') return {kind:'img',title:DIAGS.find(x=>x.k===S.diag).t,sub:'',src:'Sources: EFAS, GHS-OBAT, GHS-POP, OpenStreetMap, Copernicus DEM'+(isDemo?' · DEMO DATA':''),csv:null};
-  if(['flow','arch','dfd','erd'].includes(S.diag)) return designDiagram(S.diag);
   if(S.diag.startsWith('fw')) return fwChart(S.diag);
+  if(S.diag.startsWith('cost')) return costChart(S.diag);
   const names=['Flooded in both','Only on the hazard map','Only in 2021'],cols=['--c-both','--c-mod','--c-obs'];
   if(!D.hasObs) return {kind:'empty',title:'Model vs the real 2021 flood',sub:'Load the 2021 flood file (Copernicus EMS) to draw this diagram.',src,csv:[['note'],['no 2021 file loaded']]};
   return {kind:'stack',title:'Hazard map vs the real 2021 flood (area, km²)',sub:'How much of each flood-size map overlaps the satellite outline of July 2021.',src,

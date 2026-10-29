@@ -11,7 +11,7 @@ $('size').oninput=e=>{S.sizeIdx=+e.target.value; drawSize(); render(); drawActor
 /* ---------- tabs ---------- */
 function setTab(t){ S.tab=t; document.querySelectorAll('.tabs [data-t]').forEach(b=>b.setAttribute('aria-selected',b.dataset.t===t));
   ['sim','safety','coord','diag','policy'].forEach(k=>$('tab-'+k).hidden=k!==t);
-  $('stage').hidden=t!=='diag'; if(t==='diag') drawDiagram(); if(t==='coord') drawCoord(); if(t==='policy') drawImpact(); drawLegend(); applyLayers(); }
+  $('stage').hidden=t!=='diag'; if(t==='diag') drawDiagram(); if(t==='coord') drawCoord(); if(t==='policy'){ drawCosts(); drawImpact(); } drawLegend(); applyLayers(); }
 document.querySelector('.tabs').onclick=e=>{const b=e.target.closest('[data-t]'); if(b) setTab(b.dataset.t);};
 $('stageClose').onclick=()=>setTab('sim');
 

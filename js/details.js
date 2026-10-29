@@ -79,7 +79,7 @@ let roadSegs=new Map(),roadLines=[],cutPieces=[],roadT=null,graphCache={};
 const kk=p=>p[0].toFixed(5)+','+p[1].toFixed(5);
 function roadsReset(){ roadSegs=new Map(); roadLines=[]; cutPieces=[]; cars=[]; graphCache={};
   if(ready){map.getSource('cut').setData(empty()); map.getSource('cars').setData(empty());}
-  if(D.roads?.length){ addRoads(D.roads.map(f=>({pts:f.geometry.coordinates,car:f.properties.car!==0,foot:f.properties.foot!==0,bridge:!!f.properties.bridge}))); finishRoads(); } }
+  if(D.roads?.length){ addRoads(D.roads.map(f=>({pts:f.geometry.coordinates,car:f.properties.car!==0,foot:f.properties.foot!==0,bridge:!!f.properties.bridge,cls:f.properties.hw||f.properties.cls}))); finishRoads(); } }
 function cellAt(p){const i=D.G.at(p[0],p[1]); return i<0?null:D.cells[i];}
 function depthAt(p){return cellAt(p)?.depth||null;}
 function addRoads(lines){ let added=0;
@@ -89,7 +89,7 @@ function addRoads(lines){ let added=0;
       for(let s=0;s<n;s++){ const t0=s/n,t1=(s+1)/n,q=[a[0]+(b[0]-a[0])*t0,a[1]+(b[1]-a[1])*t0],e=[a[0]+(b[0]-a[0])*t1,a[1]+(b[1]-a[1])*t1],c=cellAt([(q[0]+e[0])/2,(q[1]+e[1])/2]);
         if(!c) continue; D.rps.forEach(r=>dep[r]=Math.max(dep[r]||0,c.depth[r])); if(D.rps.some(r=>c.depth[r]>0)) cs.add(c);
         if(L.car&&D.rps.some(r=>c.depth[r]>CAR_DEPTH)) cutPieces.push({a:q,b:e,len:len/n,dep:c.depth,c}); }
-      roadSegs.set(key,{a,b,len,dep,cs:[...cs],car:L.car,foot:L.foot,bridge:L.bridge}); added++; } }
+      roadSegs.set(key,{a,b,len,dep,cs:[...cs],car:L.car,foot:L.foot,bridge:L.bridge,cls:L.cls}); added++; } }
   return added; }
 function finishRoads(){ graphCache={}; if(!ready) return;
   map.getSource('cut').setData({type:'FeatureCollection',features:cutPieces.map(s=>({type:'Feature',geometry:{type:'LineString',coordinates:[s.a,s.b]},properties:depthProps(s.c)}))});
@@ -97,7 +97,7 @@ function finishRoads(){ graphCache={}; if(!ready) return;
 function collectRoads(){ if(D?.roads?.length) return; clearTimeout(roadT); roadT=setTimeout(()=>{ if(!ready||!D) return;
   const [x0,y0,x1,y1]=D.bbox,inB=p=>p[0]>=x0&&p[0]<=x1&&p[1]>=y0&&p[1]<=y1,lines=[];
   for(const f of map.querySourceFeatures('osm',{sourceLayer:'transportation'})){ if(!VEH.includes(f.properties.class)) continue;
-    const g=f.geometry; for(const pts of g.type==='LineString'?[g.coordinates]:g.type==='MultiLineString'?g.coordinates:[]) if(pts.some(inB)) lines.push({pts,car:true,foot:!MAJOR.slice(0,2).includes(f.properties.class),bridge:f.properties.brunnel==='bridge'}); }
+    const g=f.geometry; for(const pts of g.type==='LineString'?[g.coordinates]:g.type==='MultiLineString'?g.coordinates:[]) if(pts.some(inB)) lines.push({pts,cls:f.properties.class,car:true,foot:!MAJOR.slice(0,2).includes(f.properties.class),bridge:f.properties.brunnel==='bridge'}); }
   if(addRoads(lines)) finishRoads(); },500); }
 function cutKm(r,now){let m=0; for(const s of cutPieces) if((now?nowDepth(s.c,r):s.dep[r])>CAR_DEPTH) m+=s.len; return m/1000;}
 
