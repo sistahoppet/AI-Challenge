@@ -18,7 +18,8 @@ function roadGraph(r,mode='foot',limit=Infinity,plain=false,now=false){ const ke
   if(Object.keys(graphCache).length>24) graphCache={};
   if(roadSegs.size<50) return null; const id=new Map(),pts=[],adj=[];
   const node=p=>{const k=kk(p); let n=id.get(k); if(n===undefined){n=pts.length; id.set(k,n); pts.push(p); adj.push([]);} return n;};
-  for(const s of roadSegs.values()){ const d=now?s.cs.reduce((m,c)=>Math.max(m,nowDepth(c,r)),0):s.dep[r]||0; if(!s[mode]||d>limit) continue;
+  for(const s of roadSegs.values()){ s.qs??=pixLine(s.a,s.b); // depth = deepest drawn water along the street (and its grid cells)
+    const d=Math.max(now?s.cs.reduce((m,c)=>Math.max(m,nowDepth(c,r)),0):s.dep[r]||0,s.qs.reduce((m,q)=>Math.max(m,pixDepth(q,r,S.T,!now)),0)); if(!s[mode]||d>limit) continue;
     const a=node(s.a),b=node(s.b),w=plain||limit<Infinity?s.len:s.len*(1+4*Math.max(0,d-CAR_DEPTH)); adj[a].push(b,w); adj[b].push(a,w);} // deep streets cost more
   return graphCache[key]={pts,adj,kind:'streets'};}
 function gridGraph(r){ const G=D.G,pts=D.cells.map(c=>c.c),adj=D.cells.map(()=>[]);

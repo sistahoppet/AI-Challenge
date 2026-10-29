@@ -55,6 +55,8 @@ function initMap(){
     map.addLayer({id:'bld-3d',type:'fill-extrusion',source:'bld',layout:{visibility:'none'},paint:{'fill-extrusion-color':bldColor(),'fill-extrusion-height':0,'fill-extrusion-opacity':0.95,'fill-extrusion-vertical-gradient':true}});
     // roof band on top, thickness and colour by type: tiled homes, flat grey work buildings, coloured public and emergency buildings
     map.addLayer({id:'bld-roof',type:'fill-extrusion',source:'bld',layout:{visibility:'none'},paint:{'fill-extrusion-color':roofColor(),'fill-extrusion-height':0,'fill-extrusion-base':0,'fill-extrusion-opacity':0.95}});
+    // 3D: the water around each flooded building, up to today's level; a building lower than the water disappears under it
+    map.addLayer({id:'bld-water',type:'fill-extrusion',source:'bld',layout:{visibility:'none'},filter:['==',1,0],paint:{'fill-extrusion-color':css('--w2'),'fill-extrusion-height':0,'fill-extrusion-opacity':.8}});
     map.addLayer({id:'bld-line',type:'line',source:'bld',minzoom:15,paint:{'line-color':css('--ink'),'line-opacity':.25,'line-width':.5}});
     addLiveLayers(); addEvacLayers(); addPlaceLayers(); addResponseLayers();
     map.addLayer({id:'obs-fill',type:'fill',source:'obs',paint:{'fill-color':css('--obs'),'fill-opacity':.45}});
@@ -87,7 +89,7 @@ function applyLayers(){
   const model=S.cmp!=='obs',obs=S.cmp!=='model'&&D.hasObs&&!zones;
   map.setLayoutProperty('water-img','visibility',vis(!zones&&model)); map.setLayoutProperty('water-3d','visibility',vis(three&&!zones&&$('tCols').checked));
   map.setLayoutProperty('zones','visibility',vis(zones||$('tZones').checked)); map.setPaintProperty('zones','fill-opacity',zones?.55:.3);
-  map.setLayoutProperty('bld-2d','visibility',vis(!three&&$('tBld').checked)); map.setLayoutProperty('bld-hit','visibility',vis(!three&&$('tBld').checked&&!zones)); map.setLayoutProperty('bld-3d','visibility',vis(three&&$('tBld').checked)); map.setLayoutProperty('bld-roof','visibility',vis(three&&$('tBld').checked)); map.setLayoutProperty('bld-line','visibility',vis(!three&&$('tBld').checked));
+  map.setLayoutProperty('bld-2d','visibility',vis(!three&&$('tBld').checked)); map.setLayoutProperty('bld-hit','visibility',vis(!three&&$('tBld').checked&&!zones)); map.setLayoutProperty('bld-3d','visibility',vis(three&&$('tBld').checked)); map.setLayoutProperty('bld-roof','visibility',vis(three&&$('tBld').checked)); map.setLayoutProperty('bld-water','visibility',vis(three&&$('tBld').checked)); map.setLayoutProperty('bld-line','visibility',vis(!three&&$('tBld').checked));
   map.setLayerZoomRange('bld-hit',0,14.5); // up close the real footprints show the water; the dots only help when zoomed out
   map.setLayoutProperty('obs-line','visibility',vis(obs)); map.setLayoutProperty('obs-fill','visibility',vis(obs));
   map.setPaintProperty('bld-3d','fill-extrusion-height',['*',['get','h'],S.lift,1.02]); // real GHS-OBAT height, just above the OSM footprint it sits in
@@ -103,7 +105,13 @@ function paintDynamic(force){ if(!ready) return; const cols=S.l3d&&$('tCols').ch
   map.setPaintProperty('bld-hit','circle-color',bldColor()); map.setPaintProperty('bld-hit','circle-opacity',['case',hit,.95,0]);
   map.setPaintProperty('bld-hit','circle-stroke-color',['case',now,css('--w3'),'#fff']); map.setPaintProperty('bld-hit','circle-stroke-width',['case',now,2,1]);
   map.setPaintProperty('bld-hit','circle-stroke-opacity',['case',hit,1,0]);
+  if(S.l3d){ const w=['max',0,over()],sub=['>=',w,['get','h']],z=v=>['*',v,S.lift,1.02];
+    map.setPaintProperty('bld-3d','fill-extrusion-base',z(['min',['get','h'],w])); // only the part above the water stands out
+    map.setPaintProperty('bld-roof','fill-extrusion-base',['case',sub,0,z(['get','h'])]);
+    map.setPaintProperty('bld-roof','fill-extrusion-height',['case',sub,0,z(['+',['get','h'],['match',['get','bt'],0,1.6,1,.4,2,2.2,1.2]])]);
+    map.setPaintProperty('bld-water','fill-extrusion-height',z(w)); }
   if(S.l3d&&(force||performance.now()-lastFilter>150)){ lastFilter=performance.now(); // filters are slower, so update them less often
+    map.setFilter('bld-water',['>',over(),0.05]);
     // 3D: only buildings in the water are drawn from GHS-OBAT (coloured); all others come from OpenStreetMap at their real height
     map.setFilter('bld-3d',$('tOsmB').checked&&!D.hasFp?['>',over(),0.01]:null); map.setFilter('bld-roof',$('tOsmB').checked&&!D.hasFp?['>',over(),0.01]:null);
     if(cols){ map.setFilter('water-3d',['>',over(),0.01]); map.setPaintProperty('water-3d','fill-extrusion-color',waterColor());

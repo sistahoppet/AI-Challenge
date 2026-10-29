@@ -21,7 +21,9 @@ const clockM=m=>m<0?`${clock(-m/SC.mins)} before start`:clock(m/SC.mins);
 function drillPrep(){ const P=E.plan; if(!P?.groups.length||!E.shelters.length) return null; const r=P.r,M=SC.mins,F=CAR_DEPTH,G=D.G,B=Math.max(1,Math.round(400/G.m));
   // minute when the water at a cell first reaches F (inverse of nowDepth's rise, same curve as floodStart)
   const cutT=c=>{const d=c.depth[r]; if(!(d>F)) return Infinity; const v=1-(d-F)/c.L[r]; if(INIT/(c.L[r]||1)>=v) return 0; return (c.lag+.45*Math.acos(1-2*v)/Math.PI)*M;};
-  const cellsOf=l=>{ if(l.cells) return l.cells; const out=[],seen=new Set(); for(let s=0;s<=l.len;s+=40){const p=along(l,s),i=G.at(p[0],p[1]); if(i<0||seen.has(i)) continue; seen.add(i); const t=cutT(D.cells[i]); if(isFinite(t)) out.push([s,t]);} return l.cells=out; };
+  // closing time along a route: drawn water (same as the map) and grid cells, every 15 m
+  const cellsOf=l=>{ if(l.cells) return l.cells; const out=[],seen=new Set(); for(let s=0;s<=l.len;s+=15){const p=along(l,s),i=G.at(p[0],p[1]),q=pixAt(p); if(seen.has(q+':'+i)) continue; seen.add(q+':'+i);
+    const t=Math.min(i<0?Infinity:cutT(D.cells[i]),pixCut(q,r,F,M)); if(isFinite(t)) out.push([s,t]);} return l.cells=out; };
   const key=c=>Math.floor(c.gx/B)+':'+Math.floor(c.gy/B),up=new Map(); // share of residents whose building keeps a floor above the water (GHS-OBAT height)
   for(const b of D.blds){ if(b.ci<0) continue; const c=D.cells[b.ci],d=c.depth[r]; if(!(d>.01)) continue; const k=key(c),w=b.pop||1,u=up.get(k)||up.set(k,{a:0,n:0}).get(k); u.n+=w; if(b.h>=d+STOREY) u.a+=w; }
   // when the water reaches the homes of a group: the residents' median moment (the group's first wet cell is often the riverbed)

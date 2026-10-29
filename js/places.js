@@ -76,7 +76,9 @@ function abSet(which,p){ AB[which.toLowerCase()]=p; AB.mk[which]?.remove(); cons
 function abPick(p){ if(!AB.pick) return false; const w=AB.pick; AB.pick=null; map.getCanvas().style.cursor=''; ['abA','abB'].forEach(id=>$(id).setAttribute('aria-pressed',false));
   abSet(w,p); if(AB.a&&(AB.b||w==='A'&&AB.toShelter)) abRoute(); return true; }
 function pathOf(g,tree,from){const out=[]; for(let u=from;u>=0;u=tree.prev[u]) out.push(g.pts[u]); return out;}
-function abRoute(fit=true){ const r=rp(),mode=AB.mode||$('abMode').value,lim=mode==='car'?CAR_DEPTH:FOOT_DEPTH,out=$('abOut'),off=S.T<.45||S.T>.6; // water at the video's current moment
+function abRoute(fit=true){ const r=rp(),mode=AB.mode||$('abMode').value,lim=ANY_WATER,out=$('abOut'),off=S.T<.45||S.T>.6; // water at the video's current moment
+  const wetAt=p=>pixDepth(pixAt(p),r),wa=wetAt(AB.a),wb=AB.b&&!AB.toShelter?wetAt(AB.b):0; // a point in the water: no safe route from/to it, say so
+  if(wa>lim||wb>lim){ map.getSource('ab').setData({type:'FeatureCollection',features:[]}); out.innerHTML=`<b style="color:var(--err)">${wa>lim?'A':'B'} is under ${(Math.max(wa,wb)).toFixed(2)} m of water at this moment.</b> No safe way ${wa>lim?'out by road: go upstairs, call 112 and wait for rescue':'in: choose a dry place'}. Move the timeline earlier to see when it was still possible.`; return; }
   const safe=roadGraph(r,mode,lim,false,true),any=roadGraph(r,mode,Infinity,true); if(!safe){out.textContent='Roads are not loaded yet.'; return;}
   const sa=nearest(safe,AB.a),ta=dijkstra(safe,sa); let tb,dest;
   if(AB.toShelter){ let best=Infinity; E.shelters.forEach((s,k)=>{const n=nearest(safe,s.c); if(ta.dist[n]<best){best=ta.dist[n]; tb=n; dest=s;}}); if(dest) abSet('B',dest.c); }
@@ -91,10 +93,10 @@ function abRoute(fit=true){ const r=rp(),mode=AB.mode||$('abMode').value,lim=mod
   if(any&&AB.b){ const na=nearest(any,AB.a),t=dijkstra(any,na),nb=nearest(any,AB.b); if(isFinite(t.dist[nb])){ const pts=pathOf(any,t,nb).reverse(),wet=wetLen(pts,r,lim);
     if(wet>0){ F.push({type:'Feature',geometry:{type:'LineString',coordinates:pts},properties:{k:'normal'}});
       html+=`<br><span style="color:var(--cut)">The usual shortest route (dashed) has ${Math.round(wet)} m under ${lim} m of water or more.</span>`; } } }
-  map.getSource('ab').setData({type:'FeatureCollection',features:F}); out.innerHTML=html+`<br><span class="hint">Water ${off?`at the moment shown in the video (${['rising','','going down'][S.T<.45?0:2]})`:'at the peak'} of the ${sizeWord(r).toLowerCase()} flood. Move the timeline and press the button again to compare. Limits: car ${CAR_DEPTH} m, walking ${FOOT_DEPTH} m (assumptions).</span>`;
+  map.getSource('ab').setData({type:'FeatureCollection',features:F}); out.innerHTML=html+`<br><span class="hint">Water ${off?`at the moment shown in the video (${['rising','','going down'][S.T<.45?0:2]})`:'at the peak'} of the ${sizeWord(r).toLowerCase()} flood. Move the timeline and press the button again to compare. The safe route avoids every street with visible water (≥ ${ANY_WATER*100} cm), as for the video: never drive or walk into flood water.</span>`;
   if(F.length&&fit) map.fitBounds(bboxOf([F.flatMap(f=>f.geometry.coordinates)]),{padding:90,duration:900,pitch:map.getPitch(),bearing:map.getBearing()}); return html; }
 function countBridges(pts){let n=0,on=false; for(let j=1;j<pts.length;j++){const s=roadSegs.get(kk(pts[j-1])+'|'+kk(pts[j]))||roadSegs.get(kk(pts[j])+'|'+kk(pts[j-1])),b=!!s?.bridge; if(b&&!on) n++; on=b;} return n;}
-function wetLen(pts,r,lim){let m=0; for(let j=1;j<pts.length;j++){const s=roadSegs.get(kk(pts[j-1])+'|'+kk(pts[j]))||roadSegs.get(kk(pts[j])+'|'+kk(pts[j-1])); if(s&&s.cs.some(c=>nowDepth(c,r)>lim)) m+=s.len;} return m;}
+function wetLen(pts,r,lim){let m=0; for(let j=1;j<pts.length;j++){const s=roadSegs.get(kk(pts[j-1])+'|'+kk(pts[j]))||roadSegs.get(kk(pts[j])+'|'+kk(pts[j-1])); if(s&&(s.cs.some(c=>nowDepth(c,r)>lim)||(s.qs??=pixLine(s.a,s.b)).some(q=>pixDepth(q,r)>lim))) m+=s.len;} return m;}
 function abStart(w){ AB.pick=w; AB.toShelter=false; $('ab'+w).setAttribute('aria-pressed',true); map.getCanvas().style.cursor='crosshair'; toast(`Click the map to set ${w}`); }
 $('abA').onclick=()=>abStart('A'); $('abB').onclick=()=>abStart('B');
 // double-click on the map: first point = A, second = B (route drawn), a third starts again from A

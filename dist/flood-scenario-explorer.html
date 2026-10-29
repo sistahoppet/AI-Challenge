@@ -1021,6 +1021,8 @@ function initMap(){
     map.addLayer({id:'bld-3d',type:'fill-extrusion',source:'bld',layout:{visibility:'none'},paint:{'fill-extrusion-color':bldColor(),'fill-extrusion-height':0,'fill-extrusion-opacity':0.95,'fill-extrusion-vertical-gradient':true}});
     // roof band on top, thickness and colour by type: tiled homes, flat grey work buildings, coloured public and emergency buildings
     map.addLayer({id:'bld-roof',type:'fill-extrusion',source:'bld',layout:{visibility:'none'},paint:{'fill-extrusion-color':roofColor(),'fill-extrusion-height':0,'fill-extrusion-base':0,'fill-extrusion-opacity':0.95}});
+    // 3D: the water around each flooded building, up to today's level; a building lower than the water disappears under it
+    map.addLayer({id:'bld-water',type:'fill-extrusion',source:'bld',layout:{visibility:'none'},filter:['==',1,0],paint:{'fill-extrusion-color':css('--w2'),'fill-extrusion-height':0,'fill-extrusion-opacity':.8}});
     map.addLayer({id:'bld-line',type:'line',source:'bld',minzoom:15,paint:{'line-color':css('--ink'),'line-opacity':.25,'line-width':.5}});
     addLiveLayers(); addEvacLayers(); addPlaceLayers(); addResponseLayers();
     map.addLayer({id:'obs-fill',type:'fill',source:'obs',paint:{'fill-color':css('--obs'),'fill-opacity':.45}});
@@ -1053,7 +1055,7 @@ function applyLayers(){
   const model=S.cmp!=='obs',obs=S.cmp!=='model'&&D.hasObs&&!zones;
   map.setLayoutProperty('water-img','visibility',vis(!zones&&model)); map.setLayoutProperty('water-3d','visibility',vis(three&&!zones&&$('tCols').checked));
   map.setLayoutProperty('zones','visibility',vis(zones||$('tZones').checked)); map.setPaintProperty('zones','fill-opacity',zones?.55:.3);
-  map.setLayoutProperty('bld-2d','visibility',vis(!three&&$('tBld').checked)); map.setLayoutProperty('bld-hit','visibility',vis(!three&&$('tBld').checked&&!zones)); map.setLayoutProperty('bld-3d','visibility',vis(three&&$('tBld').checked)); map.setLayoutProperty('bld-roof','visibility',vis(three&&$('tBld').checked)); map.setLayoutProperty('bld-line','visibility',vis(!three&&$('tBld').checked));
+  map.setLayoutProperty('bld-2d','visibility',vis(!three&&$('tBld').checked)); map.setLayoutProperty('bld-hit','visibility',vis(!three&&$('tBld').checked&&!zones)); map.setLayoutProperty('bld-3d','visibility',vis(three&&$('tBld').checked)); map.setLayoutProperty('bld-roof','visibility',vis(three&&$('tBld').checked)); map.setLayoutProperty('bld-water','visibility',vis(three&&$('tBld').checked)); map.setLayoutProperty('bld-line','visibility',vis(!three&&$('tBld').checked));
   map.setLayerZoomRange('bld-hit',0,14.5); // up close the real footprints show the water; the dots only help when zoomed out
   map.setLayoutProperty('obs-line','visibility',vis(obs)); map.setLayoutProperty('obs-fill','visibility',vis(obs));
   map.setPaintProperty('bld-3d','fill-extrusion-height',['*',['get','h'],S.lift,1.02]); // real GHS-OBAT height, just above the OSM footprint it sits in
@@ -1069,7 +1071,13 @@ function paintDynamic(force){ if(!ready) return; const cols=S.l3d&&$('tCols').ch
   map.setPaintProperty('bld-hit','circle-color',bldColor()); map.setPaintProperty('bld-hit','circle-opacity',['case',hit,.95,0]);
   map.setPaintProperty('bld-hit','circle-stroke-color',['case',now,css('--w3'),'#fff']); map.setPaintProperty('bld-hit','circle-stroke-width',['case',now,2,1]);
   map.setPaintProperty('bld-hit','circle-stroke-opacity',['case',hit,1,0]);
+  if(S.l3d){ const w=['max',0,over()],sub=['>=',w,['get','h']],z=v=>['*',v,S.lift,1.02];
+    map.setPaintProperty('bld-3d','fill-extrusion-base',z(['min',['get','h'],w])); // only the part above the water stands out
+    map.setPaintProperty('bld-roof','fill-extrusion-base',['case',sub,0,z(['get','h'])]);
+    map.setPaintProperty('bld-roof','fill-extrusion-height',['case',sub,0,z(['+',['get','h'],['match',['get','bt'],0,1.6,1,.4,2,2.2,1.2]])]);
+    map.setPaintProperty('bld-water','fill-extrusion-height',z(w)); }
   if(S.l3d&&(force||performance.now()-lastFilter>150)){ lastFilter=performance.now(); // filters are slower, so update them less often
+    map.setFilter('bld-water',['>',over(),0.05]);
     // 3D: only buildings in the water are drawn from GHS-OBAT (coloured); all others come from OpenStreetMap at their real height
     map.setFilter('bld-3d',$('tOsmB').checked&&!D.hasFp?['>',over(),0.01]:null); map.setFilter('bld-roof',$('tOsmB').checked&&!D.hasFp?['>',over(),0.01]:null);
     if(cols){ map.setFilter('water-3d',['>',over(),0.01]); map.setPaintProperty('water-3d','fill-extrusion-color',waterColor());
@@ -1186,6 +1194,19 @@ function paintWater(now,_dt,force){
   WV.ctx.putImageData(img,0,0);
 }
 FX.push(paintWater);
+
+/* ---------- the drawn water as data: routes use exactly the water you see ---------- */
+// pixel of the water image under a point (-1 outside)
+function pixAt(p){ if(!WV) return -1; const G=D.G,k=WV.W/G.nx,px=Math.floor((p[0]-G.x0)/G.w*k),py=Math.floor((G.y0+G.ny*G.h-p[1])/G.h*k); return px<0||py<0||px>=WV.W||py>=WV.H?-1:py*WV.W+px; }
+// water depth of that pixel at moment T (same formula as paintWater); peak=true: the flood's highest level
+function pixDepth(q,r,T=S.T,peak=false){ if(q<0||!WV.dep[r]) return 0; const d=WV.dep[r][q]; if(!(d>0)) return 0; if(peak) return d;
+  const L=WV.Lm[r][q]||d,x0=T-WV.lag[q],rise=Math.max(WV.lvl[x0<=-.2?0:x0>=1?1200:((x0+.2)*1000)|0],Math.min(1,INIT/L)); return Math.max(0,d-(1-rise)*L); }
+// clock minute when the water at a pixel first exceeds F (inverse of the rise; Infinity if never)
+function pixCut(q,r,F,M){ if(q<0||!WV.dep[r]) return Infinity; const d=WV.dep[r][q],L=WV.Lm[r][q]||d; if(!(d>F)) return Infinity; const v=1-(d-F)/L;
+  if(INIT/L>=v) return 0; return (WV.lag[q]+.45*Math.acos(1-2*v)/Math.PI)*M; }
+// pixels along a line from a to b, one sample per ~10 m
+function pixLine(a,b){ const n=Math.max(1,Math.ceil(mDist(a,b)/10)),out=new Set(); for(let i=0;i<=n;i++){ const q=pixAt([a[0]+(b[0]-a[0])*i/n,a[1]+(b[1]-a[1])*i/n]); if(q>=0) out.add(q); } return [...out]; }
+const ANY_WATER=.05; // safe A–B route: no street with visible water (≥ 5 cm) at that moment ("never drive or walk into flood water")
 
 </script>
 <script>
@@ -1328,7 +1349,8 @@ function roadGraph(r,mode='foot',limit=Infinity,plain=false,now=false){ const ke
   if(Object.keys(graphCache).length>24) graphCache={};
   if(roadSegs.size<50) return null; const id=new Map(),pts=[],adj=[];
   const node=p=>{const k=kk(p); let n=id.get(k); if(n===undefined){n=pts.length; id.set(k,n); pts.push(p); adj.push([]);} return n;};
-  for(const s of roadSegs.values()){ const d=now?s.cs.reduce((m,c)=>Math.max(m,nowDepth(c,r)),0):s.dep[r]||0; if(!s[mode]||d>limit) continue;
+  for(const s of roadSegs.values()){ s.qs??=pixLine(s.a,s.b); // depth = deepest drawn water along the street (and its grid cells)
+    const d=Math.max(now?s.cs.reduce((m,c)=>Math.max(m,nowDepth(c,r)),0):s.dep[r]||0,s.qs.reduce((m,q)=>Math.max(m,pixDepth(q,r,S.T,!now)),0)); if(!s[mode]||d>limit) continue;
     const a=node(s.a),b=node(s.b),w=plain||limit<Infinity?s.len:s.len*(1+4*Math.max(0,d-CAR_DEPTH)); adj[a].push(b,w); adj[b].push(a,w);} // deep streets cost more
   return graphCache[key]={pts,adj,kind:'streets'};}
 function gridGraph(r){ const G=D.G,pts=D.cells.map(c=>c.c),adj=D.cells.map(()=>[]);
@@ -1663,7 +1685,9 @@ function abSet(which,p){ AB[which.toLowerCase()]=p; AB.mk[which]?.remove(); cons
 function abPick(p){ if(!AB.pick) return false; const w=AB.pick; AB.pick=null; map.getCanvas().style.cursor=''; ['abA','abB'].forEach(id=>$(id).setAttribute('aria-pressed',false));
   abSet(w,p); if(AB.a&&(AB.b||w==='A'&&AB.toShelter)) abRoute(); return true; }
 function pathOf(g,tree,from){const out=[]; for(let u=from;u>=0;u=tree.prev[u]) out.push(g.pts[u]); return out;}
-function abRoute(fit=true){ const r=rp(),mode=AB.mode||$('abMode').value,lim=mode==='car'?CAR_DEPTH:FOOT_DEPTH,out=$('abOut'),off=S.T<.45||S.T>.6; // water at the video's current moment
+function abRoute(fit=true){ const r=rp(),mode=AB.mode||$('abMode').value,lim=ANY_WATER,out=$('abOut'),off=S.T<.45||S.T>.6; // water at the video's current moment
+  const wetAt=p=>pixDepth(pixAt(p),r),wa=wetAt(AB.a),wb=AB.b&&!AB.toShelter?wetAt(AB.b):0; // a point in the water: no safe route from/to it, say so
+  if(wa>lim||wb>lim){ map.getSource('ab').setData({type:'FeatureCollection',features:[]}); out.innerHTML=`<b style="color:var(--err)">${wa>lim?'A':'B'} is under ${(Math.max(wa,wb)).toFixed(2)} m of water at this moment.</b> No safe way ${wa>lim?'out by road: go upstairs, call 112 and wait for rescue':'in: choose a dry place'}. Move the timeline earlier to see when it was still possible.`; return; }
   const safe=roadGraph(r,mode,lim,false,true),any=roadGraph(r,mode,Infinity,true); if(!safe){out.textContent='Roads are not loaded yet.'; return;}
   const sa=nearest(safe,AB.a),ta=dijkstra(safe,sa); let tb,dest;
   if(AB.toShelter){ let best=Infinity; E.shelters.forEach((s,k)=>{const n=nearest(safe,s.c); if(ta.dist[n]<best){best=ta.dist[n]; tb=n; dest=s;}}); if(dest) abSet('B',dest.c); }
@@ -1678,10 +1702,10 @@ function abRoute(fit=true){ const r=rp(),mode=AB.mode||$('abMode').value,lim=mod
   if(any&&AB.b){ const na=nearest(any,AB.a),t=dijkstra(any,na),nb=nearest(any,AB.b); if(isFinite(t.dist[nb])){ const pts=pathOf(any,t,nb).reverse(),wet=wetLen(pts,r,lim);
     if(wet>0){ F.push({type:'Feature',geometry:{type:'LineString',coordinates:pts},properties:{k:'normal'}});
       html+=`<br><span style="color:var(--cut)">The usual shortest route (dashed) has ${Math.round(wet)} m under ${lim} m of water or more.</span>`; } } }
-  map.getSource('ab').setData({type:'FeatureCollection',features:F}); out.innerHTML=html+`<br><span class="hint">Water ${off?`at the moment shown in the video (${['rising','','going down'][S.T<.45?0:2]})`:'at the peak'} of the ${sizeWord(r).toLowerCase()} flood. Move the timeline and press the button again to compare. Limits: car ${CAR_DEPTH} m, walking ${FOOT_DEPTH} m (assumptions).</span>`;
+  map.getSource('ab').setData({type:'FeatureCollection',features:F}); out.innerHTML=html+`<br><span class="hint">Water ${off?`at the moment shown in the video (${['rising','','going down'][S.T<.45?0:2]})`:'at the peak'} of the ${sizeWord(r).toLowerCase()} flood. Move the timeline and press the button again to compare. The safe route avoids every street with visible water (≥ ${ANY_WATER*100} cm), as for the video: never drive or walk into flood water.</span>`;
   if(F.length&&fit) map.fitBounds(bboxOf([F.flatMap(f=>f.geometry.coordinates)]),{padding:90,duration:900,pitch:map.getPitch(),bearing:map.getBearing()}); return html; }
 function countBridges(pts){let n=0,on=false; for(let j=1;j<pts.length;j++){const s=roadSegs.get(kk(pts[j-1])+'|'+kk(pts[j]))||roadSegs.get(kk(pts[j])+'|'+kk(pts[j-1])),b=!!s?.bridge; if(b&&!on) n++; on=b;} return n;}
-function wetLen(pts,r,lim){let m=0; for(let j=1;j<pts.length;j++){const s=roadSegs.get(kk(pts[j-1])+'|'+kk(pts[j]))||roadSegs.get(kk(pts[j])+'|'+kk(pts[j-1])); if(s&&s.cs.some(c=>nowDepth(c,r)>lim)) m+=s.len;} return m;}
+function wetLen(pts,r,lim){let m=0; for(let j=1;j<pts.length;j++){const s=roadSegs.get(kk(pts[j-1])+'|'+kk(pts[j]))||roadSegs.get(kk(pts[j])+'|'+kk(pts[j-1])); if(s&&(s.cs.some(c=>nowDepth(c,r)>lim)||(s.qs??=pixLine(s.a,s.b)).some(q=>pixDepth(q,r)>lim))) m+=s.len;} return m;}
 function abStart(w){ AB.pick=w; AB.toShelter=false; $('ab'+w).setAttribute('aria-pressed',true); map.getCanvas().style.cursor='crosshair'; toast(`Click the map to set ${w}`); }
 $('abA').onclick=()=>abStart('A'); $('abB').onclick=()=>abStart('B');
 // double-click on the map: first point = A, second = B (route drawn), a third starts again from A
@@ -2590,7 +2614,9 @@ const clockM=m=>m<0?`${clock(-m/SC.mins)} before start`:clock(m/SC.mins);
 function drillPrep(){ const P=E.plan; if(!P?.groups.length||!E.shelters.length) return null; const r=P.r,M=SC.mins,F=CAR_DEPTH,G=D.G,B=Math.max(1,Math.round(400/G.m));
   // minute when the water at a cell first reaches F (inverse of nowDepth's rise, same curve as floodStart)
   const cutT=c=>{const d=c.depth[r]; if(!(d>F)) return Infinity; const v=1-(d-F)/c.L[r]; if(INIT/(c.L[r]||1)>=v) return 0; return (c.lag+.45*Math.acos(1-2*v)/Math.PI)*M;};
-  const cellsOf=l=>{ if(l.cells) return l.cells; const out=[],seen=new Set(); for(let s=0;s<=l.len;s+=40){const p=along(l,s),i=G.at(p[0],p[1]); if(i<0||seen.has(i)) continue; seen.add(i); const t=cutT(D.cells[i]); if(isFinite(t)) out.push([s,t]);} return l.cells=out; };
+  // closing time along a route: drawn water (same as the map) and grid cells, every 15 m
+  const cellsOf=l=>{ if(l.cells) return l.cells; const out=[],seen=new Set(); for(let s=0;s<=l.len;s+=15){const p=along(l,s),i=G.at(p[0],p[1]),q=pixAt(p); if(seen.has(q+':'+i)) continue; seen.add(q+':'+i);
+    const t=Math.min(i<0?Infinity:cutT(D.cells[i]),pixCut(q,r,F,M)); if(isFinite(t)) out.push([s,t]);} return l.cells=out; };
   const key=c=>Math.floor(c.gx/B)+':'+Math.floor(c.gy/B),up=new Map(); // share of residents whose building keeps a floor above the water (GHS-OBAT height)
   for(const b of D.blds){ if(b.ci<0) continue; const c=D.cells[b.ci],d=c.depth[r]; if(!(d>.01)) continue; const k=key(c),w=b.pop||1,u=up.get(k)||up.set(k,{a:0,n:0}).get(k); u.n+=w; if(b.h>=d+STOREY) u.a+=w; }
   // when the water reaches the homes of a group: the residents' median moment (the group's first wet cell is often the riverbed)

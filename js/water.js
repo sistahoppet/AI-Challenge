@@ -63,3 +63,16 @@ function paintWater(now,_dt,force){
   WV.ctx.putImageData(img,0,0);
 }
 FX.push(paintWater);
+
+/* ---------- the drawn water as data: routes use exactly the water you see ---------- */
+// pixel of the water image under a point (-1 outside)
+function pixAt(p){ if(!WV) return -1; const G=D.G,k=WV.W/G.nx,px=Math.floor((p[0]-G.x0)/G.w*k),py=Math.floor((G.y0+G.ny*G.h-p[1])/G.h*k); return px<0||py<0||px>=WV.W||py>=WV.H?-1:py*WV.W+px; }
+// water depth of that pixel at moment T (same formula as paintWater); peak=true: the flood's highest level
+function pixDepth(q,r,T=S.T,peak=false){ if(q<0||!WV.dep[r]) return 0; const d=WV.dep[r][q]; if(!(d>0)) return 0; if(peak) return d;
+  const L=WV.Lm[r][q]||d,x0=T-WV.lag[q],rise=Math.max(WV.lvl[x0<=-.2?0:x0>=1?1200:((x0+.2)*1000)|0],Math.min(1,INIT/L)); return Math.max(0,d-(1-rise)*L); }
+// clock minute when the water at a pixel first exceeds F (inverse of the rise; Infinity if never)
+function pixCut(q,r,F,M){ if(q<0||!WV.dep[r]) return Infinity; const d=WV.dep[r][q],L=WV.Lm[r][q]||d; if(!(d>F)) return Infinity; const v=1-(d-F)/L;
+  if(INIT/L>=v) return 0; return (WV.lag[q]+.45*Math.acos(1-2*v)/Math.PI)*M; }
+// pixels along a line from a to b, one sample per ~10 m
+function pixLine(a,b){ const n=Math.max(1,Math.ceil(mDist(a,b)/10)),out=new Set(); for(let i=0;i<=n;i++){ const q=pixAt([a[0]+(b[0]-a[0])*i/n,a[1]+(b[1]-a[1])*i/n]); if(q>=0) out.add(q); } return [...out]; }
+const ANY_WATER=.05; // safe A–B route: no street with visible water (≥ 5 cm) at that moment ("never drive or walk into flood water")
