@@ -144,6 +144,18 @@ python3 build.py
 ```
 → `dist/flood-scenario-explorer.html`.
 
+## CI/CD
+
+- **CI** (`.github/workflows/ci.yml`, every PR and push to `main`): JS syntax (`node --check`), Python compiles,
+  `scripts/ci_check.py` (every `<script>`/css in `index.html` exists, every `js/*.js` is loaded, data JSON parses,
+  warning when `dist/` is out of date), smoke test (`serve.py` serves every asset with 200).
+- **CD**: when CI is green on `main`, the workflow moves branch `live` to that commit. The server (valencia) pulls
+  `live` every minute (`deploy/deploy.sh`, systemd `frontend-deploy.timer`), and the `verify` job waits until
+  https://dev.nsrddyn.com serves the new files. A red `main` never goes live. Roll back: push an older commit to `live`.
+- Server setup (once): `cd ~/frontend && git fetch origin live && git checkout -B live FETCH_HEAD`, then
+  `sudo cp deploy/frontend-deploy.{service,timer} /etc/systemd/system/ && sudo systemctl enable --now frontend-deploy.timer`.
+  Log: `journalctl -u frontend-deploy`.
+
 ## Where to change things
 
 | I want to… | File |
