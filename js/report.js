@@ -49,9 +49,9 @@ const CH={order:{plan:'each street → its shelter',tall:'places first for homes
 let played=false,endDone=false;
 FX.push(()=>{ if(S.playing) played=true; if(S.T<.99) endDone=false; if(S.T>=1&&!S.playing&&played&&!endDone&&D&&!isDemo){ endDone=true; played=false; runEnded(); } });
 function runEnded(){ const R=DR.run,s=runSettings();
-  if(!R){ const b=$('runEnd'); // no car drill here (no roads or shelter sizes from the server): report of the water, people, places and server results
+  if(!R){ const b=$('runEnd'); // no car drill here (no buildings or shelter sizes from the server): report of the water, people, places and server results
     b.innerHTML=`<div class="ih">${SVGI('<path d="M14 3H6v18h12V7z"/><path d="M14 3v4h4M9 13h6M9 17h6"/>')}<b>Run finished</b></div>
-    <p>No evacuation drill for this area (the server sends no roads or shelter sizes): the report covers the water, residents, emergency places, costs and the server's model results.</p>
+    <p>No evacuation drill for this area (the server sends no buildings or shelter sizes): the report covers the water, residents, emergency places, costs and the server's model results.</p>
     <div class="iopts row"><button class="btn sm primary" id="reOpen">Area report (PDF)</button><button class="btn sm" id="reNo">Not now</button></div>`;
     b.hidden=false; $('reOpen').onclick=()=>{ b.hidden=true; openSources('Area report'); }; $('reNo').onclick=()=>b.hidden=true; return; }
   RUNS.push({at:new Date().toLocaleString('en-GB'),...s,unsafe:Math.round(R.score),saved:Math.round(savedBy(R)),danger:Math.round(R.peak.danger),noplace:Math.round(R.peak.noplace),shel:Math.round(R.peak.shel),up:Math.round(R.peak.up),away:Math.round(R.peak.away||0),
