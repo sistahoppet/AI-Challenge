@@ -1,0 +1,177 @@
+{
+ "comply": {
+  "value": 80,
+  "unit": "%",
+  "status": "sourced",
+  "source": "Endendijk et al. 2023, Journal of Coastal and Riverine Flood Risk: 75.7% of advised residents left (Limburg 2021)",
+  "note": "range 70–80%"
+ },
+ "doorBoost": {
+  "value": 0,
+  "unit": "percentage points",
+  "status": "placeholder",
+  "source": "",
+  "note": "set to 0 until sourced (pessimistic). no study isolates door-to-door. Personal advice raised evacuation from 18.9% to 75.7% (Endendijk 2023); 'no single channel is likely to reach all people' (Pescaroli & Magni 2015)"
+ },
+ "mob": {
+  "value": 60,
+  "unit": "min",
+  "status": "sourced (proxy)",
+  "source": "KLD Evacuation Time Estimate, Lee Nuclear Station (NRC ML073510574), Table 5-5: 62% ready by 30 min, 82% by 1 h, 97% by 2 h",
+  "note": "US nuclear-plant study, not a European flood: replace when a local curve exists"
+ },
+ "delay": {
+  "value": 15,
+  "unit": "min",
+  "status": "assumption",
+  "source": "",
+  "note": "delay on the way (traffic, closures)"
+ },
+ "speedCar": {
+  "value": 20,
+  "unit": "km/h",
+  "status": "sourced (proxy)",
+  "source": "FLOODsite Evacuation Calculator (c.2009): 'usually an average velocity of 20 km/hour is used' in flood evacuation models; legal limits 50 km/h built-up, 90 km/h outside built-up areas in Wallonia (police.be 2024)",
+  "note": "average speed in evacuation traffic, below legal limits"
+ },
+ "carDepth": {
+  "value": 0.3,
+  "unit": "m",
+  "status": "sourced",
+  "source": "AIDR Guideline 7-3 Flood Hazard, 2017 (class H1: ≤0.3 m and ≤2 m/s)",
+  "note": ""
+ },
+ "footDepth": {
+  "value": 0.15,
+  "unit": "m",
+  "status": "sourced",
+  "source": "AIDR Guideline 7-3, 2017 (≤0.3 m generally safe; 0.15 m kept as a conservative limit)",
+  "note": ""
+ },
+ "leadMin": {
+  "value": 180,
+  "unit": "min",
+  "status": "assumption",
+  "source": "",
+  "note": "July 2021 Vesdre: ~0–3 h between alerts and the water (Walloon Parliament inquiry 2022)"
+ },
+ "sphere": {
+  "value": 3.5,
+  "unit": "m² per person",
+  "status": "sourced",
+  "source": "Sphere Handbook 2018 (minimum covered living space)",
+  "note": "humanitarian standard, not a Belgian norm; set in js/places.js"
+ },
+ "squeeze": {
+  "value": 30,
+  "unit": "%",
+  "status": "assumption",
+  "source": "",
+  "note": "extra emergency places when a shelter is full"
+ },
+ "rescueRate": {
+  "value": 60,
+  "unit": "people/h",
+  "status": "placeholder",
+  "source": "",
+  "note": "no published rate for the Vesdre. 2021 context: fire zone Vesdre-Hoëgne & Plateau ~3,300 missions in 72 h (~46/h, L'Avenir 2022); 9 helicopters rescued 21 people in 42 flight hours (L'Avenir 2021). Ask the rescue zone."
+ },
+ "rescueMob": {
+  "value": 30,
+  "unit": "min",
+  "status": "placeholder",
+  "source": "",
+  "note": "rescue starts this long after the first person is in danger"
+ },
+ "nationalX": {
+  "value": 3,
+  "unit": "×",
+  "status": "placeholder",
+  "source": "",
+  "note": "no source. 2021: Civil Protection ~30 agents and 6 boats at first, then max ~60 staff per day (L'Avenir 2021); ~300 foreign rescuers, 50 boats"
+ },
+ "shelterShare": {
+  "value": 25,
+  "unit": "%",
+  "status": "assumption",
+  "source": "",
+  "note": "evidence: ~4.5% went to public centres in Limburg 2021 (Endendijk 2023); Verviers plan 600 beds for ~4,600 people (~13%); 25% keeps a large margin"
+ },
+ "riverbankM": {
+  "value": 50,
+  "unit": "m",
+  "status": "assumption",
+  "source": "",
+  "note": "homes this close to the river: upstairs unreliable, evacuate early (houses collapsed along the Vesdre in Pepinster, July 2021)"
+ },
+ "storey": {
+  "value": 3,
+  "unit": "m",
+  "status": "assumption",
+  "source": "",
+  "note": "a building has a safe floor if it is at least this much taller than the water"
+ },
+ "R0": {
+  "value": 60,
+  "unit": "%",
+  "status": "placeholder",
+  "source": "",
+  "note": "Impact table: illustrative until data arrives"
+ },
+ "Q0": {
+  "value": 70,
+  "unit": "%",
+  "status": "placeholder",
+  "source": "",
+  "note": "Impact table: illustrative until data arrives"
+ },
+ "R1": {
+  "value": 90,
+  "unit": "%",
+  "status": "placeholder",
+  "source": "",
+  "note": "Impact table: illustrative until data arrives"
+ },
+ "Q1": {
+  "value": 80,
+  "unit": "%",
+  "status": "placeholder",
+  "source": "",
+  "note": "Impact table: illustrative until data arrives"
+ },
+ "T0": {
+  "value": 6,
+  "unit": "h",
+  "status": "placeholder",
+  "source": "",
+  "note": "Impact table: illustrative until data arrives"
+ },
+ "T1": {
+  "value": 2,
+  "unit": "h",
+  "status": "placeholder",
+  "source": "",
+  "note": "Impact table: illustrative until data arrives"
+ },
+ "C": {
+  "value": 2,
+  "unit": "€M",
+  "status": "placeholder",
+  "source": "",
+  "note": "Impact table: illustrative until data arrives"
+ },
+ "D0": {
+  "value": 30,
+  "unit": "€M",
+  "status": "placeholder",
+  "source": "",
+  "note": "Impact table: illustrative until data arrives"
+ },
+ "D1": {
+  "value": 18,
+  "unit": "€M",
+  "status": "placeholder",
+  "source": "",
+  "note": "Impact table: illustrative until data arrives"
+ }
+}

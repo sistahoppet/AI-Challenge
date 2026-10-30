@@ -239,7 +239,7 @@
         </div>
         <div>
           <h2>Critical sites in the water</h2>
-          <p class="hint" style="margin:0 0 8px">Hospitals, clinics, fire stations, police, town halls flooded in this flood size: evacuate or protect them first.</p>
+          <p class="hint" style="margin:0 0 8px">Hospitals, care homes, fire stations, police, town halls and schools flooded in this flood size: evacuate or protect them first.</p>
           <ul class="safe" id="critList"></ul>
         </div>
         <div>
@@ -263,8 +263,8 @@
             <label>Time to get ready before leaving, min <span class="tag">your assumption</span><input class="btn" type="number" id="fw-mob" min="0" step="5" value="60"></label>
             <label>Delay on the way (traffic, closures), min <span class="tag">your assumption</span><input class="btn" type="number" id="fw-delay" min="0" step="5" value="15"></label>
             <label>Who leaves<select class="btn" id="evWho"><option value="water">Everyone in the water at this flood size</option><option value="red">Red-zone residents only</option></select></label>
-            <label>Places when size unknown <span class="tag">your assumption</span><input class="btn" type="number" id="evCap" min="10" step="10" value="500"></label>
-            <label>Driving speed, km/h <span class="tag">your assumption</span><input class="btn" type="number" id="evSpeedMs" min="5" max="90" step="5" value="30"></label>
+            <label>Places when size unknown (0 = not counted) <span class="tag">your assumption</span><input class="btn" type="number" id="evCap" min="0" step="10" value="0"></label>
+            <label>Driving speed, km/h <span class="tag">your assumption</span><input class="btn" type="number" id="evSpeedMs" min="5" max="90" step="5" value="20"></label>
           </div>
           <div class="stats" id="evStats" style="margin-top:12px"></div>
           <ol class="safe groups" id="evGroups" style="margin-top:10px"></ol>
@@ -272,7 +272,7 @@
         </div>
         <div>
           <h2>Drill: people, shelters, best actions</h2>
-          <p class="hint" style="margin:0 0 8px">How people really move over the event: some stay home, shelters fill up, streets flood. Press <b>Training mode</b> under the map to take the decisions yourself; the controls under the map change the scenario.</p>
+          <p class="hint" style="margin:0 0 8px">How people really move over the event: some stay home, shelters fill up, streets flood. Set the choices under the map before pressing ▶; the controls under the map change the scenario.</p>
           <div id="drillOut"></div>
         </div>
       </div>
@@ -606,6 +606,7 @@
 <script src="js/costs.js"></script>
 <script src="js/data-view.js"></script>
 <script src="js/drill.js"></script>
+<script src="js/congestion.js"></script>
 <script src="js/brief.js"></script>
 <script src="js/howto.js"></script>
 <script src="js/report.js"></script>

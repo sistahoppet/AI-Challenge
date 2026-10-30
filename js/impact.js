@@ -24,11 +24,11 @@ function drawImpact(){ if(!D||!E.plan) return; const P=E.plan,r=rp(),N=P.total,K
     ${row('Extra people evacuated',`+${fmtFull(a-b)}`,'mix')}
     <tr><th colspan="3">3 · Institutions</th></tr>
     ${row(`Decision time ${IM.T0} h → ${IM.T1} h`,IM.T0?`−${Math.round(gain/IM.T0*100)}%`:'–','assumption')}
-    ${row(`Reach a shelter in time on foot: warning ${SC.leadMin} → ${SC.leadMin+gain*60} min`,`${fmtFull(inTime(pb))} → ${fmtFull(inTime(pa))} (+${fmtFull(inTime(pa)-inTime(pb))})`,'mix')}
+    ${row(`Reach a shelter in time by car: warning ${SC.leadMin} → ${SC.leadMin+gain*60} min`,`${fmtFull(inTime(pb))} → ${fmtFull(inTime(pa))} (+${fmtFull(inTime(pa)-inTime(pb))})`,'mix')}
   </tbody></table>
   <p style="font-size:14px;margin:8px 0 0"><b>For the mayor:</b> ${N?`at a ${sizeWord(r).toLowerCase()} flood ${fmtFull(N)} residents must leave, but the shelters in the plan hold ${fmtFull(K)} (${Math.round(K/N*100)}%). `:''}
    ${N&&a-b<1&&K<N*IM.R1/100*IM.Q1/100?`Better alerts add nobody while the shelters are full: <b>shelter capacity is the bottleneck</b>. `:''}
-   ${gain?`Deciding ${gain} h faster lets about ${fmtFull(inTime(pa)-inTime(pb))} more people reach a shelter on foot before the water. `:''}
+   ${gain?`Deciding ${gain} h faster lets about ${fmtFull(inTime(pa)-inTime(pb))} more people reach a shelter by car before the water. `:''}
    ${thr!=null?`With the cost and damage figures entered, acting is worth it when the flood chance is above ${thr.toFixed(0)}% (this map's yearly chance: ${pf<1?pf.toFixed(1):Math.round(pf)}%).`:''}</p>
   <p class="hint">Data: EFAS flood maps, GHS-POP/OBAT, OpenStreetMap shelters and roads, your plan in Evacuate. Assumptions: alert reach and compliance, decision times, costs and damages are illustrative (the framework's example values): replace them with sourced figures before quoting. Euros are hypothetical: no depth–damage data is loaded.</p>`; }
 const IMF=[['R0','Alert reach today, %'],['Q0','People who follow, today, %'],['R1','Alert reach with tool, %'],['Q1','People who follow, with tool, %'],

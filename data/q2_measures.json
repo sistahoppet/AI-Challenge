@@ -1,0 +1,236 @@
+[
+ {
+  "area": "Vesdre (Wallonia)",
+  "measure": "About 50 urgent river works without prior hydraulic study carried out (€16M)",
+  "type": "defence",
+  "date": "2021–2026",
+  "source": "Wallonia, 5 ans après (2026)",
+  "url": "https://wallonie.be/fr/actualites/5-ans-apres-les-inondations-de-2021-ou-en-est",
+  "verified": true
+ },
+ {
+  "area": "Chaudfontaine, Theux, Spa, Pepinster, Limbourg",
+  "measure": "14 major river projects under way or starting in 2026 (structural works needing in-depth studies)",
+  "type": "defence",
+  "date": "2026",
+  "source": "Wallonia, 5 ans après (2026)",
+  "url": "https://wallonie.be/fr/actualites/5-ans-apres-les-inondations-de-2021-ou-en-est",
+  "verified": true
+ },
+ {
+  "area": "9 Vesdre communes",
+  "measure": "€25M to buy and demolish exposed homes; Pepinster 116 and Limbourg 78 buildings to demolish",
+  "type": "abandoned",
+  "date": "2022–2028",
+  "source": "L'Avenir (01/12/2022)",
+  "url": "https://www.lavenir.net/regions/verviers/2022/12/01/234-biens-doivent-etre-demolis-quelle-somme-attribuee-par-la-region-wallonne-a-limbourg-verviers-pepinster-et-theux-CYFFEJ5NFBAWTC3NVTGL5ISCKY/",
+  "verified": false
+ },
+ {
+  "area": "Pepinster",
+  "measure": "Demolition of 18 flood-hit buildings started",
+  "type": "abandoned",
+  "date": "2024",
+  "source": "RTBF (2024)",
+  "url": "https://www.rtbf.be/article/inondations-2021-a-pepinster-la-destruction-des-18-batiments-sinistres-a-commence-11313455",
+  "verified": false
+ },
+ {
+  "area": "Vesdre basin (25 communes)",
+  "measure": "Schéma stratégique multidisciplinaire Vesdre finished; action plan next",
+  "type": "plan",
+  "date": "2022–2026",
+  "source": "Wallonia, rapports et études",
+  "url": "https://www.wallonie.be/fr/inondations-de-juillet-2021-rapports-etudes-projets-subventions",
+  "verified": true
+ },
+ {
+  "area": "Wallonia",
+  "measure": "First regional plan dedicated to floods adopted",
+  "type": "plan",
+  "date": "2026",
+  "source": "Wallonia, 5 ans après (2026)",
+  "url": "https://wallonie.be/fr/actualites/5-ans-apres-les-inondations-de-2021-ou-en-est",
+  "verified": true
+ },
+ {
+  "area": "Wallonia",
+  "measure": "Decree on risk and crisis management (regional crisis plan, single contact point)",
+  "type": "plan",
+  "date": "13/07/2023",
+  "source": "Wallex",
+  "url": "https://wallex.wallonie.be/eli/loi-decret/2023/07/13/2023044777",
+  "verified": true
+ },
+ {
+  "area": "Wallonia",
+  "measure": "Circular on building in flood zones: avoid building in high hazard, refuge zone required in high-risk situations",
+  "type": "plan",
+  "date": "12/2021",
+  "source": "SPW Territoire",
+  "url": "https://territoire.wallonie.be/storage/territoire/documents/content/page/inondations/circulaireinondations-231221.pdf",
+  "verified": true
+ },
+ {
+  "area": "Province of Liège",
+  "measure": "Special flood emergency plan (runoff, overflow, dams, starting with Eupen) and new crisis centre in Vottem",
+  "type": "plan",
+  "date": "2022",
+  "source": "Governor of Liège (2022)",
+  "url": "https://gouverneur.provincedeliege.be/sites/default/files/media/7780/CP%20COMMEMORATION%20INONDATIONS.pdf",
+  "verified": true
+ },
+ {
+  "area": "Verviers",
+  "measure": "Flood evacuation plan: 3 sectors, 200-bed reception centre each, based on the 2021 flooded area (~4,600 people)",
+  "type": "plan",
+  "date": "2023",
+  "source": "L'Avenir (28/02/2023)",
+  "url": "https://www.lavenir.net/regions/verviers/2023/02/28/verviers-un-plan-daction-pour-etre-plus-efficace-en-cas-dinondations-video-4L3B7SAG4RFYBMIRN44M2FVBMM/",
+  "verified": false
+ },
+ {
+  "area": "Wallonia",
+  "measure": "About 100 hydrometric stations under a new maintenance contract",
+  "type": "warning",
+  "date": "2026",
+  "source": "Wallonia, 5 ans après (2026)",
+  "url": "https://wallonie.be/fr/actualites/5-ans-apres-les-inondations-de-2021-ou-en-est",
+  "verified": true
+ },
+ {
+  "area": "Limbourg (Dolhain)",
+  "measure": "Sirens and river cameras installed, live test",
+  "type": "warning",
+  "date": "08/2025",
+  "source": "L'Avenir (19/08/2025)",
+  "url": "https://www.lavenir.net/regions/verviers/limbourg/2025/08/19/la-ville-de-limbourg-sequipe-de-cameras-et-de-sirenes-pour-prevenir-la-population-en-cas-de-risque-un-test-grandeur-nature-sera-organise-ce-jeudi-Z77C35EWX5A4VILJVI366MXP6A/",
+  "verified": false
+ },
+ {
+  "area": "Verviers",
+  "measure": "Mobile siren for emergency communication tested",
+  "type": "warning",
+  "date": "10/2025",
+  "source": "L'Avenir (02/10/2025)",
+  "url": "https://www.lavenir.net/regions/verviers/verviers/2025/10/02/une-sirene-mobile-outil-de-communication-durgence-testee-a-verviers-on-est-la-seule-commune-wallonne-a-en-posseder-photos-video-L7TKXRIPAJFVRKFM6GHTTYD4VE/",
+  "verified": false
+ },
+ {
+  "area": "BE, NL, DE, LU",
+  "measure": "Mobile phone alerts by cell broadcast in all four countries; better crisis plans (but different warning levels across borders)",
+  "type": "warning",
+  "date": "2026",
+  "source": "NHESS 26, 1457 (2026)",
+  "url": "https://nhess.copernicus.org/articles/26/1457/2026/nhess-26-1457-2026.html",
+  "verified": true
+ },
+ {
+  "area": "Limbourg (Dolhain)",
+  "measure": "Repairs halted on 42 social housing units (80% repaired) over flood fears",
+  "type": "rebuild",
+  "date": "2021",
+  "source": "Brussels Times",
+  "url": "https://brusselstimes.com/224063/wallonia-orders-halt-to-e1-4-million-social-housing-repairs-affected-by-floods",
+  "verified": false
+ },
+ {
+  "area": "Vesdre (Wallonia)",
+  "measure": "98.3% of insurance claims closed; most homes rebuilt and reoccupied in the same places",
+  "type": "rebuild",
+  "date": "2025–2026",
+  "source": "VRT (11/07/2025)",
+  "url": "https://www.vrt.be/vrtnws/nl/2025/07/11/vier-jaar-na-de-waterbom-in-wallonie/",
+  "verified": false
+ },
+ {
+  "area": "Chaudfontaine",
+  "measure": "Official: people not necessarily better protected, sometimes less, because not all infrastructure is restored",
+  "type": "infrastructure",
+  "date": "2025",
+  "source": "VRT (11/07/2025)",
+  "url": "https://www.vrt.be/vrtnws/nl/2025/07/11/vier-jaar-na-de-waterbom-in-wallonie/",
+  "verified": false
+ },
+ {
+  "area": "Wallonia",
+  "measure": "Only one dam reservoir has an emergency and intervention plan",
+  "type": "infrastructure",
+  "date": "12/2025",
+  "source": "DH (09/12/2025)",
+  "url": "https://www.dhnet.be/regions/liege/2025/12/09/un-seul-barrage-reservoir-wallon-dote-de-son-plan-durgence-et-dintervention-la-deputee-valerie-dejardin-a-interpelle-le-ministre-desquesnes-CN34L6GWWRE5LA2C6YVPJP3224/",
+  "verified": false
+ },
+ {
+  "area": "Wallonia",
+  "measure": "Parliamentary inquiry report with 161 recommendations",
+  "type": "plan",
+  "date": "2022",
+  "source": "Walloon Parliament",
+  "url": "https://www.wallonie.be/sites/default/files/2022-11/Inondations%20rapport%20de%20la%20commission%20parlementaire.pdf",
+  "verified": true
+ },
+ {
+  "area": "Dutch Limburg",
+  "measure": "National policy table on flooding reviewed the event (damage in Limburg ~€433M)",
+  "type": "plan",
+  "date": "12/2022",
+  "source": "Eerste Kamer",
+  "url": "https://eerstekamer.nl/overig/20221219/eindadvies_beleidstafel/document",
+  "verified": true
+ },
+ {
+  "area": "Dutch Limburg (Geul)",
+  "measure": "Waterveiligheid en Ruimte Limburg programme incl. Geul catchment (also looks at the Belgian part)",
+  "type": "plan",
+  "date": "2023–",
+  "source": "Commissie m.e.r.",
+  "url": "https://pas.commissiemer.nl/files/nl/3958/a3958rd.pdf",
+  "verified": true
+ },
+ {
+  "area": "Dutch Limburg",
+  "measure": "Water-board faction: no measure funded since 2021 that was not already planned",
+  "type": "plan",
+  "date": "2024",
+  "source": "Waterschap Limburg documents",
+  "url": "https://waterschaplimburg.bestuurlijkeinformatie.nl/Document/View/cd3a1226-d97b-4aa6-b2d9-8a2ee89f900e",
+  "verified": false
+ },
+ {
+  "area": "Region Aachen (Inde, Vicht)",
+  "measure": "WVER pilot area for flood resilience (Aachen, Roetgen, Stolberg, Eschweiler)",
+  "type": "plan",
+  "date": "2022",
+  "source": "WVER brochure (2022)",
+  "url": "https://www.cpmonitor.de/_data/WVER-broschuere-gemeinsam-vorbeugen_2022.pdf",
+  "verified": true
+ },
+ {
+  "area": "Stolberg (Vicht)",
+  "measure": "Retention basins upstream: Roetgen-Rott ~745,000 m³, Roetgen-Mulartshütte ~394,000 m³, planned by 2027 (not built yet)",
+  "type": "defence",
+  "date": "2023–2027",
+  "source": "WVER / UVP notice (2023)",
+  "url": "https://uvp-verbund.de/documents-ige-ng/igc_nw/265c40c2-3af1-4f40-9d8f-b45abf9b587d/2023-04-13_BekanntmUVPV_HRBsVicht.pdf",
+  "verified": true
+ },
+ {
+  "area": "Stolberg",
+  "measure": "About €314M reconstruction aid approved",
+  "type": "rebuild",
+  "date": "2024",
+  "source": "Land NRW",
+  "url": "https://land.nrw/media/33628/download",
+  "verified": true
+ },
+ {
+  "area": "Stolberg",
+  "measure": "Local survey: reconstruction too slow; over half see no better flood protection",
+  "type": "rebuild",
+  "date": "2024",
+  "source": "meinstolberg.de",
+  "url": "https://www.meinstolberg.de/?p=9185",
+  "verified": false
+ }
+]

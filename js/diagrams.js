@@ -22,7 +22,7 @@ const DIAGS=[
   {g:'Policy framework',k:'fwMethods',t:'Review of the calculation methods',s:'Which formulas are supported and what replaces the rest.',metric:false},
   {g:'Policy framework',k:'fwStages',t:'Framework stages and status in the app',s:'8 stages, methods, references, and what is built.',metric:false},
   {g:'Policy framework',k:'fwClear',t:'Evacuation clearance time',s:'Mobilisation + travel + delay vs time before the water arrives (real routes).',metric:false},
-  {g:'Policy framework',k:'fwG6',t:'UNDRR G-6: pre-emptive evacuation',s:'Share of at-risk residents protected, per flood size.',metric:false},
+  {g:'Policy framework',k:'fwG6',t:'Safe evacuation coverage (inspired by UNDRR G-6)',s:'Share of at-risk residents protected, per flood size.',metric:false},
   {g:'Policy framework',k:'fwAAL',t:'Risk curve (AAL logic)',s:'Residents in flooded areas vs yearly chance (real data).',metric:false},
   {g:'Policy framework',k:'fwCost',t:'Cost–loss model (ECMWF)',s:'When acting is worth it: p* = C / L (hypothetical €).',metric:false},
   {g:'Policy framework',k:'fwBCR',t:'Benefit–cost ratio',s:'Avoided damage vs cost (hypothetical €).',metric:false},

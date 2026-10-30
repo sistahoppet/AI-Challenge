@@ -20,25 +20,8 @@ document.addEventListener('click',e=>{ const el=e.target.closest('[data-src]'),p
 addEventListener('keydown',e=>{ if(e.key==='Escape'){ $('srcPop').hidden=true; } });
 
 /* ---------- mayor's decision card: one printable page ---------- */
-function openCard(){ const r=rp(),pk=peak(r),c=floodCost(r),B=DR.best,R=DR.run,P=E.plan; if(!B||!R){ toast('Still computing the best plan…'); return; }
-  const places=E.shelters.reduce((s,x,k)=>s+capOf(k),0),strip=s=>s.replace(/<span class="gain">(.*?)<\/span>/g,'<em>($1)</em>');
-  const w=docStage("Mayor's decision card");
-  w.document.write(`<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Flood decision card</title><style>
-    body{font:14px/1.45 system-ui,sans-serif;color:#1d2529;max-width:760px;margin:24px auto;padding:0 16px}h1{font-size:22px;margin:0}h2{font-size:15px;margin:18px 0 6px;text-transform:uppercase;letter-spacing:.04em}
-    .k{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}.k div{border:1px solid #ccd;border-radius:6px;padding:8px}.k b{display:block;font-size:20px}
-    ol{padding-left:20px}li{margin:4px 0}.t{font-family:ui-monospace,monospace;color:#555;margin-right:6px}em{color:#0e6b5e;font-style:normal}.s{font-size:12px;color:#555}
-    @media print{button{display:none}}</style></head><body>
-    <h1>Flood decision card</h1><div class="s">${esc(STUDY.name)} · ${sizeWord(r).toLowerCase()} flood, 1-in-${r} years (${chance(r)} chance each year) · warning ${SC.leadMin} min before the water · Flood Scenario Explorer</div>
-    <h2>What is at stake</h2><div class="k"><div><b>${fmt(pk.people)}</b>residents in flooded areas</div><div><b>${fmt(pk.bld)}</b>buildings in the water</div>
-      <div><b>${eur(c.damage)}</b>damage to buildings and roads (proxy)</div><div><b>${fmt(places)} / ${fmt(P.total)}</b>shelter places / people to move</div></div>
-    ${D.hasObs?`<p class="s">July 2021 satellite check: ${$('agreeHead').textContent.replace(/^.*?:\s*/,'')}</p>`:''}
-    <h2>Result of the drill</h2><p>People unsafe when the water is highest: <b>${fmt(R.score)}</b> (range ${fmt(DR.range[0])}–${fmt(DR.range[1])}) with the current settings,
-      <b>${fmt(B.run.score)}</b> (range ${fmt(B.range[0])}–${fmt(B.range[1])}) with the sequence below.</p>
-    <h2>Sequence of actions</h2><ol>${actionPlan(B).map(([t,x])=>`<li><span class="t">${isFinite(t)?clockM(t):'Before'}</span>${strip(x)}</li>`).join('')}</ol>
-    <h2>Sources and limits</h2><p class="s">Data: EFAS flood maps, GHS-POP, GHS-OBAT (JRC), Copernicus EMS 2021, Copernicus DEM, OpenStreetMap. Published sources: JRC depth–damage curves, Sphere standard (3.5 m² per person).
-      Assumptions (set by the team): follow rate ${DR.comply}%, time to get ready ${FW.mob} min, walking speed ${(E.speed/3.6).toFixed(1)} m/s, rescue ${DR.rescue} people/h, shelter places ${DR.capX}% of planned.
-      "Unsafe" = trapped without a floor above the water, stuck in a flooded street, or without a shelter place. The timing of the water is illustrative: a training and planning aid, not a forecast of casualties.</p>
-    <button onclick="print()">Print or save as PDF</button></body></html>`); w.document.close(); }
+// Anna's report replaces the separate decision card: one PDF, page 1 = the one-minute summary (report.js)
+function openCard(){ openReport(); }
 $('cardBtn').onclick=openCard;
 
 /* ---------- guided demo ---------- */
@@ -48,8 +31,8 @@ const TOUR=[
   ['Watch the water rise',()=>{tab('sim'); S.T=0; setSpeed(5); setPlaying(true);},'Upstream and low ground flood first. Buildings turn colour when water reaches them; red streets are closed to cars.'],
   ['Who must leave, and where to',()=>{setPlaying(false); tab('safety'); S.T=.3; render();},'Each circle is a group of residents, with a car route on real streets to a shelter the app chose (far from water, room for many). Click a shelter pin to see the area it serves.'],
   ['Choose, then play',()=>{ tab('sim'); S.T=0; render(); },'Under the map: the order to give, what happens when a shelter is full, and rescue support. Choose before pressing ▶: cars leave, shelters fill up, the next best shelter is found, streets flood.'],
-  ['Best actions',()=>{ setPlaying(false); showDebrief(); },'The app tests every combination of choices on the same flood and shows the sequence that leaves the fewest people unsafe, with a range.'],
-  ['The mayor\'s decision card',()=>{ $('drillStage').hidden=true; tab('policy'); },'One printable page: what is at stake, the sequence of actions with times, and the sources and limits. Button: "Mayor\'s decision card".']];
+  ['Best actions',()=>{ setPlaying(false); showDebrief(); },'The app tests every combination of choices on the same flood and shows the sequence that leaves the fewest people not evacuated, with a range.'],
+  ['Anna\'s report',()=>{ $('drillStage').hidden=true; },'Anna\'s report: one page with what flooded, what changed, whether everyone can be sheltered, and what to do first. Button: "Report" under the map.']];
 let tourI=-1;
 const tab=t=>document.querySelector(`.tabs [data-t="${t}"]`)?.click();
 function tourGo(i){ tourI=i; const b=$('tour'); if(i<0||i>=TOUR.length){ b.hidden=true; tourI=-1; return; } const [t,act,tx]=TOUR[i],txt=typeof tx==='function'?tx():tx; try{act();}catch(e){}

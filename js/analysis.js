@@ -74,6 +74,18 @@ function computeZones(D){
   D.zoneTot=[1,2,3].map(z=>({people:D.cells.filter(c=>c.z===z).reduce((s,c)=>s+c.pop,0),bld:D.blds.filter(b=>b.ci>=0&&D.cells[b.ci].z===z).length}));
 }
 
+/* ---------- riverbank homes: upstairs is unreliable there (houses collapsed along the Vesdre in July 2021) → evacuate early ----------
+   Distance to the river line (data/rivers.geojson, OpenStreetMap) ≤ riverbankM (assumption, data/params.json);
+   without that file: distance to the river channel cells (deepest water nearby in the most frequent flood), + half a cell. */
+function riverbank(D){ const m=+(PARAMS.riverbankM?.value??50),pts=[];
+  if(D.rivers?.length){ for(const l of D.rivers) for(let j=1;j<l.length;j++){ const a=l[j-1],b=l[j],n=Math.max(1,Math.ceil(mDist(a,b)/10)); for(let i=0;i<=n;i++) pts.push([a[0]+(b[0]-a[0])*i/n,a[1]+(b[1]-a[1])*i/n]); } D.bankSrc='rivers'; }
+  else { const r=(D.base||D.rps)[0]; D.cells.forEach(c=>{ if(c.depth[r]>0&&c.depth[r]>=.9*c.L[r]) pts.push(c.c); }); D.bankSrc='channel proxy'; }
+  const lim=D.bankSrc==='rivers'?m:m+D.G.m/2,kx=KX(D.bbox[1]),key=(x,y)=>Math.floor(x*kx/lim)+':'+Math.floor(y*110540/lim),bk=new Map();
+  pts.forEach(p=>{ const k=key(p[0],p[1]); (bk.get(k)||bk.set(k,[]).get(k)).push(p); }); D.bankM=lim; D.bankN=0;
+  for(const b of D.blds){ b.bank=false; const gx=Math.floor(b.c[0]*kx/lim),gy=Math.floor(b.c[1]*110540/lim);
+    for(let dx=-1;dx<=1&&!b.bank;dx++) for(let dy=-1;dy<=1&&!b.bank;dy++) for(const p of bk.get((gx+dx)+':'+(gy+dy))||[]) if(mDist(b.c,p)<=lim){ b.bank=true; break; }
+    if(b.bank) D.bankN++; } }
+
 /* ---------- state ---------- */
 let D=null,isDemo=true;
 const S={sizeIdx:1,T:0.5,playing:false,speed:2,exag:1,mode:'2d',l3d:false,lift:0,tab:'sim',diag:'size',metric:'people',cmp:'both',

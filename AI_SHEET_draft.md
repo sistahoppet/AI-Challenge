@@ -74,6 +74,16 @@ and text faster than a non-specialist can read, so we had to push for a simpler 
 | 3 | Maps and charts | Merged building shapes gave one building 280,000 m², inflating shelter places. | Implausible capacity of one school in the shelter list. |
 | 4 | Interpreting results | The evacuation model showed 0 people in danger in every case, because the water rise (21 h) is illustrative. | All choices gave the same result; we added a "water rises in" setting and say it is an assumption. |
 | 5 | Interpreting results | The AI planned a "model vs 2021" headline score; the 2021 outline here is one 0.12 km² patch 2.7 km from the river. | Score came out 0%; the AI checked the data and we now report the check as inconclusive. |
+| 6 | Analysis and code | Shelters with unknown size silently got a default of 500 places each, inflating capacity. | Reading the code against the brief: 116 schools/sports halls have no building outline. Now 0 places, shown in amber "capacity to be checked". |
+| 7 | Policy tool | The Evacuate tab said shelters are "not flooded in 2021", but the code never checked it. | Comparing on-screen text with the code. Rule added. |
+| 8 | Policy tool | A 30 km/h driving speed was labelled "on foot"; the decision card printed "walking speed 8.3 m/s". | Code review. Labels fixed; speed now 20 km/h average evacuation speed (FLOODsite, proxy). |
+| 9 | Interpreting results | "Upstairs at home" counted as safe, so "best actions" could favour keeping people home. | The team questioned it; research found ~10 houses collapsed in Pepinster in 2021. Upstairs is now a last resort, counted as not evacuated; riverbank homes never count as safe upstairs. |
+| 10 | Loading and preparing data | The 2021 satellite file held only 2 small monitoring polygons (main outline not exported), so "inconclusive" came from our export, not the data. | Opening the file contents. Logged as a pipeline gap. |
+| 11 | Analysis and code | The app assumed every evacuee needs a public shelter; evidence shows ~4.5% went to public centres in Limburg 2021. | Desk research. Slider added (default 25%, large margin). |
+| 12 | Desk research | Behaviour values (door-to-door +10 pts, rescue 60 people/h, ×3 national support, +30% squeeze-in) had no source. | Research found none: now marked "assumption" or "placeholder" in a parameter file (data/params.json) shown in the app. |
+| 13 | Desk research | Sources disagreed (Pepinster deaths 7 / 6 / 1; one paper's text vs table; a summary listed Amblève/Ourthe gauges as Vesdre stations). | Cross-checking sources; disputed figures shown as a range or not used. |
+| 14 | Analysis and code | The road-delay formula (BPR) gave only 2 min for 42 clogged road pieces, which looked reassuring but was misleading on short pieces. | Reading the result critically; added a queue estimate (≈22 min wait at the worst point) and said delays are not fed back into the run. |
+| 15 | Analysis and code | Parallel AI code agents broke a function and guessed each other's names. | Syntax check (node --check) and a headless-browser test on our real data after every change. |
 
 ## 4. Three key prompts
 
@@ -93,6 +103,8 @@ and text faster than a non-specialist can read, so we had to push for a simpler 
 - Sources: each cost and standard has its reference shown in the app. [TEAM: list the ones you opened yourselves.]
 - Sensitivity: each assumption moved up and down to see which one changes the result most (in the report).
 - The 2021 satellite outline was compared with the model; the result (inconclusive) is reported, not hidden.
+- After the AI code changes of 30 Oct: syntax check of every file and a headless-browser run on the real data (8 shelters, 3,903 places, 18,878 people to move, report page opens).
+- Every research value was given a source link and a label (official, peer-reviewed, press, proxy); disputed values are not used. List in SOURCES.md.
 
 ## 6. Limits and uncertainty
 
@@ -103,4 +115,7 @@ and text faster than a non-specialist can read, so we had to push for a simpler 
 - Shelter places (floor area ÷ 3.5 m²) are an upper bound; real capacity depends on beds, toilets and staff.
 - Costs are proxies from European curves; GHS-OBAT building-use codes were not checked one by one.
 - Towns are assigned to the closest OpenStreetMap place name, an approximation at the edges.
+- Several parameters are placeholders until the data arrives (rescue rate, national support, squeeze-in, door-to-door): see the Data tab "Assumptions and sources".
+- Mobilisation times and road capacities come from US studies (proxy); clog delays are estimated but not fed back into the run.
+- "Riverbank" homes are estimated from the flood grid (~80 m), because the river lines could not be downloaded.
 - Much of the code was written by AI: we tested it but cannot exclude errors we did not see.

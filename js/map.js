@@ -11,7 +11,7 @@ function squareAround([x,y],m=6){const dx=m/(111320*Math.cos(y*Math.PI/180)),dy=
 function depthProps(c){const o={lag:c?c.lag:0}; D.rps.forEach(r=>{o['r'+r]=c?c.depth[r]:0; o['L'+r]=c?c.L[r]:0;}); return o;}
 function buildSources(){
   cellFC={type:'FeatureCollection',features:D.cells.map((c,i)=>({type:'Feature',geometry:{type:'Polygon',coordinates:c.poly},properties:Object.assign({i,z:c.z,pop:+c.pop.toFixed(1),elev:c.elev??-1},depthProps(c))}))};
-  bldFC={type:'FeatureCollection',features:D.blds.map(b=>({type:'Feature',geometry:b.geom.type==='Point'?squareAround(b.c,Math.max(3,Math.sqrt(b.area||36)/2)):b.geom,properties:Object.assign({bt:btOf(b),h:b.h,use:b.use??-1,area:b.area||0,bpop:+(b.pop||0).toFixed(2)},depthProps(b.ci>=0?D.cells[b.ci]:null))}))};
+  bldFC={type:'FeatureCollection',features:D.blds.map(b=>({type:'Feature',geometry:b.geom.type==='Point'?squareAround(b.c,Math.max(3,Math.sqrt(b.area||36)/2)):b.geom,properties:Object.assign({bt:btOf(b),h:b.h,use:b.use??-1,area:b.area||0,bpop:+(b.pop||0).toFixed(2),rb:b.bank?1:0},depthProps(b.ci>=0?D.cells[b.ci]:null))}))};
 }
 // water depth now, per feature: depth − (1 − rise) × L, rise = level(T − lag) (same formula as nowDepth in analysis.js)
 // keep=true: highest level reached so far (stays at 1 after the peak) → "water reached here", i.e. likely damage
@@ -57,6 +57,8 @@ function initMap(){
     map.addLayer({id:'bld-roof',type:'fill-extrusion',source:'bld',layout:{visibility:'none'},paint:{'fill-extrusion-color':roofColor(),'fill-extrusion-height':0,'fill-extrusion-base':0,'fill-extrusion-opacity':0.95}});
     // 3D: the water around each flooded building, up to today's level; a building lower than the water disappears under it
     map.addLayer({id:'bld-water',type:'fill-extrusion',source:'bld',layout:{visibility:'none'},filter:['==',1,0],paint:{'fill-extrusion-color':css('--w2'),'fill-extrusion-height':0,'fill-extrusion-opacity':.8}});
+    // riverbank homes: dashed outline = upstairs unreliable, evacuate early
+    map.addLayer({id:'bld-rb',type:'line',source:'bld',minzoom:13,filter:['==',['get','rb'],1],paint:{'line-color':css('--cut'),'line-width':1.5,'line-dasharray':[2,1.5]}});
     map.addLayer({id:'bld-line',type:'line',source:'bld',minzoom:15,paint:{'line-color':css('--ink'),'line-opacity':.25,'line-width':.5}});
     addLiveLayers(); addEvacLayers(); addPlaceLayers(); addResponseLayers();
     map.addLayer({id:'obs-fill',type:'fill',source:'obs',paint:{'fill-color':css('--obs'),'fill-opacity':.45}});
@@ -97,7 +99,7 @@ function applyLayers(){
   const model=S.cmp!=='obs',obs=S.cmp!=='model'&&D.hasObs&&!zones;
   map.setLayoutProperty('water-img','visibility',vis(!zones&&model)); map.setLayoutProperty('water-3d','visibility',vis(three&&!zones&&$('tCols').checked));
   map.setLayoutProperty('zones','visibility',vis(zones||$('tZones').checked)); map.setPaintProperty('zones','fill-opacity',zones?.55:.3);
-  map.setLayoutProperty('bld-2d','visibility',vis(!three&&$('tBld').checked)); map.setLayoutProperty('bld-hit','visibility',vis(!three&&$('tBld').checked&&!zones)); map.setLayoutProperty('bld-3d','visibility',vis(three&&$('tBld').checked)); map.setLayoutProperty('bld-roof','visibility',vis(three&&$('tBld').checked)); map.setLayoutProperty('bld-water','visibility',vis(three&&$('tBld').checked)); map.setLayoutProperty('bld-line','visibility',vis(!three&&$('tBld').checked));
+  map.setLayoutProperty('bld-2d','visibility',vis(!three&&$('tBld').checked)); map.setLayoutProperty('bld-hit','visibility',vis(!three&&$('tBld').checked&&!zones)); map.setLayoutProperty('bld-3d','visibility',vis(three&&$('tBld').checked)); map.setLayoutProperty('bld-roof','visibility',vis(three&&$('tBld').checked)); map.setLayoutProperty('bld-water','visibility',vis(three&&$('tBld').checked)); map.setLayoutProperty('bld-line','visibility',vis(!three&&$('tBld').checked)); map.setLayoutProperty('bld-rb','visibility',vis($('tBld').checked));
   map.setLayerZoomRange('bld-hit',0,14.5); // up close the real footprints show the water; the dots only help when zoomed out
   map.setLayoutProperty('obs-line','visibility',vis(obs)); map.setLayoutProperty('obs-fill','visibility',vis(obs));
   map.setPaintProperty('bld-3d','fill-extrusion-height',['*',['get','h'],S.lift,1.02]); // real GHS-OBAT height, just above the OSM footprint it sits in
@@ -130,7 +132,7 @@ function paintDynamic(force){ if(!ready) return; const t=performance.now(); clea
 }
 function recolor(){ if(!ready) return; if(map.getLayer('outside')){ map.setPaintProperty('outside','fill-color',css('--bg')); map.setPaintProperty('outside-line','line-color',css('--accent')); }
   map.setPaintProperty('bg','background-color',css('--land'));
-  map.setPaintProperty('zones','fill-color',zoneColor()); map.setPaintProperty('obs-line','line-color',css('--obs')); map.setPaintProperty('obs-fill','fill-color',css('--obs'));
+  map.setPaintProperty('zones','fill-color',zoneColor()); map.setPaintProperty('obs-line','line-color',css('--obs')); map.setPaintProperty('bld-rb','line-color',css('--cut')); map.setPaintProperty('obs-fill','fill-color',css('--obs'));
   recolorDetails(); recolorEvac(); recolorPlaces(); if(WV) WV.lut=waterLut(); setBasemap(S.basemap); drawLegend(); if(S.tab==='diag') drawDiagram();
 }
 let pending=false; function render(){ if(pending) return; pending=true; requestAnimationFrame(()=>{pending=false; draw();}); }
@@ -162,10 +164,11 @@ function drawLegend(){
   L.innerHTML=`<div class="t">Water depth</div><div class="grad"></div><div class="gradlab"><span>0</span><span>0.5</span><span>1.5</span><span>2.5+ m</span></div>
    ${D?.hasObs&&S.cmp!=='model'?`<div class="li"><span class="sw" style="border:2px dashed var(--obs);background:color-mix(in srgb,var(--obs) 45%,transparent)"></span>Water seen by satellite, July 2021</div>`:''}<div class="t" style="margin-top:6px">Buildings (real shape)</div>${[['--bt0','Home'],['--bt1','Shop, office, industry'],['--bt3','School, sports hall'],['--bt2','Hospital, fire, police, town hall']].map(([v,t])=>`<div class="li"><span class="sw" style="background:var(${v})"></span>${t}</div>`).join('')}<div class="t" style="margin-top:6px">Water reached buildings</div>${CLASSES.map((c,k)=>`<div class="li"><span class="sw dot" style="background:var(--hit${k+1})"></span>${['under 0.5 m','0.5–1.5 m','over 1.5 m: likely serious damage'][k]}</div>`).join('')}
    <div class="li"><span class="sw dot" style="background:var(--hit2);box-shadow:0 0 0 2px var(--w3)"></span>Blue ring: under water now</div>
-   <div class="li"><span class="sw" style="background:var(--cut);height:4px"></span>Street under water (≥ ${CAR_DEPTH} m): closed</div><div class="li"><span class="sw" style="background:repeating-linear-gradient(90deg,var(--dmg) 0 4px,transparent 4px 7px);height:4px"></span>Was flooded: check before use</div>
+   ${D?.bankN?`<div class="li"><span class="sw" style="background:transparent;border:2px dashed var(--cut)"></span>Riverbank home: upstairs unreliable, evacuate early (≤ ${Math.round(D.bankM)} m from the river, assumption)</div>`:''}
+   <div class="li"><span class="sw" style="background:repeating-linear-gradient(90deg,var(--clog) 0 5px,transparent 5px 8px);height:5px"></span>Clog point: more evacuation cars than the road can carry</div><div class="li"><span class="sw" style="background:var(--cut);height:4px"></span>Street under water (≥ ${CAR_DEPTH} m): closed</div><div class="li"><span class="sw" style="background:repeating-linear-gradient(90deg,var(--dmg) 0 4px,transparent 4px 7px);height:4px"></span>Was flooded: check before use</div>
    ${$('tPeople').checked?dot('--people',`1 dot ≈ ${fmt(perDot)} resident${perDot>1?'s':''}`)+dot('--people-risk','Residents in water'):''}
    ${$('tCars').checked?dot('--car','Cars: illustration only'):''}
-   ${D?.places?.length&&$('tPlaces').checked?dot('--crit','Hospital, fire, police, town hall')+dot('--shel','School, sports hall (possible shelter)')+'<div class="li"><span class="sw dot" style="border:3px solid var(--cut)"></span>Site in the water</div>':''}`;
+   ${D?.places?.length&&$('tPlaces').checked?dot('--crit','Hospital, fire, police, town hall')+dot('--shel','School, sports hall (possible shelter)')+(typeof placesLegend==='function'?placesLegend():'')+'<div class="li"><span class="sw dot" style="border:3px solid var(--cut)"></span>Site in the water</div>':''}`;
 }
 function onHover(ev){
   const layer=S.tab==='safety'?'zones':'water-2d',f=ready&&map.queryRenderedFeatures(ev.point,{layers:[layer]})[0],tip=$('tip');

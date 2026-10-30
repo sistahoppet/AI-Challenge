@@ -25,15 +25,15 @@ function flyTo(k){ setOrbit(false); if(S.tab!=='safety'&&S.tab!=='coord') setTab
 
 /* ---------- policy ---------- */
 function drawActor(){
-  const r=rp(),pk=peak(r),deep=pk.cc[2],lo=peak(D.rps[0]),hi=peak(D.rps[D.rps.length-1]),o=D.hasObs?peak('obs'):null,sc=`${sizeWord(r).toLowerCase()} (1-in-${r}-year) flood`,a=$('actorSel').value;
+  const r=rp(),pk=peak(r),deep=pk.cc[2],lo=peak(D.rps[0]),hi=peak(D.rps[D.rps.length-1]),o=D.hasObs?peak('obs'):null,sc=`${sizeWord(r).toLowerCase()} (1-in-${r}-year) flood`,a=$('actorSel').value,inW=p=>p.ci>=0&&D.cells[p.ci].depth[r]>.01,critN=(D.places||[]).filter(p=>p.group==='critical'&&inW(p)).length,schN=(D.places||[]).filter(p=>p.kind==='school'&&inW(p)).length;
   const T={
     muni:[`${fmt(deep.bld)} buildings sit where water goes over 1.5 m in a ${sc}. Which of them got rebuilding permits after 2021?`,
-      `Check whether schools, care homes and the town hall are among the ${fmt(pk.bld)} buildings in the water (needs a building-use layer).`,
+      `${critN} hospitals, care homes, emergency sites or town halls and ${schN} schools are in the water at this flood size (OpenStreetMap; listed in the Evacuate tab).`,
       `Show residents their own street at each flood size in a public meeting.`],
     region:[`People in flooded areas grow from ${fmt(lo.people)} (frequent flood) to ${fmt(hi.people)} (extreme flood). Where the jump is biggest, zoning rules matter most.`,
       `Reconstruction money: start with the ${fmt(deep.people)} residents where water goes over 1.5 m.`,`Compare towns: which municipality carries most of the risk?`],
     cp:[`${fmt(pk.people)} people live in areas that flood in a ${sc}; ${fmt(deep.people)} of them where water goes over head height.`,
-      `Use the video to plan the evacuation order: low ground floods first.`,`Place shelters at the green "safest places" (Safety tab), outside every flood size.`],
+      `Use the video to plan the evacuation order: low ground floods first.`,`Place shelters at the green "safest places" (Evacuate tab), outside every flood size.`],
     eu:[o?`The real 2021 flood covered areas where ${fmt(o.people)} people live. Compare with each flood size to see how rare 2021 looks on the hazard maps.`:`Load the 2021 flood file to compare the event with the hazard maps.`,
       `The same method works in Belgium, Germany and the Netherlands: comparable cross-border figures.`,`Where satellite and model disagree, hazard maps or mapping practice may need review.`]};
   $('actorText').innerHTML=(isDemo?['<i>Demo numbers: replace with your team data before quoting.</i>']:[]).concat(T[a]).map(t=>`<li>${t}</li>`).join('');
