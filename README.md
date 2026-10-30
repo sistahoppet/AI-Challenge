@@ -14,8 +14,11 @@ The app needs a small local web server (so it can read the `data/` folder). Pick
 
 ```bash
 cd "/root/ai challenge/flood-scenario-explorer-project"
-python3 -m http.server 8000
+python3 scripts/serve.py --port 8000
 ```
+
+(Use this server, not `python3 -m http.server`: it tells the browser to always check for new files and compresses the
+data 10×. With the plain server, Chrome can keep old copies of the code after an update and the app breaks.)
 
 Then open **http://localhost:8000** in Chrome or Edge on Windows. Leave the terminal open; `Ctrl+C` stops it.
 After changing a file, reload the page with **Ctrl+Shift+R**.
