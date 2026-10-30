@@ -46,7 +46,7 @@ async function policyAdvise(){
   if(!Object.keys(models).length) throw new Error('No model results yet: run at least one of sections 2–5 first.');
   const prov=$('pProv').value, key=$('pKey').value.trim(), headers={'content-type':'application/json'};
   if(prov==='claude'&&key){ headers['x-anthropic-key']=key; if($('pKeep').checked) store.set('fse-claude-key',key,true); else store.set('fse-claude-key',key,false); }
-  const body={area:A.area?A.area.join(', '):'',language:$('pLang').value,provider:prov,question:$('pQ').value.trim(),models};
+  const body={area:(typeof STUDY!=='undefined'&&STUDY.name?STUDY.name+', ':'')+(A.area?'bbox '+A.area.join(','):''),language:$('pLang').value,provider:prov,question:$('pQ').value.trim(),models};
   const t0=Date.now(), out=$('pOut');
   let r; try{ r=await fetch(P.url+'/advise?async=1',{method:'POST',headers,body:JSON.stringify(body)}); }
   catch(e){ throw new Error('The policy API can\'t be reached at '+P.url+'.'); }

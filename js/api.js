@@ -212,7 +212,7 @@ $('hNeedOut').onclick=async e=>{ const b=e.target.closest('[data-acc],[data-act]
 /* ---------- 6. building damage + model checks (read-only) ---------- */
 async function loadImpact(){ try{ const j=await api('/impact');
   $('iOut').innerHTML=table(j.aois,[['country','Country'],['activation','EMS'],['aoi','AOI'],['product','Map'],['area_km2','km²'],['polygons','Polygons'],['flooded','Flooded bldgs'],['capped','Capped'],['depth','Depth m'],['damage','Damage 0–1'],['loss_m','Loss €M'],['affected','Affected'],['displaced','Displaced']])
-    +'<p class="hint">From the July 2021 satellite maps (Copernicus EMS) × GHS-OBAT buildings. Money uses an assumed rebuild cost per m².</p>'; }
+    +'<p class="hint">From the July 2021 satellite maps (Copernicus EMS) × GHS-OBAT buildings. Money uses an assumed rebuild cost per m².</p>'+links(j.files); }
   catch(e){ $('iOut').innerHTML=`<p class="hint err">✗ ${esc(e.message)}</p>`; } }
 async function loadModels(){ try{ const j=await api('/models');
   $('mOut').innerHTML=table(j.models.map(m=>({...m,endpoints:(m.endpoints||[]).join(', ')})),[['name','Model'],['what','What it does'],['runs_on','Where'],['endpoints','Routes'],['script','Script']])+'<h3>How well they work (held-out checks)</h3>'+table(j.evaluation,[['check','Check'],['model','Model'],['metric','Metric'],['value','Value']]); }
