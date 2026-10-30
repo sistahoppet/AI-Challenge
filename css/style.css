@@ -365,3 +365,8 @@ body.hideui .panelbtn{display:none}
 .tools{right:28px}
 .citysel{max-width:230px;min-height:32px;font-size:13.5px}
 .tools{top:auto;bottom:40px;right:28px;grid-auto-flow:column}
+.panel{grid-template-rows:auto auto 1fr}
+.panelhide{display:flex;justify-content:flex-end;align-items:center;gap:6px;border:0;border-bottom:1px solid var(--line);background:var(--surface);color:var(--muted);font:600 12px var(--f-body);padding:5px 12px;cursor:pointer}
+.panelhide:hover{color:var(--ink);background:color-mix(in srgb,var(--accent) 10%,var(--surface))}
+body.nopanel .panelbtn{width:auto;padding:0 8px;height:40px;font-size:13px}
+@media (max-width:1400px){ .top{flex-wrap:nowrap;gap:6px} .top .btn{padding-inline:9px;font-size:13.5px} .citysel{max-width:160px} .brand small{display:none} }

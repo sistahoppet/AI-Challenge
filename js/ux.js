@@ -137,8 +137,8 @@ document.addEventListener('keydown',e=>{ if((e.key==='h'||e.key==='H')&&!e.ctrlK
 
 /* ---------- side panel folds away (button on the map edge); the controls bar folds on small screens ---------- */
 function setPanel(open){ document.body.classList.toggle('nopanel',!open); const b=$('panelBtn'); b.textContent=open?'›':'‹'; b.setAttribute('aria-expanded',open);
-  b.title=b.ariaLabel=open?'Hide the side panel':'Show the side panel'; try{ localStorage.setItem('fse-panel',open?'1':'0'); }catch(e){} setTimeout(()=>map?.resize(),60); }
-$('panelBtn').onclick=()=>setPanel(document.body.classList.contains('nopanel'));
+  b.title=b.ariaLabel=open?'Hide the side panel':'Show the side panel'; b.textContent=open?'›':'‹ Panel'; try{ localStorage.setItem('fse-panel',open?'1':'0'); }catch(e){} setTimeout(()=>map?.resize(),60); }
+$('panelBtn').onclick=()=>setPanel(document.body.classList.contains('nopanel')); $('panelHide').onclick=()=>setPanel(false);
 try{ if(localStorage.getItem('fse-panel')==='0') setPanel(false); }catch(e){}
 if(innerHeight<760) $('dockHide').click(); // small screen: the map gets the room, the controls open with one click
 // at the start of a run (clock 0, paused) the map has no water yet: say so next to the play button

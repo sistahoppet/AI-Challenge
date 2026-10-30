@@ -375,6 +375,11 @@ body.hideui .panelbtn{display:none}
 .tools{right:28px}
 .citysel{max-width:230px;min-height:32px;font-size:13.5px}
 .tools{top:auto;bottom:40px;right:28px;grid-auto-flow:column}
+.panel{grid-template-rows:auto auto 1fr}
+.panelhide{display:flex;justify-content:flex-end;align-items:center;gap:6px;border:0;border-bottom:1px solid var(--line);background:var(--surface);color:var(--muted);font:600 12px var(--f-body);padding:5px 12px;cursor:pointer}
+.panelhide:hover{color:var(--ink);background:color-mix(in srgb,var(--accent) 10%,var(--surface))}
+body.nopanel .panelbtn{width:auto;padding:0 8px;height:40px;font-size:13px}
+@media (max-width:1400px){ .top{flex-wrap:nowrap;gap:6px} .top .btn{padding-inline:9px;font-size:13.5px} .citysel{max-width:160px} .brand small{display:none} }
 </style>
 </head>
 <body>
@@ -519,6 +524,7 @@ body.hideui .panelbtn{display:none}
     </div>
 
     <aside class="panel">
+      <button class="panelhide" id="panelHide" title="Hide this panel (the map gets the room)">Hide panel <span aria-hidden="true">»</span></button>
       <div class="tabs" role="tablist">
         <button role="tab" aria-selected="true" data-t="sim">Simulate</button>
         <button role="tab" aria-selected="false" data-t="safety">Evacuate</button>
@@ -3929,8 +3935,8 @@ document.addEventListener('keydown',e=>{ if((e.key==='h'||e.key==='H')&&!e.ctrlK
 
 /* ---------- side panel folds away (button on the map edge); the controls bar folds on small screens ---------- */
 function setPanel(open){ document.body.classList.toggle('nopanel',!open); const b=$('panelBtn'); b.textContent=open?'›':'‹'; b.setAttribute('aria-expanded',open);
-  b.title=b.ariaLabel=open?'Hide the side panel':'Show the side panel'; try{ localStorage.setItem('fse-panel',open?'1':'0'); }catch(e){} setTimeout(()=>map?.resize(),60); }
-$('panelBtn').onclick=()=>setPanel(document.body.classList.contains('nopanel'));
+  b.title=b.ariaLabel=open?'Hide the side panel':'Show the side panel'; b.textContent=open?'›':'‹ Panel'; try{ localStorage.setItem('fse-panel',open?'1':'0'); }catch(e){} setTimeout(()=>map?.resize(),60); }
+$('panelBtn').onclick=()=>setPanel(document.body.classList.contains('nopanel')); $('panelHide').onclick=()=>setPanel(false);
 try{ if(localStorage.getItem('fse-panel')==='0') setPanel(false); }catch(e){}
 if(innerHeight<760) $('dockHide').click(); // small screen: the map gets the room, the controls open with one click
 // at the start of a run (clock 0, paused) the map has no water yet: say so next to the play button
