@@ -198,3 +198,20 @@ python3 build.py
 - "Unsafe" is not a count of casualties.
 - The 2021 satellite outline covers only a small part of this valley: the app says the check is inconclusive.
 - Demo data is synthetic and marked **DEMO DATA**.
+
+## Data credits
+
+The challenge datasets are free to use with credit (Annex 2 of the challenge). The files in `data/` are extracts made from them.
+
+- **Copernicus Emergency Management Service, Rapid Mapping** (© European Union): activations EMSR517 (Germany), EMSR518 (Belgium), EMSR520 (Netherlands), July 2021. https://mapping.emergency.copernicus.eu/
+- **EFAS river flood hazard maps for Europe**, European Commission, Joint Research Centre (JRC). https://data.jrc.ec.europa.eu/collection/id-0054
+- **GHS-OBAT R2024A** buildings, European Commission, JRC. https://data.jrc.ec.europa.eu/dataset/f41a22f1-5741-4c41-86eb-6384654f6927
+- **GHS-POP R2023A** population, European Commission, JRC. https://data.jrc.ec.europa.eu/dataset/2ff68a52-5b5b-4a22-8f40-c41da8332cfe
+
+Other public sources:
+
+- **OpenStreetMap** © OpenStreetMap contributors, under the Open Database License (ODbL 1.0): roads, places, building outlines and town names, read from OpenFreeMap tiles. The OSM-derived files (`roads`, `places`, `buildings_fp`, `towns`) stay under the ODbL. https://www.openstreetmap.org/copyright
+- **Copernicus DEM GLO-30** (ground height): © DLR e.V. 2010–2014 and © Airbus Defence and Space GmbH 2014–2018, provided under COPERNICUS by the European Union and ESA.
+- **Open-Meteo** (CC BY 4.0) with **ERA5** reanalysis (Copernicus Climate Change Service): rain records and forecasts.
+- **Background maps** (display only, credited on the map): Esri World Imagery, CARTO, OpenFreeMap, Mapzen/AWS terrain tiles.
+- **Research values**: JRC depth–damage functions (Huizinga, de Moel & Szewczyk 2017, doi 10.2760/16510) and the sources listed in `SOURCES.md`.
