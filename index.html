@@ -14,7 +14,10 @@
   <header class="top">
     <h1 class="brand"><svg class="logo" viewBox="0 0 40 40" aria-hidden="true"><path d="M20 3l14 6v10c0 9-6 15-14 18C12 34 6 28 6 19V9z" fill="var(--accent)"/><path d="M13 20l7-6 7 6v7H13z" fill="var(--surface)"/><path d="M8 27q3-3 6 0t6 0t6 0t6 0" fill="none" stroke="var(--surface)" stroke-width="2.4" stroke-linecap="round"/></svg><span>Flood Scenario Explorer<small>Learning from the July 2021 floods</small></span></h1>
     <span id="dataBadge" class="badge">DEMO DATA</span>
+    <label class="citylab" for="citySel"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-7-6-7-12a7 7 0 0 1 14 0c0 6-7 12-7 12z"/><circle cx="12" cy="9" r="2.5"/></svg>Area</label><select class="btn citysel" id="citySel" aria-label="Area shown" title="Choose a town of the loaded area, or another area exported by the data team"><option value="">Whole area</option></select>
+    <span id="apiBadge" class="badge">API OFFLINE</span>
     <span class="spacer"></span>
+    <button class="btn" id="uiBtn" title="Hide the panels to see only the map (key H)" aria-pressed="false">Hide UI</button>
     <button class="btn" id="tourBtn">Guided demo</button>
     <button class="btn" id="helpBtn" aria-expanded="false">Explain</button>
     <button class="btn primary" id="openData">Load team data</button>
@@ -31,13 +34,14 @@
           <ol>
             <li>Set the flood and the scenario in the bar under the map.</li>
             <li>Press <b>▶</b>. Pause (space) and click the map to check a place.</li>
-            <li><b>Best actions</b> (under the map): the best sequence of actions.</li>
+            <li>Choose the order, what happens when a shelter is full, and rescue support <b>before</b> pressing ▶.</li>
+            <li><b>Best actions</b>: the best sequence; <b>Report</b>: PDF at the end of each run.</li>
             <li><b>Policy</b> tab: the mayor's decision card.</li>
           </ol>
           <h4>Counters on the map</h4>
           <dl>
             <dt>Home</dt><dd>still at home, water not there yet</dd>
-            <dt>Walking</dt><dd>on the way to a shelter</dd>
+            <dt>Driving</dt><dd>on the way to a shelter by car</dd>
             <dt>Sheltered</dt><dd>arrived in a shelter (places in brackets)</dd>
             <dt>Upstairs</dt><dd>water at home, building has a floor above it</dd>
             <dt>Danger</dt><dd>trapped without a safe floor, or stuck in a flooded street</dd>
@@ -88,11 +92,19 @@
         <div class="ov attr" id="attr"></div>
         <div class="ov tip" id="tip" hidden></div>
         <div class="ov alertbar" id="alertBar" hidden></div>
+        <button class="ov panelbtn" id="panelBtn" title="Hide the side panel" aria-label="Hide the side panel" aria-expanded="true">›</button>
+        <div class="ov playhint" id="playHint" hidden>Press ▶ to run this scenario</div>
+        <button class="ov uishow" id="uiShow" hidden title="Show the panels again (key H)">Show UI</button>
         <div class="ov hud" id="hud" hidden aria-live="off" aria-label="People right now"></div>
         <div class="ov shelcard" id="shelCard" hidden aria-label="Shelter"></div>
         <div class="ov inject tour" id="runEnd" hidden role="dialog" aria-label="Run finished"></div>
         <div class="ov tools" id="tools" role="toolbar" aria-label="Map layers"></div>
         <div class="ov inject tour" id="tour" hidden role="dialog" aria-label="Guided demo"></div>
+        <div class="ov stage docstage" id="docStage" hidden>
+          <div class="head"><b id="docTitle" style="font-family:var(--f-display);font-size:18px;text-transform:uppercase;letter-spacing:.04em">Report</b><span class="spacer"></span>
+            <button class="btn primary sm" id="docPrint">Save as PDF / print</button><button class="btn sm" id="docClose">Back to map</button></div>
+          <iframe id="docFrame" title="Report" style="width:100%;height:100%;border:1px solid var(--line);border-radius:6px;background:#fff"></iframe>
+        </div>
         <div class="ov stage" id="drillStage" hidden>
           <div class="head"><b style="font-family:var(--f-display);font-size:18px;text-transform:uppercase;letter-spacing:.04em">Debrief</b><span class="spacer"></span>
             <button class="btn primary sm" id="drillCard">Mayor's decision card</button><button class="btn sm" id="drillClose">Back to map</button></div>
@@ -139,11 +151,14 @@
     </div>
 
     <aside class="panel">
+      <button class="panelhide" id="panelHide" title="Hide this panel (the map gets the room)">Hide panel <span aria-hidden="true">»</span></button>
       <div class="tabs" role="tablist">
         <button role="tab" aria-selected="true" data-t="sim">Simulate</button>
         <button role="tab" aria-selected="false" data-t="safety">Evacuate</button>
         <button role="tab" aria-selected="false" data-t="coord">Alert</button>
+        <button role="tab" aria-selected="false" data-t="fc">Forecast</button>
         <button role="tab" aria-selected="false" data-t="diag">Diagrams</button>
+        <button role="tab" aria-selected="false" data-t="api">Live model</button>
         <button role="tab" aria-selected="false" data-t="policy">Policy</button>
         <button role="tab" aria-selected="false" data-t="data">Data</button>
       </div>
@@ -161,7 +176,7 @@
           <div class="form" id="scIn" style="margin-top:8px"></div>
           <p id="scInfo" style="font-size:13.5px;margin:8px 0"></p>
           <div class="row" style="justify-content:flex-start"><button class="btn primary sm" id="scBuild">Build this flood</button><button class="btn sm" id="scReset">Back to mapped sizes</button></div>
-          <p class="hint">Rain reaching the river = rain × duration × (1 − soaked up) × (1 − drained), compared with 37 years of real 48-hour rain in the Vesdre catchment to find its yearly chance; the flood map for that chance is interpolated between the EFAS maps. A simple index, not a hydrological model: short storms on small streams, snowmelt and blocked bridges are not represented.</p>
+          <p class="hint">Rain reaching the river = rain × duration × (1 − soaked up) × (1 − drained), compared with 37 years of real 48-hour rain in the catchment of the area to find its yearly chance; the flood map for that chance is interpolated between the EFAS maps. A simple index, not a hydrological model: short storms on small streams, snowmelt and blocked bridges are not represented.</p>
         </details>
         <div>
           <h2><span class="step">2</span>Press ▶ under the map</h2>
@@ -324,11 +339,149 @@
         </div>
       </div>
 
+      <div class="tabbody" id="tab-fc" hidden>
+        <div>
+          <h2>Flood forecast model</h2>
+          <p class="hint" style="margin:0 0 8px">Rain and how wet the ground is → river flow → flood size → people and buildings in the water. Trained in your browser on 40 years of rain (ERA5) and river flow (GloFAS) for the river point of the loaded area: external data from Open-Meteo, not challenge data.</p>
+          <div class="row" style="justify-content:flex-start"><button class="btn sm primary" id="fcTrain">Train model</button></div>
+          <p class="hint" id="fcModel"></p>
+        </div>
+        <div>
+          <h2>1 · Sandbox: what if the conditions change?</h2>
+          <div class="form">
+            <label>Rain day 1: <b id="fcR1V"></b><input type="range" id="fcR1" min="0" max="150" value="20"></label>
+            <label>Rain day 2: <b id="fcR2V"></b><input type="range" id="fcR2" min="0" max="150" value="10"></label>
+            <label>Rain day 3: <b id="fcR3V"></b><input type="range" id="fcR3" min="0" max="150" value="0"></label>
+            <label>Rain in the 30 days before (how wet the ground is): <b id="fcPastV"></b><input type="range" id="fcPast" min="0" max="300" value="60"></label>
+            <label>Month<select class="btn" id="fcMonth"><option value="1">January</option><option value="2">February</option><option value="3">March</option><option value="4">April</option><option value="5">May</option><option value="6">June</option><option value="7" selected>July</option><option value="8">August</option><option value="9">September</option><option value="10">October</option><option value="11">November</option><option value="12">December</option></select></label>
+          </div>
+          <div class="row" style="justify-content:flex-start;margin-top:8px"><button class="btn sm" id="fc21">Use July 2021</button></div>
+          <div id="fcSOut" style="margin-top:8px"></div>
+        </div>
+        <div>
+          <h2>2 · Now: today's data</h2>
+          <p class="hint" style="margin:0 0 8px">Last 60 days of rain + the 16-day rain forecast through the model, next to the GloFAS river-flow forecast.</p>
+          <div class="row" style="justify-content:flex-start"><button class="btn sm primary" id="fcLive">Load today's forecast</button></div>
+          <div class="wxbox" style="margin-top:8px"><div id="fcChart"></div></div>
+          <div id="fcLOut"></div>
+        </div>
+        <div>
+          <div class="row" style="justify-content:flex-start"><button class="btn sm" id="fcShow">Show the last result on the map</button></div>
+          <ul class="limits" style="margin-top:8px">
+            <li>Predicts the GloFAS river flow (a model, ~5 km), not gauge readings. Rivers with an upstream area under ~500 km² and town drainage floods are not covered.</li>
+            <li>One river point for the whole area; rain is the plain mean of a few points around it.</li>
+            <li>Vesdre check (trained 1984–2014, tested 2015–2021): July 2021 flagged beyond the 1-in-500 flow, one day late; of 2 weeks above the 1-in-10 flow, 1 caught, with 2 false alarms.</li>
+            <li>Numbers use EFAS depths blended between the 1-in-10/100/500 maps; the map shows the rarest of those maps not beyond the predicted flood.</li>
+            <li>A planning aid, not a warning: official warnings come from the national services (e.g. SPW / IRM in Belgium, DWD in Germany).</li>
+          </ul>
+        </div>
+      </div>
       <div class="tabbody" id="tab-diag" hidden>
         <div>
           <h2>Pick a diagram</h2>
           <div class="dlist" id="dlist"></div>
           <p class="hint">Each diagram can be downloaded as an image for the brief, as a vector file for editing, or as a data table (CSV) for Excel.</p>
+        </div>
+      </div>
+
+      <div class="tabbody" id="tab-api" hidden>
+        <div>
+          <h2>Team flood API</h2>
+          <p class="hint" style="margin:0 0 8px">This tab runs the team's models on the server: any area in the study region, not only the files loaded on the map.</p>
+          <div class="row" style="justify-content:flex-start"><input class="btn" id="apiUrl" style="flex:1;min-width:0" aria-label="API address"><button class="btn sm" id="apiGo">Connect</button></div>
+          <p class="hint" id="apiState">Connecting…</p>
+        </div>
+        <div>
+          <h2>1 · Area</h2>
+          <p id="apiArea" style="font-size:14px;margin:0">–</p>
+          <div class="row" style="justify-content:flex-start;margin-top:8px"><button class="btn sm" id="aStudy">Study area</button><button class="btn sm" id="aView">Map view</button><button class="btn sm" id="aDraw">Draw a box</button></div>
+          <p class="hint">Max 3000 km², inside the study region (DE / BE / NL flood areas). Bigger areas take minutes.</p>
+        </div>
+        <div>
+          <h2>Am I in danger?</h2>
+          <p class="hint" style="margin:0 0 8px">Click any place in the study region: flood depth there for each flood size. After an area check (5) it also shows the model risk of that 100 m cell.</p>
+          <div class="row" style="justify-content:flex-start"><button class="btn sm primary" id="dPick">Click a place on the map</button></div>
+          <div id="dOut"></div>
+        </div>
+        <div>
+          <h2>2 · Flood risk and who must leave</h2>
+          <div class="row" id="fFloods" style="justify-content:flex-start;font-size:14px"><label><input type="checkbox" value="rp10"> 1-in-10</label><label><input type="checkbox" value="rp100" checked> 1-in-100</label><label><input type="checkbox" value="rp500"> 1-in-500</label><label><input type="checkbox" value="risk>=0.5"> model risk ≥ 0.5</label></div>
+          <div class="row" style="justify-content:flex-start;margin-top:8px"><button class="btn sm primary" id="fRun">Run flood model</button></div>
+          <div id="fOut"></div>
+        </div>
+        <div>
+          <h2>3 · Evacuation flow</h2>
+          <div class="form">
+            <label>Flood size<select class="btn" id="eFlood"><option value="rp10">1-in-10</option><option value="rp100" selected>1-in-100</option><option value="rp500">1-in-500</option></select></label>
+            <label>Hours of the day <span class="tag">e.g. 3 8 17</span><input class="btn" id="eHours" value="3 8 17"></label>
+            <label>Weekend<input type="checkbox" id="eWeekend" style="width:auto;justify-self:start"></label>
+          </div>
+          <div class="row" id="eWeather" style="justify-content:flex-start;font-size:14px;margin-top:8px"><label><input type="checkbox" value="dry" checked> dry</label><label><input type="checkbox" value="rain"> rain</label><label><input type="checkbox" value="heavy_rain"> heavy rain</label><label><input type="checkbox" value="fog"> fog</label><label><input type="checkbox" value="snow"> snow</label></div>
+          <div class="row" style="justify-content:flex-start;margin-top:8px"><button class="btn sm primary" id="eRun">Simulate evacuation</button></div>
+          <div id="eOut"></div>
+        </div>
+        <div>
+          <h2>4 · Flood over time (what if)</h2>
+          <div class="form">
+            <label>Peak flood size (1-in-N years)<input class="btn" type="number" id="tPeak" min="2" value="100"></label>
+            <label>Hours to the peak<input class="btn" type="number" id="tRise" min="1" value="12"></label>
+            <label>Hours to fall back<input class="btn" type="number" id="tFall" min="1" value="24"></label>
+            <label>Step, hours<input class="btn" type="number" id="tStep" min="1" value="3"></label>
+          </div>
+          <div class="row" style="justify-content:flex-start;margin-top:8px"><button class="btn sm primary" id="tRun">Run timeline</button></div>
+          <div id="tOut"></div>
+        </div>
+        <div>
+          <h2>5 · Area check</h2>
+          <p class="hint" style="margin:0 0 8px">Risk per 100 m cell, emergency places and the places to act first. The first run in a new area takes ~2 min (map data download).</p>
+          <div class="row" style="justify-content:flex-start"><button class="btn sm primary" id="rRun">Check area</button>
+            <label style="font-size:14px">Show on map <select class="btn sm" id="rShow"><option value="r">model risk</option><option value="d10">1-in-10 water</option><option value="d100" selected>1-in-100 water</option><option value="d500">1-in-500 water</option><option value="">nothing</option></select></label></div>
+          <p class="hint" id="rLegend" style="margin:6px 0 0"></p>
+          <div class="row" style="justify-content:flex-start;margin-top:8px"><button class="btn sm" id="rAnim" disabled>Animate this area</button><button class="btn sm" id="rBack">Back to the study area</button></div>
+          <p class="hint" style="margin:4px 0 0">Plays the rising water for the checked area in the Simulate tab (EFAS depths; people and buildings only where the API sends them).</p>
+          <div id="rOut"></div>
+        </div>
+        <div>
+          <h2>6 · Help a friend</h2>
+          <p class="hint" style="margin:0 0 8px">Volunteers near a person with a disability get a route that avoids flooded roads. No names are stored; requests are deleted after 72 h.</p>
+          <div class="form"><label>Flood size<select class="btn" id="hScen"><option value="rp10">1-in-10</option><option value="rp100" selected>1-in-100</option><option value="rp500">1-in-500</option></select></label></div>
+          <div class="row" style="justify-content:flex-start;margin-top:8px"><button class="btn sm" id="hZone">Set up help zone</button><button class="btn sm" id="hShel">Show shelters</button></div>
+          <p class="hint">Set up once per area (3–4 min, loads all roads); the study area is ready. A zone works only for the area it was set up for.</p>
+          <div id="hZoneOut"></div>
+          <h3>Helper</h3>
+          <div class="row" style="justify-content:flex-start;align-items:center"><button class="btn sm" id="hHelpPick">Place on map</button><select class="btn" id="hMode" aria-label="Travel mode"><option value="walk">on foot</option><option value="bike">by bike</option><option value="car">by car</option></select><button class="btn sm primary" id="hHelp">Register helper</button><span class="hint" id="hHelpAt"></span></div>
+          <div id="hHelpOut"></div>
+          <h3>Person who needs help</h3>
+          <div class="row" style="justify-content:flex-start;align-items:center"><button class="btn sm" id="hNeedPick">Place on map</button><select class="btn" id="hNeedKind" aria-label="Need"><option value="mobility">mobility</option><option value="visual">visual</option><option value="hearing">hearing</option><option value="other">other</option></select><label style="font-size:14px"><input type="checkbox" id="hUrgent"> urgent</label><button class="btn sm primary" id="hNeed">Ask for help</button><span class="hint" id="hNeedAt"></span></div>
+          <div id="hNeedOut"></div>
+        </div>
+        <div>
+          <h2>7 · Building damage, July 2021</h2>
+          <div id="iOut"><p class="hint">Loading…</p></div>
+        </div>
+        <div>
+          <details><summary style="cursor:pointer"><h2 style="display:inline">8 · The models and how well they work</h2></summary><div id="mOut"><p class="hint">Loading…</p></div></details>
+        </div>
+        <div>
+          <h2>9 · Which policy should the mayor take?</h2>
+          <p class="hint" style="margin:0 0 8px">Sends the results of the runs above to the team's policy advisor. It picks from our policies (Policy Brief, Policies since the 2021 flood) and cites the model numbers it used.</p>
+          <div class="row" style="justify-content:flex-start"><input class="btn" id="pUrl" style="flex:1;min-width:0" aria-label="Policy API address"><button class="btn sm" id="pGo">Connect</button></div>
+          <p class="hint" id="pState">Connecting…</p>
+          <div class="form">
+            <label>Answer by<select class="btn" id="pProv"><option value="claude">Claude (Anthropic API key)</option><option value="local">Local model</option><option value="rules">Rules only (no AI, instant)</option></select></label>
+            <label>Language<select class="btn" id="pLang"><option>English</option><option>Français</option><option>Nederlands</option><option>Deutsch</option></select></label>
+            <label>Question <span class="tag">optional</span><input class="btn" id="pQ" placeholder="Which policies first, in which order?"></label>
+          </div>
+          <div id="pKeyRow" style="margin-top:8px">
+            <div class="row" style="justify-content:flex-start;align-items:center"><input class="btn" id="pKey" type="password" autocomplete="off" placeholder="sk-ant-…" style="flex:1;min-width:0" aria-label="Claude API key"><button class="btn sm" id="pForget">Forget</button></div>
+            <label style="font-size:14px"><input type="checkbox" id="pKeep"> remember on this device</label>
+            <p class="hint" id="pKeyHint" style="margin:4px 0 0"></p>
+            <p class="hint" style="margin:2px 0 0">The key goes only to the team policy API, for this one request; the server does not store or log it. Not remembered = gone when you close the tab.</p>
+          </div>
+          <p class="hint" id="pInputs"></p>
+          <div class="row" style="justify-content:flex-start;margin-top:8px"><button class="btn sm primary" id="pRun">Get policy advice</button><button class="btn sm" id="pAll" title="Runs 2, 3, 4 and 5 on the chosen area, then asks the advisor">Run all models + advice</button></div>
+          <div id="pOut"></div>
+          <details id="pCat" style="margin-top:8px"></details>
         </div>
       </div>
 
@@ -436,9 +589,12 @@
 <script src="js/respond.js"></script>
 <script src="js/places.js"></script>
 <script src="js/weather.js"></script>
+<script src="js/forecast.js"></script>
 <script src="js/impact.js"></script>
 <script src="js/response.js"></script>
 <script src="js/scenario.js"></script>
+<script src="js/api.js"></script>
+<script src="js/policy.js"></script>
 <script src="js/player.js"></script>
 <script src="js/camera.js"></script>
 <script src="js/panels.js"></script>

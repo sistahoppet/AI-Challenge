@@ -14,8 +14,11 @@ The app needs a small local web server (so it can read the `data/` folder). Pick
 
 ```bash
 cd "/root/ai challenge/flood-scenario-explorer-project"
-python3 -m http.server 8000
+python3 scripts/serve.py --port 8000
 ```
+
+(Use this server, not `python3 -m http.server`: it tells the browser to always check for new files and compresses the
+data 10×. With the plain server, Chrome can keep old copies of the code after an update and the app breaks.)
 
 Then open **http://localhost:8000** in Chrome or Edge on Windows. Leave the terminal open; `Ctrl+C` stops it.
 After changing a file, reload the page with **Ctrl+Shift+R**.
@@ -84,6 +87,12 @@ flood-scenario-explorer-project/
 ├── scripts/              how the data/ files were made (see below)
 ├── build.py              bundles the code into ONE html file → dist/
 └── dist/                 output of build.py
+├── data/                 put grid.geojson (+ observed_2021, buildings) here
+├── scripts/
+│   ├── colab_export_for_app.py   for the data person (Colab)
+│   └── serve.py          server with gzip (data 21 MB → ~2 MB): python3 scripts/serve.py
+├── build.py              bundles everything into ONE html file
+└── dist/                 output of build.py (the file to submit)
 ```
 
 ## Remake the data files
@@ -97,6 +106,36 @@ Needs Python with `requests mapbox-vector-tile shapely pyproj` (and the challeng
 | `scripts/export_footprints.py` | buildings_fp.geojson (real building outlines) | OpenStreetMap tiles + GHS-OBAT |
 | `scripts/export_towns.py` | towns.geojson (town and village names) | OpenStreetMap tiles |
 | `scripts/export_weather.py` | weather.json (rain records, July 2021) | Open-Meteo / ERA5 |
+
+## Switch area or town
+
+- **Town of the loaded area**: the menu next to *TEAM DATA* lists the towns with residents in the water. Choosing one frames it
+  (the rest is dimmed); the simulation still covers the whole valley, because the water comes from upstream.
+- **Another area** (another city in BE / DE / NL): the data team exports the same files into `data/cities/<name>/`
+  (grid, buildings or buildings_fp, observed_2021, places, roads, towns, weather.json) and lists it in `data/cities/index.json`:
+
+```json
+[{"name": "Bad Neuenahr-Ahrweiler (DE)", "dir": "cities/ahrweiler"}]
+```
+
+  It then appears under *Other areas* in the menu (the page reloads with `?area=cities/<name>`).
+
+## Live model tab (team server)
+
+The tab talks to two public HTTPS APIs on the team server, no Tailscale needed:
+
+- **Flood models** `https://dev.nsrddyn.com/api` ([flood_api](https://github.com/nasrlol/eu-ai-challange)): flood risk, evacuation, timeline,
+  area check, "am I in danger", help a friend, 2021 building damage, model checks.
+- **Policy advisor** `https://dev.nsrddyn.com/policy` ([flood-policy-advisor](https://github.com/nasrlol/flood-policy-advisor)): picks and orders
+  policies from the team catalogue, citing the model numbers. **Run all models + advice** runs sections 2–5 on the chosen area, then asks it.
+  Every answer shows the facts sent, the rules that fired and the model limits; the full catalogue is listed under the button.
+
+Other address: `?api=…&policy=…` in the page URL, or the field in the tab.
+
+## Hide the panels
+
+**Hide UI** (or key **H**) keeps only the map and the play bar. The small **›** tab on the right edge of the map folds the side
+panel; **Controls ▴ / ▾** folds the bar under the map (folded by default on small screens).
 
 ## Make the single file
 

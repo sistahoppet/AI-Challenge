@@ -142,7 +142,7 @@ $('safeList').onchange=e=>{const i=e.target.dataset.cap; if(i!=null){const v=+e.
 $('candList').onclick=e=>{const b=e.target.closest('[data-add]'); if(b){E.shelters.push(asShelter(E.cands[+b.dataset.add])); makePlan(); toast('Added to the plan');}};
 $('safeList').onclick=e=>{ if(e.target.closest('input')) return; const d=e.target.closest('[data-del]'); if(d){E.shelters.splice(+d.dataset.del,1); makePlan(); return;} const b=e.target.closest('[data-k]'); if(b) flyTo(+b.dataset.k);};
 $('evGroups').onclick=e=>{const b=e.target.closest('[data-r]'); if(!b) return; const r=E.plan.routes[+b.dataset.r]; map.fitBounds(bboxOf([r.pts]),{padding:80,duration:1000,pitch:map.getPitch(),bearing:map.getBearing()});};
-function onMapClick(e){ const p=[e.lngLat.lng,e.lngLat.lat]; if(abPick(p)) return;
+function onMapClick(e){ const p=[e.lngLat.lng,e.lngLat.lat]; if(apiPick(p)||abPick(p)) return;
   if(E.adding){ E.adding=false; $('evAdd').setAttribute('aria-pressed',false); map.getCanvas().style.cursor='';
     const d=depthAt(p),wet=d&&D.rps.some(r=>d[r]>0); E.shelters.push({c:p,auto:false,name:`Shelter ${String.fromCharCode(65+E.shelters.filter(s=>!s.auto).length%26)}`});
     toast(wet?'Careful: this place floods in at least one flood size':'Shelter added'); makePlan(); return; }

@@ -3,6 +3,11 @@
 // researcher needs to check and reuse it: the run's data files, a sensitivity table, the methods, and a comparison of runs.
 // The PDF is the browser's "Save as PDF" on a print-ready page (no extra library). Loaded as a classic script.
 
+// documents (report, decision card) open inside the app, not in a pop-up (browsers often block those silently)
+function docStage(title){ const st=$('docStage'),fr=$('docFrame'); $('docTitle').textContent=title; st.hidden=false; let html='';
+  fr.srcdoc='<p style="font:16px sans-serif;padding:24px">Preparing…</p>';
+  return {document:{open(){ html=''; },write(h){ html+=h; },close(){ fr.srcdoc=html; }}}; }
+$('docPrint').onclick=()=>$('docFrame').contentWindow?.print(); $('docClose').onclick=()=>{ $('docStage').hidden=true; };
 const RUNS=(()=>{ try{ return JSON.parse(localStorage.getItem('fse-runs')||'[]'); }catch(e){ return []; } })(); // finished runs, kept in this browser
 const saveRuns=()=>{ try{ localStorage.setItem('fse-runs',JSON.stringify(RUNS.slice(-12))); }catch(e){} };
 
@@ -59,8 +64,7 @@ async function snapMap(){ const cam={center:map.getCenter(),zoom:map.getZoom(),p
   Object.assign(S,keep); map.jumpTo(cam); applyLayers(); render(); return {url,pins,ratio:cv.clientHeight/cv.clientWidth}; }
 
 /* ---------- the report ---------- */
-async function openReport(){ const R=DR.run; if(!R){ toast('Run the simulation first'); return; } const w=open('','_blank'); if(!w){ toast('Allow pop-ups to open the report'); return; }
-  w.document.write('<p style="font:16px sans-serif;padding:24px">Preparing the report…</p>');
+async function openReport(){ const R=DR.run; if(!R){ toast('Run the simulation first'); return; } const w=docStage('Report of this run');
   const B=DR.best||bestPlan(),sn=await snapMap(),sens=sensitivity(),r=rp(),pk=peak(r),st=runSettings(),towns=townStats(R),cost=floodCost(r),g=agreePix?.(r);
   const used=R.sh.map((s,i)=>({...s,i,src:i<E.shelters.length?E.shelters[i].src:(E.cands||[]).find(c=>c.c===s.c)})).filter(s=>!s.extra||s.load>0);
   const crit=(D.places||[]).filter(p=>p.ci>=0&&(p.group==='critical'||p.group==='shelter')&&D.cells[p.ci].depth[r]>.01).map(p=>({p,d:D.cells[p.ci].depth[r]})).sort((a,b)=>b.d-a.d);
@@ -89,7 +93,7 @@ async function openReport(){ const R=DR.run; if(!R){ toast('Run the simulation f
   ol li{margin:3px 0} .t{font-family:ui-monospace,monospace;color:#56696f;margin-right:6px} .pb{page-break-before:always} .note{white-space:pre-wrap;border:1px dashed #cdd6d9;padding:6px 8px;border-radius:6px}
   @media print{button{display:none} body{margin:0}}</style></head><body>
   <button onclick="print()" style="float:right;padding:6px 12px">Save as PDF / print</button>
-  <h1>If the July 2021 flood came back tomorrow</h1><div class="s">For Anna, cross-border crisis coordinator · Vesdre valley (Liège province, BE) · ${esc(st.flood)} · run of ${new Date().toLocaleString('en-GB')} · ${isDemo?'<b>DEMO DATA</b> · ':''}Flood Scenario Explorer</div>
+  <h1>If the July 2021 flood came back tomorrow</h1><div class="s">For Anna, cross-border crisis coordinator · ${esc(STUDY.name)} · ${esc(st.flood)} · run of ${new Date().toLocaleString('en-GB')} · ${isDemo?'<b>DEMO DATA</b> · ':''}Flood Scenario Explorer</div>
   <p class="lead"><b>First action:</b> ${first?plain(first[1]):'—'}</p>
   <div class="four">
    <section><h3>What the flood covered</h3>
@@ -129,7 +133,7 @@ async function openReport(){ const R=DR.run; if(!R){ toast('Run the simulation f
 
   <h2 class="pb">Can we shelter everyone who must leave?</h2>
   <p><b>${fmt(toMove)}</b> people have to leave; <b>${fmt(needPub)}</b> (${share}%) are expected to need a public shelter, the others go to family or friends ${tag('as')}. The app chose ${E.shelters.length} shelters (outside every mapped flood, at least 150 m from water, dry road access) with <b>${fmt(places)} places</b>${extraUsed.length?`; when they were full, cars went on to ${extraUsed.length} next best sites (+${fmt(extraPl)} places)`:''}. ${unk} possible sites have no known capacity: shown in amber on the map, to be checked, not counted. At the peak: <b>${fmt(R.peak.shel)} in shelters</b>, ${fmt(R.peak.up)} upstairs at home (last resort), ${fmt(R.peak.noplace)} without a place${away?`, ${fmt(away)} with family or friends`:''}.</p>
-  <p class="s">The nearest safe shelter may be across the border (Dutch Limburg, Region Aachen): this version covers the Belgian Vesdre only; no cross-border sheltering agreement was found (EMRIC is the existing cooperation).</p>
+  <p class="s">The nearest safe shelter may be across the border (Dutch Limburg, Region Aachen): this version models one area at a time; no cross-border sheltering agreement was found (EMRIC is the existing cooperation).</p>
   <table><thead><tr><th>#</th><th>Shelter</th><th>Type</th><th class="n">Places</th><th class="n">People in</th><th>Full at</th><th>Why</th></tr></thead><tbody>${used.map(s=>`<tr><td>${s.i<E.shelters.length?s.i+1:'+'}</td><td><a href="${osm(s.c)}">${esc(s.name)}</a></td><td>${s.src?esc(kindName(s.src.kind)):''}</td><td class="n">${fmtFull(s.cap)}</td><td class="n">${fmtFull(s.load)}</td><td>${s.full!=null?clockM(s.full):'—'}</td>
     <td class="s">${s.src?[s.src.margin!=null?`${Math.round(s.src.margin)} m above water`:'',`${Math.round(s.src.dmin)} m from water`,s.src.capSrc||''].filter(Boolean).join(' · '):''}</td></tr>`).join('')}</tbody></table>
   <div class="s">Places = published capacity when known, else floor area (building outline × floors from GHS-OBAT height) ÷ 3.5 m² per person (Sphere standard) ${tag('ext')} — a maximum: beds, toilets and staff limit it further.</div>

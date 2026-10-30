@@ -79,15 +79,22 @@ $('useDemo').onclick=()=>{load(ingest(makeDemo()).data,true); $('modal').hidden=
    data/grid.geojson (+ optional observed_2021.geojson, buildings.geojson)
    and shows them instead of the demo. Opening index.html by double-click
    (file://) cannot read the folder: use "Load team data" instead. */
+// returns true when team data was loaded (otherwise the caller shows the demo)
+// which data folder: data/ (default) or another area exported to data/cities/<name>/ and chosen in the top bar (?area=cities/<name>)
+// name of the area (data/cities/index.json); every text in the app uses it, nothing is tied to one valley
+let STUDY={name:'Study area',gauge:'river',gaugeAt:null};
+fetch('data/cities/index.json',{cache:'no-cache'}).then(r=>r.json()).then(j=>{ const a=j.find(x=>(x.dir||'')===DATA_AREA); if(a){ STUDY=a; if(a.gaugeAt&&typeof GAUGE!=='undefined'){ GAUGE.name=a.gauge; GAUGE.c=a.gaugeAt; } if(typeof drawCities==='function'&&D) drawCities(); } }).catch(()=>{});
+const DATA_AREA=(new URLSearchParams(location.search).get('area')||'').replace(/[^\w\-\/]/g,'').replace(/^\/+|\/+$/g,''),DATA_DIR=DATA_AREA?`data/${DATA_AREA}/`:'data/';
 async function tryAutoLoad(){
-  if(!/^https?:$/.test(location.protocol)) return;
-  const get=async n=>{ try{ const r=await fetch('data/'+n,{cache:'no-store'}); return r.ok?await r.json():null; }catch(e){ return null; } };
-  const getT=async n=>{ try{ const r=await fetch('data/'+n,{cache:'no-store'}); return r.ok?await r.text():null; }catch(e){ return null; } };
-  const params=await get('params.json'); if(params) applyParams(params); // parameter registry: values, status and sources
-  const grid=await get('grid.geojson'); if(!grid) return;
+  if(!/^https?:$/.test(location.protocol)) return false;
+  // all files at once; 'no-cache' re-downloads only when a file changed. Real building outlines when exported, else GHS-OBAT points
+  const get=async n=>{ try{ const r=await fetch(DATA_DIR+n,{cache:'no-cache'}); return r.ok?await r.json():null; }catch(e){ return null; } };
+  const getT=async n=>{ try{ const r=await fetch(DATA_DIR+n,{cache:'no-cache'}); return r.ok?await r.text():null; }catch(e){ return null; } };
   const csvF=async n=>{ const t=await getT(n); return t?csvObjects(t):null; };
-  const r=ingest({grid,observed:await get('observed_2021.geojson'),buildings:await get('buildings_fp.geojson')||await get('buildings.geojson'),places:await get('places.geojson'),roads:await get('roads.geojson'),towns:await get('towns.geojson'),
-    rivers:await get('rivers.geojson'),shelterCap:await csvF('shelter_capacity.csv'),q2:await get('q2_measures.json'),prm:await csvF('prm.csv'),munis:await get('municipalities.geojson')});
-  if(r.data){ load(r.data,false); toast('Team data loaded from the data folder'); }
-  else toast('data/grid.geojson has a problem: '+r.log.filter(l=>l.e).map(l=>l.m).join(' '));
+  try{ const pr=await fetch('data/params.json',{cache:'no-cache'}); if(pr.ok) applyParams(await pr.json()); }catch(e){} // parameter registry (all areas): values, status and sources
+  const [grid,observed,fp,pts,places,roads,towns,rivers,munis,q2]=await Promise.all(['grid','observed_2021','buildings_fp','buildings','places','roads','towns','rivers','municipalities'].map(n=>get(n+'.geojson')).concat([get('q2_measures.json')]));
+  if(!grid) return false;
+  const r=ingest({grid,observed,buildings:fp||pts,places,roads,towns,rivers,munis,q2,shelterCap:await csvF('shelter_capacity.csv'),prm:await csvF('prm.csv')});
+  if(r.data){ load(r.data,false); toast('Team data loaded from the data folder'); return true; }
+  toast('data/grid.geojson has a problem: '+r.log.filter(l=>l.e).map(l=>l.m).join(' ')); return false;
 }

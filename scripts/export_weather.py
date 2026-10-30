@@ -5,9 +5,15 @@
 Usage: python scripts/export_weather.py
 """
 import json, math, pathlib, statistics as st, requests
-OUT = pathlib.Path(__file__).resolve().parent.parent / "data" / "weather.json"
-PTS = [(6.05, 50.52), (5.95, 50.60), (5.86, 50.59), (5.80, 50.57)]   # Hautes Fagnes, Eupen/Limbourg, Verviers, Pepinster
-GAUGE = (5.807, 50.567); REPLAY = ("2021-07-08", "2021-07-24")
+import argparse
+ap = argparse.ArgumentParser()
+ap.add_argument("--pts", nargs="+", type=float, default=[6.05, 50.52, 5.95, 50.60, 5.86, 50.59, 5.80, 50.57], help="lon lat pairs in the catchment (default: Vesdre)")
+ap.add_argument("--gauge", nargs=2, type=float, default=[5.807, 50.567], help="river point for the flow (default: Pepinster)")
+ap.add_argument("--out", default=str(pathlib.Path(__file__).resolve().parent.parent / "data"))
+a = ap.parse_args()
+OUT = pathlib.Path(a.out) / "weather.json"
+PTS = list(zip(a.pts[::2], a.pts[1::2]))
+GAUGE = tuple(a.gauge); REPLAY = ("2021-07-08", "2021-07-24")
 ll = f"latitude={','.join(str(p[1]) for p in PTS)}&longitude={','.join(str(p[0]) for p in PTS)}"
 
 def gumbel(series):  # series: {date: value}; yearly maxima 1984-2020, method of moments

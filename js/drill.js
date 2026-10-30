@@ -113,7 +113,7 @@ function bestPlan(){ if(!DR.prep) return null; let best=null;
 /* ---------- action sequence for "Best actions" and the decision card ---------- */
 function actionPlan(b=DR.best){ if(!b) return []; const R=b.run,d=b.dec,g=k=>b.gain[k]>.5?` <span class="gain">−${fmt(b.gain[k])} not evacuated</span>`:'',out=[],pr=DR.prep;
   const f=d.order==='tall'?R.f:1,stay=pr.groups.reduce((s,x)=>s+x.pop*R.comply*x.up*(1-f),0),used=R.sh.filter(s=>s.extra&&s.load>0);
-  out.push([-Infinity,`<b>Before the season</b>: <b>agree cross-border sheltering</b> with Dutch Limburg (Veiligheidsregio Zuid-Limburg) and Region Aachen through EMRIC: no agreement for sheltering evacuees across the border was found; this app covers the Belgian Vesdre only so far.`]);
+  out.push([-Infinity,`<b>Before the season</b>: <b>agree cross-border sheltering</b> with Dutch Limburg (Veiligheidsregio Zuid-Limburg) and Region Aachen through EMRIC: no agreement for sheltering evacuees across the border was found; this app models one area at a time, with no cross-border data yet.`]);
   if(D.bankN) out.push([-Infinity,`<b>Before the season</b>: tell the ${fmt(D.bankN)} riverbank buildings (≤ ${Math.round(D.bankM)} m from the river) that going upstairs is unreliable there: they <b>evacuate early</b>, at the first warning.`]);
   if(used.length) out.push([-Infinity,`<b>Before the season</b>: agree with the next best sites (${used.slice(0,4).map(x=>esc(x.name)).join(', ')}${used.length>4?'…':''}) that they open when the first shelters are full (+${fmt(used.reduce((s,x)=>s+x.cap,0))} places).`]);
   if(d.early) out.push([R.W,`<b>Be ready to warn ${d.early/60} h earlier</b> (${SC.leadMin+d.early} min before the water): forecast watch + a pre-agreed trigger (EFAS / IRM-KMI warnings).${g('early')}`]);

@@ -3,7 +3,7 @@
 // External source, not challenge data: Open-Meteo Flood API (GloFAS river discharge, ~5 km cells) and Open-Meteo weather (ERA5 archive, forecast models).
 
 /* ---------- where we look ---------- */
-const GAUGE={name:'Vesdre at Pepinster',c:[5.807,50.567]};                 // river point (GloFAS snaps it to its nearest ~5 km river cell)
+const GAUGE={name:'Vesdre at Pepinster',c:[5.807,50.567]}; // replaced by the area's river point from data/cities/index.json                 // river point (GloFAS snaps it to its nearest ~5 km river cell)
 const RAIN_PTS=[[6.05,50.52],[5.95,50.60],[5.86,50.59],[5.80,50.57]];      // catchment: Hautes Fagnes, Eupen/Limbourg, Verviers, Pepinster (plain mean)
 const REPLAY=['2021-07-08','2021-07-24'];
 const WX={mode:'replay',data:null,day:null};
@@ -87,5 +87,5 @@ $('wxLoad').onclick=()=>loadWeather(WX.mode);
 $('wxWorst').onchange=drawWeather;
 $('wxSave').onclick=()=>WX.data?saveFile('weather.json',JSON.stringify(WX.data)):toast('Load the data first');
 // start from data/weather.json (offline demo) or the browser cache
-setTimeout(async()=>{ let d=null; if(/^https?:$/.test(location.protocol)){ try{ const r=await fetch('data/weather.json',{cache:'no-store'}); if(r.ok) d=await r.json(); }catch(e){} }
+setTimeout(async()=>{ let d=null; if(/^https?:$/.test(location.protocol)){ try{ const r=await fetch(DATA_DIR+'weather.json',{cache:'no-store'}); if(r.ok) d=await r.json(); }catch(e){} }
   if(!d){ try{ d=JSON.parse(store.get('fse-weather')||'null'); }catch(e){} } WX.data=d; if(D){ drawWeather(); drawCmp(); } });

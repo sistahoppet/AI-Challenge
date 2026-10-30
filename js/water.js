@@ -46,14 +46,17 @@ function buildWater(){
     sc:Math.max(.5,Math.min(3,G.m/k/2)),key:''};
   const x1=G.x0+G.nx*G.w,y1=G.y0+G.ny*G.h,coordinates=[[G.x0,y1],[x1,y1],[x1,G.y0],[G.x0,G.y0]];
   if(map.getLayer('water-img')) map.removeLayer('water-img'); if(map.getSource('water-img')) map.removeSource('water-img');
-  map.addSource('water-img',{type:'canvas',canvas:cv,coordinates,animate:true});
+  map.addSource('water-img',{type:'canvas',canvas:cv,coordinates,animate:false}); // re-read only while playing (waterLive) or after a repaint
   map.addLayer({id:'water-img',type:'raster',source:'water-img',paint:{'raster-fade-duration':0,'raster-resampling':'linear'}},'water-2d');
   paintWater(performance.now(),0,true);
 }
+// ripples move only while the video plays; paused (or reduced motion) the image is redrawn only when the water level changes,
+// so the map can stop redrawing every frame
+function waterLive(on){ const src=ready&&map.getSource('water-img'); if(!src) return; on?src.play():src.pause(); }
 function paintWater(now,_dt,force){
-  if(!WV||S.tab==='safety') return; const r=rp(),key=r+':'+S.T.toFixed(4);
-  if(reduce&&!force&&key===WV.key) return; WV.key=key; // reduced motion: only repaint when the water level changes
-  const {img,fx,fy,wet,lut,noise,W,sc,lag,lvl}=WV,dep=WV.dep[r],Lm=WV.Lm[r],T=S.T,d=img.data,t=reduce?0:now/1000*.22,a=t%1,b=(t+.5)%1,bl=Math.abs(1-2*a),L=40;
+  if(!WV||S.tab==='safety') return; const r=rp(),key=r+':'+S.T.toFixed(4),still=reduce||!S.playing;
+  if(still&&!force&&key===WV.key) return; WV.key=key; if(!still) WV.t=now/1000*.22;
+  const {img,fx,fy,wet,lut,noise,W,sc,lag,lvl}=WV,dep=WV.dep[r],Lm=WV.Lm[r],T=S.T,d=img.data,t=reduce?0:WV.t||0,a=t%1,b=(t+.5)%1,bl=Math.abs(1-2*a),L=40;
   for(let n=0;n<wet.length;n++){ const q=wet[n],x0=T-lag[q],o=q*4,s=dep[q]-(1-Math.max(lvl[x0<=-.2?0:x0>=1?1200:((x0+.2)*1000)|0],Math.min(1,INIT/(Lm[q]||1))))*Lm[q]; if(s<=0.003){d[o+3]=0; continue;}
     // two ripple layers pushed along the flow, cross-faded so they never stretch
     const x=(q%W)*sc,y=((q/W)|0)*sc,sp=(.5+Math.min(1,s*.5))*L,ux=fx[q]*sp,uy=-fy[q]*sp;
@@ -61,6 +64,7 @@ function paintWater(now,_dt,force){
     const li=(s>=3?255:(s*85)|0)*3,f=.75+rip*.5,fo=s<.15?(1-s/.15)*.55:0,g=1-fo,w=255*fo; // ripple light + white foam at the water's edge
     d[o]=lut[li]*f*g+w; d[o+1]=lut[li+1]*f*g+w; d[o+2]=lut[li+2]*f*g+w; d[o+3]=s>=.06?215:s*3583; }
   WV.ctx.putImageData(img,0,0);
+  if(still){ waterLive(true); waterLive(false); map.triggerRepaint(); } // pause() uploads the canvas once
 }
 FX.push(paintWater);
 

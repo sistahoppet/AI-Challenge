@@ -129,3 +129,32 @@ const TOOLS=[['tZones','Safety zones','<path d="M12 3l8 4v6c0 5-4 8-8 9-4-1-8-4-
 $('tools').innerHTML=TOOLS.map(([id,t,p])=>`<button data-for="${id}" title="${t}" aria-label="${t}" aria-pressed="${$(id).checked}"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${p}</svg></button>`).join('');
 $('tools').onclick=e=>{ const b=e.target.closest('[data-for]'); if(!b) return; const c=$(b.dataset.for); c.checked=!c.checked; c.dispatchEvent(new Event('change',{bubbles:true})); };
 document.addEventListener('change',e=>{ const b=document.querySelector(`#tools [data-for="${e.target.id}"]`); if(b) b.setAttribute('aria-pressed',e.target.checked); });
+
+/* ---------- hide / show the interface: only the map and the play bar stay (button or key H) ---------- */
+function setUI(hide){ document.body.classList.toggle('hideui',hide); $('uiBtn').setAttribute('aria-pressed',hide); $('uiShow').hidden=!hide; setTimeout(()=>map?.resize(),50); }
+$('uiBtn').onclick=()=>setUI(true); $('uiShow').onclick=()=>setUI(false);
+document.addEventListener('keydown',e=>{ if((e.key==='h'||e.key==='H')&&!e.ctrlKey&&!e.metaKey&&!/INPUT|TEXTAREA|SELECT/.test(document.activeElement?.tagName)) setUI(!document.body.classList.contains('hideui')); });
+
+/* ---------- side panel folds away (button on the map edge); the controls bar folds on small screens ---------- */
+function setPanel(open){ document.body.classList.toggle('nopanel',!open); const b=$('panelBtn'); b.textContent=open?'›':'‹'; b.setAttribute('aria-expanded',open);
+  b.title=b.ariaLabel=open?'Hide the side panel':'Show the side panel'; b.textContent=open?'›':'‹ Panel'; try{ localStorage.setItem('fse-panel',open?'1':'0'); }catch(e){} setTimeout(()=>map?.resize(),60); }
+$('panelBtn').onclick=()=>setPanel(document.body.classList.contains('nopanel')); $('panelHide').onclick=()=>setPanel(false);
+try{ if(localStorage.getItem('fse-panel')==='0') setPanel(false); }catch(e){}
+if(innerHeight<760) $('dockHide').click(); // small screen: the map gets the room, the controls open with one click
+// at the start of a run (clock 0, paused) the map has no water yet: say so next to the play button
+FX.push(()=>{ const h=$('playHint'),on=S.T<.001&&!S.playing&&!!D; if(h.hidden===on) h.hidden=!on; $('play').classList.toggle('pulse',on); });
+
+/* ---------- choose the area: a town of the loaded data (focus box), or another area exported to data/cities/ ---------- */
+async function drawCities(){ const sel=$('citySel'); if(!D||isDemo||!D.towns?.length){ sel.hidden=!D?.towns?.length; return; } sel.hidden=false;
+  const ti=townIndex(),r=D.zoneRule?.mid||rp(),n=D.towns.map(()=>0); D.cells.forEach((c,i)=>{ if(c.depth[r]>.01) n[ti[i]]+=c.pop; });
+  const towns=D.towns.map((t,i)=>({t,i,n:n[i]})).filter(x=>x.n>=50&&x.t.cls!=='hamlet').sort((a,b)=>b.n-a.n);
+  let areas=[]; try{ areas=await (await fetch('data/cities/index.json',{cache:'no-cache'})).json(); }catch(e){}
+  const here=areas.find(x=>(x.dir||'')===DATA_AREA);
+  sel.innerHTML=`<option value="">${esc(here?.name||'Whole area')}</option>`
+    +(areas.length>1?`<optgroup label="Switch area (reloads)">${areas.filter(x=>x!==here).map(x=>`<option value="a${esc(x.dir||'')}">${esc(x.name)}</option>`).join('')}</optgroup>`:'')
+    +`<optgroup label="Zoom to a town (residents in water at 1-in-${r})">${towns.map(x=>`<option value="t${x.i}">${esc(x.t.name)} · ${fmt(x.n)}</option>`).join('')}</optgroup>`; }
+$('citySel').onchange=e=>{ const v=e.target.value; if(v[0]==='a'){ const q=new URLSearchParams(location.search); v.length>1?q.set('area',v.slice(1)):q.delete('area'); location.search=q.toString(); return; }
+  if(!v){ cityBox(); map.fitBounds(D.bbox,{padding:30}); return; }
+  const ti=townIndex(),k=+v.slice(1),pts=D.cells.filter((c,i)=>ti[i]===k&&c.pop>0).map(c=>c.c); if(!pts.length) return;
+  const b=bboxOf([pts]),px=600/KX(b[1]),py=600/110540,box=[b[0]-px,b[1]-py,b[2]+px,b[3]+py]; // the town's populated cells + 600 m
+  cityBox(box); map.fitBounds(box,{padding:30,duration:900}); toast(`${D.towns[k].name}: the simulation still covers the whole area (water comes from upstream)`); };
