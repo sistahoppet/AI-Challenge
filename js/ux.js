@@ -145,15 +145,18 @@ if(innerHeight<760) $('dockHide').click(); // small screen: the map gets the roo
 FX.push(()=>{ const h=$('playHint'),on=S.T<.001&&!S.playing&&!!D; if(h.hidden===on) h.hidden=!on; $('play').classList.toggle('pulse',on); });
 
 /* ---------- choose the area: a town of the loaded data (focus box), or another area exported to data/cities/ ---------- */
-async function drawCities(){ const sel=$('citySel'); if(!D||isDemo||!D.towns?.length){ sel.hidden=!D?.towns?.length; return; } sel.hidden=false;
-  const ti=townIndex(),r=D.zoneRule?.mid||rp(),n=D.towns.map(()=>0); D.cells.forEach((c,i)=>{ if(c.depth[r]>.01) n[ti[i]]+=c.pop; });
+async function drawCities(){ const sel=$('citySel'); if(!D||isDemo) return; sel.hidden=false;
+  const ti=townIndex(),r=D.zoneRule?.mid||rp(),n=(D.towns||[]).map(()=>0); if(ti) D.cells.forEach((c,i)=>{ if(c.depth[r]>.01) n[ti[i]]+=c.pop; });
   const towns=D.towns.map((t,i)=>({t,i,n:n[i]})).filter(x=>x.n>=50&&x.t.cls!=='hamlet').sort((a,b)=>b.n-a.n);
   let areas=[]; try{ areas=await (await fetch('data/cities/index.json',{cache:'no-cache'})).json(); }catch(e){}
-  const here=areas.find(x=>(x.dir||'')===DATA_AREA);
-  sel.innerHTML=`<option value="">${esc(here?.name||'Whole area')}</option>`
-    +(areas.length>1?`<optgroup label="Switch area (reloads)">${areas.filter(x=>x!==here).map(x=>`<option value="a${esc(x.dir||'')}">${esc(x.name)}</option>`).join('')}</optgroup>`:'')
-    +`<optgroup label="Zoom to a town (residents in water at 1-in-${r})">${towns.map(x=>`<option value="t${x.i}">${esc(x.t.name)} · ${fmt(x.n)}</option>`).join('')}</optgroup>`; }
-$('citySel').onchange=e=>{ const v=e.target.value; if(v[0]==='a'){ const q=new URLSearchParams(location.search); v.length>1?q.set('area',v.slice(1)):q.delete('area'); location.search=q.toString(); return; }
+  const here=SERVER_AOI?null:areas.find(x=>(x.dir||'')===DATA_AREA), aois=await aoiList();
+  sel.innerHTML=`<option value="">${esc(SERVER_AOI?STUDY.name:here?.name||'Whole area')}</option>`
+    +`<optgroup label="Areas with full detail (buildings, roads, shelters)">${areas.filter(x=>x!==here).map(x=>`<option value="a${esc(x.dir||'')}">${esc(x.name)}</option>`).join('')}</optgroup>`
+    +(aois.length?`<optgroup label="All July 2021 mapped areas · team server (people affected in 2021)">${aois.filter(a=>a.code!==SERVER_AOI).map(a=>`<option value="s${esc(a.code)}">${esc(a.country)} · ${esc(a.code.replace(/_/g,' '))} · ${fmt(a.affected)}</option>`).join('')}</optgroup>`:'')
+    +(towns.length?`<optgroup label="Zoom to a town (residents in water at 1-in-${r})">${towns.map(x=>`<option value="t${x.i}">${esc(x.t.name)} · ${fmt(x.n)}</option>`).join('')}</optgroup>`:''); }
+$('citySel').onchange=e=>{ const v=e.target.value, q=new URLSearchParams(location.search);
+  if(v[0]==='a'){ q.delete('aoi'); v.length>1?q.set('area',v.slice(1)):q.delete('area'); location.search=q.toString(); return; }
+  if(v[0]==='s'){ q.delete('area'); q.set('aoi',v.slice(1)); location.search=q.toString(); return; }
   if(!v){ cityBox(); map.fitBounds(D.bbox,{padding:30}); return; }
   const ti=townIndex(),k=+v.slice(1),pts=D.cells.filter((c,i)=>ti[i]===k&&c.pop>0).map(c=>c.c); if(!pts.length) return;
   const b=bboxOf([pts]),px=600/KX(b[1]),py=600/110540,box=[b[0]-px,b[1]-py,b[2]+px,b[3]+py]; // the town's populated cells + 600 m

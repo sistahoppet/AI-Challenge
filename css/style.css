@@ -372,3 +372,7 @@ body.nopanel .panelbtn{width:auto;padding:0 8px;height:40px;font-size:13px}
 @media (max-width:1400px){ .top{flex-wrap:nowrap;gap:6px} .top .btn{padding-inline:9px;font-size:13.5px} .citysel{max-width:160px} .brand small{display:none} }
 .citylab{display:flex;align-items:center;gap:4px;font:600 12px var(--f-body);color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
 .citysel{max-width:260px;font-weight:600;border-color:var(--accent)}
+
+/* loading an area from the team server */
+.srvload{inset:0;border-radius:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:16px;z-index:8;font-size:15px;text-align:center}
+.srvload[hidden]{display:none}

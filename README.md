@@ -120,6 +120,27 @@ Needs Python with `requests mapbox-vector-tile shapely pyproj` (and the challeng
 
   It then appears under *Other areas* in the menu (the page reloads with `?area=cities/<name>`).
 
+## All July 2021 areas from the team server
+
+The **📍 Area** menu lists two kinds of areas:
+
+- **Areas with full detail**: the Vesdre and the Ahr, exported to `data/` (buildings, roads, shelters with capacity, towns, rain).
+- **All 19 areas mapped by satellite in July 2021** (Copernicus EMS: 2 BE, 16 DE, 1 NL), straight from the team flood API.
+  Choosing one reloads the page with `?aoi=<code>`, and the app then fetches:
+  1. `POST /flood` on the area code: flood and evacuation model (people flooded or cut off, buildings, roads closed), 3 flood sizes;
+  2. the box of the 1 km cells it returns, then `POST /region` on that box: 100 m cells with EFAS water depth (1-in-10/100/500),
+     GHS-POP residents, ground height and terrain risk, plus hospitals, fire stations, police and shelters (OpenStreetMap);
+  3. the same results go to the Live model tab and the policy advice.
+  When part of an area lies outside the server's study region (NL), the app takes the largest middle part the server accepts
+  and says so ("part").
+
+**What the server does not send stays empty** (no invented data): building outlines and heights, roads for car routes,
+shelter sizes, town names. So for these areas the car drill has no shelter capacity: use the Vesdre or the Ahr for the full drill.
+
+**For the jury:** the **Data sources** button (next to the area menu) opens a page listing every layer and number of the loaded area,
+its dataset, its limits and where the app gets it, plus the server's results and stated limits for that area. The synthetic demo
+data only builds the map while the real data loads; it is covered and never shown as a result.
+
 ## Live model tab (team server)
 
 The tab talks to two public HTTPS APIs on the team server, no Tailscale needed:
