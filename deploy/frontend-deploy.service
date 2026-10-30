@@ -1,0 +1,10 @@
+[Unit]
+Description=Flood frontend: pull branch live (CD)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=nasr
+Environment=FRONTEND_DIR=/home/nasr/frontend
+ExecStart=/bin/sh /home/nasr/frontend/deploy/deploy.sh
