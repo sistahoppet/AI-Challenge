@@ -148,12 +148,13 @@ FX.push(()=>{ const h=$('playHint'),on=S.T<.001&&!S.playing&&!!D; if(h.hidden===
 async function drawCities(){ const sel=$('citySel'); if(!D||isDemo||!D.towns?.length){ sel.hidden=!D?.towns?.length; return; } sel.hidden=false;
   const ti=townIndex(),r=D.zoneRule?.mid||rp(),n=D.towns.map(()=>0); D.cells.forEach((c,i)=>{ if(c.depth[r]>.01) n[ti[i]]+=c.pop; });
   const towns=D.towns.map((t,i)=>({t,i,n:n[i]})).filter(x=>x.n>=50&&x.t.cls!=='hamlet').sort((a,b)=>b.n-a.n);
-  let other=[]; try{ const j=await (await fetch('data/cities/index.json',{cache:'no-cache'})).json(); other=j.filter(x=>x.dir&&('data/'+x.dir+'/')!==DATA_DIR); }catch(e){}
-  sel.innerHTML=`<option value="">Whole area</option><optgroup label="Towns in this area (residents in water at 1-in-${r})">${towns.map(x=>`<option value="t${x.i}">${esc(x.t.name)} · ${fmt(x.n)}</option>`).join('')}</optgroup>`
-    +(other.length?`<optgroup label="Other areas">${other.map(x=>`<option value="a${esc(x.dir)}">${esc(x.name)}</option>`).join('')}</optgroup>`:'')
-    +(DATA_DIR!=='data/'?'<option value="a">Back to the main area</option>':''); }
+  let areas=[]; try{ areas=await (await fetch('data/cities/index.json',{cache:'no-cache'})).json(); }catch(e){}
+  const here=areas.find(x=>(x.dir||'')===DATA_AREA);
+  sel.innerHTML=`<option value="">${esc(here?.name||'Whole area')}</option>`
+    +(areas.length>1?`<optgroup label="Switch area (reloads)">${areas.filter(x=>x!==here).map(x=>`<option value="a${esc(x.dir||'')}">${esc(x.name)}</option>`).join('')}</optgroup>`:'')
+    +`<optgroup label="Zoom to a town (residents in water at 1-in-${r})">${towns.map(x=>`<option value="t${x.i}">${esc(x.t.name)} · ${fmt(x.n)}</option>`).join('')}</optgroup>`; }
 $('citySel').onchange=e=>{ const v=e.target.value; if(v[0]==='a'){ const q=new URLSearchParams(location.search); v.length>1?q.set('area',v.slice(1)):q.delete('area'); location.search=q.toString(); return; }
   if(!v){ cityBox(); map.fitBounds(D.bbox,{padding:30}); return; }
   const ti=townIndex(),k=+v.slice(1),pts=D.cells.filter((c,i)=>ti[i]===k&&c.pop>0).map(c=>c.c); if(!pts.length) return;
   const b=bboxOf([pts]),px=600/KX(b[1]),py=600/110540,box=[b[0]-px,b[1]-py,b[2]+px,b[3]+py]; // the town's populated cells + 600 m
-  cityBox(box); map.fitBounds(box,{padding:30,duration:900}); toast(`${D.towns[k].name}: the simulation still covers the whole valley (water comes from upstream)`); };
+  cityBox(box); map.fitBounds(box,{padding:30,duration:900}); toast(`${D.towns[k].name}: the simulation still covers the whole area (water comes from upstream)`); };

@@ -82,7 +82,7 @@ async function openReport(){ const R=DR.run; if(!R){ toast('Run the simulation f
   ol li{margin:3px 0} .t{font-family:ui-monospace,monospace;color:#56696f;margin-right:6px} .pb{page-break-before:always} .note{white-space:pre-wrap;border:1px dashed #cdd6d9;padding:6px 8px;border-radius:6px}
   @media print{button{display:none} body{margin:0}}</style></head><body>
   <button onclick="print()" style="float:right;padding:6px 12px">Save as PDF / print</button>
-  <h1>Flood scenario report</h1><div class="s">Vesdre valley (Liège province, BE) · ${esc(st.flood)} · water rises in ${st.rise_h} h · run of ${new Date().toLocaleString('en-GB')} · Flood Scenario Explorer (European AI Challenge 2026)</div>
+  <h1>Flood scenario report</h1><div class="s">${esc(STUDY.name)} · ${esc(st.flood)} · water rises in ${st.rise_h} h · run of ${new Date().toLocaleString('en-GB')} · Flood Scenario Explorer (European AI Challenge 2026)</div>
   <p class="lead"><b>First action for Anna:</b> ${first?plain(first[1]):'—'}</p>
   <div class="map"><img src="${sn.url}" alt="Flood at its peak with shelters">${sn.pins.filter(p=>p.x>0&&p.x<100&&p.y>0&&p.y<100).map(p=>`<span class="pin${p.full?' full':''}" style="left:${p.x}%;top:${p.y}%">${p.n}</span>`).join('')}</div>
   <div class="s">Water at the peak (blue, darker = deeper), buildings coloured where water reached them, shelters (numbered; red = full; + = next best site used). Scale: whole study area, ~25 × 10 km.</div>

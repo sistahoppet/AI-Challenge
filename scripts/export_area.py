@@ -2,7 +2,7 @@
 
 Runs locally (or in Colab) and reads ONLY the study-area window from the public bucket.
 Usage:  python scripts/export_area.py            (Vesdre valley, BE, default)
-        python scripts/export_area.py --bbox W S E N --ems-country be --ems EMSR518_AOI01
+        python scripts/export_area.py --bbox W S E N --country de --out data/cities/ahr   (any area in BE, DE or NL)
 
 Output in data/:
   grid.geojson           EFAS cells (native 3" grid) with depth_rp10/100/500 + pop + elev (ground height, Copernicus DEM)
@@ -19,10 +19,10 @@ B = "/vsigs/datasets_challenge/working_data/"
 ap = argparse.ArgumentParser()
 ap.add_argument("--bbox", nargs=4, type=float, default=[5.60, 50.55, 5.96, 50.64])  # Chaudfontaine -> Verviers
 ap.add_argument("--keep-km", type=float, default=1.0, help="keep dry cells this close to any flooded cell")
-ap.add_argument("--ems-country", default="be")
-ap.add_argument("--ems", default="EMSR518_AOI01")
+ap.add_argument("--country", "--ems-country", dest="ems_country", default="be", choices=["be", "de", "nl"])
+ap.add_argument("--ems", default="auto", help="auto: every Copernicus EMS flood outline of the country that touches the area")
 ap.add_argument("--out", default=str(pathlib.Path(__file__).resolve().parent.parent / "data"))
-a = ap.parse_args(); W, S, E, N = a.bbox; out = pathlib.Path(a.out); out.mkdir(exist_ok=True)
+a = ap.parse_args(); W, S, E, N = a.bbox; out = pathlib.Path(a.out); out.mkdir(parents=True, exist_ok=True)
 
 # --- 1. EFAS depth per return period, on its own 3" grid (no resampling: values stay as published) ---
 depth = {}
@@ -45,8 +45,8 @@ keep = (cum[r1][:, c1] - cum[r0][:, c1] - cum[r1][:, c0] + cum[r0][:, c0]) > 0
 print(f"EFAS grid {ncol}x{nrow}, cell {cw:.0f} x {ch:.0f} m, flooded {wet.sum()}, kept {keep.sum()}")
 
 # --- 2. GHS-OBAT buildings (real points) ---
-bld = pyogrio.read_dataframe(B + "obat_be/GHS_OBAT_GPKG_BEL_E2020_R2024A_V1_0/GHS_OBAT_GPKG_BEL_E2020_R2024A_V1_0.gpkg", bbox=(W, S, E, N)) \
-    if a.ems_country == "be" else None  # >>> other countries: obat_de / obat_nl paths
+ISO = {"be": "BEL", "de": "DEU", "nl": "NLD"}[a.ems_country]
+bld = pyogrio.read_dataframe(B + f"obat_{a.ems_country}/GHS_OBAT_GPKG_{ISO}_E2020_R2024A_V1_0/GHS_OBAT_GPKG_{ISO}_E2020_R2024A_V1_0.gpkg", bbox=(W, S, E, N))
 x, y = bld.geometry.x.values, bld.geometry.y.values
 bc = ((x - tr.c) / tr.a).astype(int); br = ((y - tr.f) / tr.e).astype(int)
 inside = (bc >= 0) & (bc < ncol) & (br >= 0) & (br < nrow)
@@ -96,12 +96,23 @@ b["height"] = b["height"].fillna(3).round(1); b["area"] = b["area"].round(0)
 b.to_file(out / "buildings.geojson", driver="GeoJSON", COORDINATE_PRECISION=6)
 
 # --- 6. observed_2021.geojson (EMS flooded area: first delineation + monitoring merged) ---
+import requests
+def ems_files():  # every flood outline (observedEventA) of the country in the bucket; folder names differ per activation
+    names, tok = [], ""
+    while True:
+        j = requests.get("https://storage.googleapis.com/storage/v1/b/datasets_challenge/o", params={"prefix": f"working_data/ems_{a.ems_country}/",
+            "fields": "items(name),nextPageToken", "maxResults": 1000, **({"pageToken": tok} if tok else {})}, timeout=60).json()
+        names += [x["name"][len("working_data/"):] for x in j.get("items", []) if "observedEventA" in x["name"] and x["name"].endswith(".json")]
+        tok = j.get("nextPageToken")
+        if not tok: return names
 parts = []
-for prod in ("PRODUCT", "MONIT01"):
-    p = f"ems_{a.ems_country}/{a.ems}_DEL_{prod}_r1_VECTORS_v1_vector/{a.ems}_DEL_{prod}_observedEventA_r1_v1.json"
-    try: parts.append(gpd.read_file(B + p).to_crs(4326)[["geometry"]].assign(product=prod))
-    except Exception as e: print("EMS layer missing:", p, e)
-obs = gpd.clip(pd.concat(parts), box(W, S, E, N)).explode(index_parts=False)
+for p in ems_files() if a.ems == "auto" else [a.ems]:
+    try:
+        g = gpd.read_file(B + p).to_crs(4326)
+        g = g[g.intersects(box(W, S, E, N))]
+        if len(g): parts.append(g[["geometry"]].assign(product=p.split("/")[0])); print("EMS", p.split("/")[0], len(g), "polygons")
+    except Exception as e: print("EMS layer skipped:", p, e)
+obs = gpd.clip(pd.concat(parts), box(W, S, E, N)).explode(index_parts=False) if parts else gpd.GeoDataFrame(geometry=[], crs=4326)
 obs = obs[obs.geom_type == "Polygon"]
 obs.to_file(out / "observed_2021.geojson", driver="GeoJSON", COORDINATE_PRECISION=6)
 

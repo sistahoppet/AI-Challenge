@@ -49,7 +49,7 @@ function chartData(){
       csv:[['zone','residents','buildings'],...order.map(i=>[names[i],Math.round(z[i].people),z[i].bld])]};}
   const steps=Array.from({length:25},(_,i)=>i/24),cat=['--c-mod','--wave2','--crit','--c-obs'],xs=steps.map(t=>clock(t));
   if(S.diag==='rainT'){ const R=WX.data?.replayRain,L=WX.data?.rainLevels?.q; if(!R) return {kind:'empty',title:'Rainfall vs time',sub:'Load the July 2021 replay in the Alert tab.',src,csv:[['note'],['no rain data']]};
-    return {kind:'line',title:'Rain in the Vesdre catchment, July 2021',sub:'Catchment mean of 4 points (ERA5). Dashed: 48-hour rain levels from 1984–2020 records.',x:R.map(r=>r.t.slice(5)),yTitle:'mm',
+    return {kind:'line',title:`Rain in the catchment, July 2021 (${STUDY.name})`,sub:'Catchment mean of 4 points (ERA5). Dashed: 48-hour rain levels from 1984–2020 records.',x:R.map(r=>r.t.slice(5)),yTitle:'mm',
       series:[{name:'Rain per day',color:css('--w2'),values:R.map(r=>r.mm)},{name:'Rain over 48 hours',color:css('--w3'),values:R.map(r=>r.mm48)}],
       refs:L?[10,100,500].map(T=>({v:L[T],label:'1-in-'+T})):[],src:'Source: Open-Meteo ERA5 archive (external, not challenge data)',
       csv:[['date','rain_mm','rain_48h_mm'],...R.map(r=>[r.t,r.mm.toFixed(1),r.mm48.toFixed(1)])]};}

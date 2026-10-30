@@ -3,7 +3,7 @@
 // External source, not challenge data: Open-Meteo Flood API (GloFAS river discharge, ~5 km cells) and Open-Meteo weather (ERA5 archive, forecast models).
 
 /* ---------- where we look ---------- */
-const GAUGE={name:'Vesdre at Pepinster',c:[5.807,50.567]};                 // river point (GloFAS snaps it to its nearest ~5 km river cell)
+const GAUGE={name:'Vesdre at Pepinster',c:[5.807,50.567]}; // replaced by the area's river point from data/cities/index.json                 // river point (GloFAS snaps it to its nearest ~5 km river cell)
 const RAIN_PTS=[[6.05,50.52],[5.95,50.60],[5.86,50.59],[5.80,50.57]];      // catchment: Hautes Fagnes, Eupen/Limbourg, Verviers, Pepinster (plain mean)
 const REPLAY=['2021-07-08','2021-07-24'];
 const WX={mode:'replay',data:null,day:null};

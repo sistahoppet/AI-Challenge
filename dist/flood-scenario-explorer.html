@@ -380,6 +380,8 @@ body.hideui .panelbtn{display:none}
 .panelhide:hover{color:var(--ink);background:color-mix(in srgb,var(--accent) 10%,var(--surface))}
 body.nopanel .panelbtn{width:auto;padding:0 8px;height:40px;font-size:13px}
 @media (max-width:1400px){ .top{flex-wrap:nowrap;gap:6px} .top .btn{padding-inline:9px;font-size:13.5px} .citysel{max-width:160px} .brand small{display:none} }
+.citylab{display:flex;align-items:center;gap:4px;font:600 12px var(--f-body);color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+.citysel{max-width:260px;font-weight:600;border-color:var(--accent)}
 </style>
 </head>
 <body>
@@ -387,7 +389,7 @@ body.nopanel .panelbtn{width:auto;padding:0 8px;height:40px;font-size:13px}
   <header class="top">
     <h1 class="brand"><svg class="logo" viewBox="0 0 40 40" aria-hidden="true"><path d="M20 3l14 6v10c0 9-6 15-14 18C12 34 6 28 6 19V9z" fill="var(--accent)"/><path d="M13 20l7-6 7 6v7H13z" fill="var(--surface)"/><path d="M8 27q3-3 6 0t6 0t6 0t6 0" fill="none" stroke="var(--surface)" stroke-width="2.4" stroke-linecap="round"/></svg><span>Flood Scenario Explorer<small>Learning from the July 2021 floods</small></span></h1>
     <span id="dataBadge" class="badge">DEMO DATA</span>
-    <select class="btn citysel" id="citySel" aria-label="Area shown" title="Choose a town of the loaded area, or another area exported by the data team"><option value="">Whole area</option></select>
+    <label class="citylab" for="citySel"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-7-6-7-12a7 7 0 0 1 14 0c0 6-7 12-7 12z"/><circle cx="12" cy="9" r="2.5"/></svg>Area</label><select class="btn citysel" id="citySel" aria-label="Area shown" title="Choose a town of the loaded area, or another area exported by the data team"><option value="">Whole area</option></select>
     <span id="apiBadge" class="badge">API OFFLINE</span>
     <span class="spacer"></span>
     <button class="btn" id="uiBtn" title="Hide the panels to see only the map (key H)" aria-pressed="false">Hide UI</button>
@@ -549,7 +551,7 @@ body.nopanel .panelbtn{width:auto;padding:0 8px;height:40px;font-size:13px}
           <div class="form" id="scIn" style="margin-top:8px"></div>
           <p id="scInfo" style="font-size:13.5px;margin:8px 0"></p>
           <div class="row" style="justify-content:flex-start"><button class="btn primary sm" id="scBuild">Build this flood</button><button class="btn sm" id="scReset">Back to mapped sizes</button></div>
-          <p class="hint">Rain reaching the river = rain × duration × (1 − soaked up) × (1 − drained), compared with 37 years of real 48-hour rain in the Vesdre catchment to find its yearly chance; the flood map for that chance is interpolated between the EFAS maps. A simple index, not a hydrological model: short storms on small streams, snowmelt and blocked bridges are not represented.</p>
+          <p class="hint">Rain reaching the river = rain × duration × (1 − soaked up) × (1 − drained), compared with 37 years of real 48-hour rain in the catchment of the area to find its yearly chance; the flood map for that chance is interpolated between the EFAS maps. A simple index, not a hydrological model: short storms on small streams, snowmelt and blocked bridges are not represented.</p>
         </details>
         <div>
           <h2><span class="step">2</span>Press ▶ under the map</h2>
@@ -1070,6 +1072,9 @@ $('useDemo').onclick=()=>{load(ingest(makeDemo()).data,true); $('modal').hidden=
    (file://) cannot read the folder: use "Load team data" instead. */
 // returns true when team data was loaded (otherwise the caller shows the demo)
 // which data folder: data/ (default) or another area exported to data/cities/<name>/ and chosen in the top bar (?area=cities/<name>)
+// name of the area (data/cities/index.json); every text in the app uses it, nothing is tied to one valley
+let STUDY={name:'Study area',gauge:'river',gaugeAt:null};
+fetch('data/cities/index.json',{cache:'no-cache'}).then(r=>r.json()).then(j=>{ const a=j.find(x=>(x.dir||'')===DATA_AREA); if(a){ STUDY=a; if(a.gaugeAt&&typeof GAUGE!=='undefined'){ GAUGE.name=a.gauge; GAUGE.c=a.gaugeAt; } if(typeof drawCities==='function'&&D) drawCities(); } }).catch(()=>{});
 const DATA_AREA=(new URLSearchParams(location.search).get('area')||'').replace(/[^\w\-\/]/g,'').replace(/^\/+|\/+$/g,''),DATA_DIR=DATA_AREA?`data/${DATA_AREA}/`:'data/';
 async function tryAutoLoad(){
   if(!/^https?:$/.test(location.protocol)) return false;
@@ -1263,7 +1268,8 @@ function cityBox(b=D.bbox){ const [x0,y0,x1,y1]=b,px=(x1-x0)*.15,py=(y1-y0)*.15,
   if(!map.getSource('outside')){ map.addSource('outside',{type:'geojson',data:fc}); map.addLayer({id:'outside',type:'fill',source:'outside',paint:{'fill-color':css('--bg'),'fill-opacity':.82}});
     map.addLayer({id:'outside-line',type:'line',source:'outside',paint:{'line-color':css('--accent'),'line-width':2}}); }
   else map.getSource('outside').setData(fc);
-  map.setMaxBounds([[x0-px,y0-py],[x1+px,y1+py]]); const cam=map.cameraForBounds?.(b,{padding:20}); if(cam) map.setMinZoom(Math.max(0,cam.zoom-.6)); }
+  map.setMaxBounds([[x0-px,y0-py],[x1+px,y1+py]]); const cam=map.cameraForBounds?.(b,{padding:20}); if(cam) map.setMinZoom(Math.max(0,cam.zoom-.6));
+  const c=map.getCenter(); if(c.lng<x0||c.lng>x1||c.lat<y0||c.lat>y1) map.fitBounds(b,{padding:30,duration:0}); } // a new area: start framed on it
 function showNotice(){ if(S.basemap==='none') return; const n=$('notice'); n.textContent='The real map can\'t load in this preview. Open the downloaded app file in your browser to see streets, satellite photos and real hills.'; n.hidden=false; }
 function setBasemap(b){ S.basemap=b; document.querySelectorAll('.basemap [data-b]').forEach(x=>x.setAttribute('aria-pressed',x.dataset.b===b));
   if(!ready) return; const want=b==='streets'?(isDark()?'streets-dark':'streets-light'):b;
@@ -1968,7 +1974,7 @@ function inspect(p){ const c=cellAt(p); if(!c){ toast('Outside the study area');
 // External source, not challenge data: Open-Meteo Flood API (GloFAS river discharge, ~5 km cells) and Open-Meteo weather (ERA5 archive, forecast models).
 
 /* ---------- where we look ---------- */
-const GAUGE={name:'Vesdre at Pepinster',c:[5.807,50.567]};                 // river point (GloFAS snaps it to its nearest ~5 km river cell)
+const GAUGE={name:'Vesdre at Pepinster',c:[5.807,50.567]}; // replaced by the area's river point from data/cities/index.json                 // river point (GloFAS snaps it to its nearest ~5 km river cell)
 const RAIN_PTS=[[6.05,50.52],[5.95,50.60],[5.86,50.59],[5.80,50.57]];      // catchment: Hautes Fagnes, Eupen/Limbourg, Verviers, Pepinster (plain mean)
 const REPLAY=['2021-07-08','2021-07-24'];
 const WX={mode:'replay',data:null,day:null};
@@ -2804,7 +2810,7 @@ function drawCmp(){ drawAgreeHead(); document.querySelectorAll('#cmpSeg [data-c]
    <div class="crow" style="grid-template-columns:14px 1fr auto"><span class="sw" style="background:var(--obs)"></span><span><b>July 2021</b>: water seen by satellite, Copernicus EMS</span><span class="mono">${D.hasObs?oa.toFixed(2)+' km²':'not loaded'}</span></div>
    ${a?`<p class="hint">Of the model area, ${((a.both/(a.both+a.mod||1))*100).toFixed(0)}% was also seen as flooded in 2021.</p>`:''}
    <p class="hint">${T21?`<b>The 2021 rain</b> (${Math.round(rain21)} mm in 48 h) matches the <b>1-in-${T21}</b> rain level, so the closest model scenario is the ${sizeWord(D.rps[planFromRp(T21)]).toLowerCase()} flood map. `:''}
-   Why the 2021 outline looks small here: the satellite images are from 15 July (only part of the valley) and 18 July, after most Vesdre water had drained; narrow streets and water under trees are also missed. So 2021 here is a minimum, not the full flood.</p>`; }
+   Why the 2021 outline looks small here: the satellite images are from 15 July (only part of the valley) and 18 July, after most water had drained (true for the Vesdre; check for other areas); narrow streets and water under trees are also missed. So 2021 here is a minimum, not the full flood.</p>`; }
 document.querySelector('#cmpSeg').onclick=e=>{const b=e.target.closest('[data-c]'); if(!b) return; S.cmp=b.dataset.c; drawCmp(); drawLegend(); applyLayers();};
 
 </script>
@@ -2860,7 +2866,7 @@ function chartData(){
       csv:[['zone','residents','buildings'],...order.map(i=>[names[i],Math.round(z[i].people),z[i].bld])]};}
   const steps=Array.from({length:25},(_,i)=>i/24),cat=['--c-mod','--wave2','--crit','--c-obs'],xs=steps.map(t=>clock(t));
   if(S.diag==='rainT'){ const R=WX.data?.replayRain,L=WX.data?.rainLevels?.q; if(!R) return {kind:'empty',title:'Rainfall vs time',sub:'Load the July 2021 replay in the Alert tab.',src,csv:[['note'],['no rain data']]};
-    return {kind:'line',title:'Rain in the Vesdre catchment, July 2021',sub:'Catchment mean of 4 points (ERA5). Dashed: 48-hour rain levels from 1984–2020 records.',x:R.map(r=>r.t.slice(5)),yTitle:'mm',
+    return {kind:'line',title:`Rain in the catchment, July 2021 (${STUDY.name})`,sub:'Catchment mean of 4 points (ERA5). Dashed: 48-hour rain levels from 1984–2020 records.',x:R.map(r=>r.t.slice(5)),yTitle:'mm',
       series:[{name:'Rain per day',color:css('--w2'),values:R.map(r=>r.mm)},{name:'Rain over 48 hours',color:css('--w3'),values:R.map(r=>r.mm48)}],
       refs:L?[10,100,500].map(T=>({v:L[T],label:'1-in-'+T})):[],src:'Source: Open-Meteo ERA5 archive (external, not challenge data)',
       csv:[['date','rain_mm','rain_48h_mm'],...R.map(r=>[r.t,r.mm.toFixed(1),r.mm48.toFixed(1)])]};}
@@ -3521,7 +3527,7 @@ const SRC={
   drill:['assumption','Evacuation drill: plan routes on OpenStreetMap streets + flood depths (data), with your assumptions: follow rate, time to get ready, walking speed, warning lead time, shelter places, rescue rate.','Training aid: people do not all behave the same way; range shown for faster/slower reactions.'],
   rescue:['assumption','Rescue: your rescue capacity (people per hour), starting 30 min after the first person is in danger; national support ×3 (assumption).','No published Belgian rate used: set it with the fire and rescue zone.'],
   cost:['external','Damage: JRC depth–damage curves (Huizinga 2017, via CLIMAAX) × building floor area (GHS-OBAT), 2010 prices × 1.218 (Eurostat HICP).','A proxy: vehicles, networks, agriculture and business interruption not counted.'],
-  ems:['data','July 2021 check: share of the area seen flooded by satellite (Copernicus EMS rapid mapping, EMSR518 for Belgium) that the selected EFAS flood map also floods, per grid cell.','Satellite images from 15 and 18 July miss part of the Vesdre (taken after the water drained, streets and trees hide water): 2021 here is a minimum, so this is a hit rate, not a full validation.'],
+  ems:['data','July 2021 check: share of the area seen flooded by satellite (Copernicus EMS rapid mapping: EMSR518 Belgium, EMSR517 Germany, EMSR520 Netherlands) that the selected EFAS flood map also floods, per grid cell.','Satellite images from 15 and 18 July miss part of the Vesdre (taken after the water drained, streets and trees hide water): 2021 here is a minimum, so this is a hit rate, not a full validation.'],
   shel:['mix','Shelter places: floor area of real buildings (OpenStreetMap) ÷ 3.5 m² per person (Sphere standard), or set by you.','Real capacity depends on beds, toilets and staff: check with each site.']};
 const KIND={data:'Challenge data',external:'Published source',assumption:'Your assumption',mix:'Data + assumption'};
 document.addEventListener('click',e=>{ const el=e.target.closest('[data-src]'),pop=$('srcPop'); if(!el){ if(!e.target.closest('#srcPop')) pop.hidden=true; return; }
@@ -3539,7 +3545,7 @@ function openCard(){ const r=rp(),pk=peak(r),c=floodCost(r),B=DR.best,R=DR.run,P
     .k{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}.k div{border:1px solid #ccd;border-radius:6px;padding:8px}.k b{display:block;font-size:20px}
     ol{padding-left:20px}li{margin:4px 0}.t{font-family:ui-monospace,monospace;color:#555;margin-right:6px}em{color:#0e6b5e;font-style:normal}.s{font-size:12px;color:#555}
     @media print{button{display:none}}</style></head><body>
-    <h1>Flood decision card</h1><div class="s">Vesdre valley (BE) · ${sizeWord(r).toLowerCase()} flood, 1-in-${r} years (${chance(r)} chance each year) · warning ${SC.leadMin} min before the water · Flood Scenario Explorer</div>
+    <h1>Flood decision card</h1><div class="s">${esc(STUDY.name)} · ${sizeWord(r).toLowerCase()} flood, 1-in-${r} years (${chance(r)} chance each year) · warning ${SC.leadMin} min before the water · Flood Scenario Explorer</div>
     <h2>What is at stake</h2><div class="k"><div><b>${fmt(pk.people)}</b>residents in flooded areas</div><div><b>${fmt(pk.bld)}</b>buildings in the water</div>
       <div><b>${eur(c.damage)}</b>damage to buildings and roads (proxy)</div><div><b>${fmt(places)} / ${fmt(P.total)}</b>shelter places / people to move</div></div>
     ${D.hasObs?`<p class="s">July 2021 satellite check: ${$('agreeHead').textContent.replace(/^.*?:\s*/,'')}</p>`:''}
@@ -3554,7 +3560,7 @@ $('cardBtn').onclick=openCard;
 
 /* ---------- guided demo ---------- */
 const TOUR=[
-  ['The valley, with real data',()=>{tab('sim'); S.T=0; render(); map.fitBounds(D.bbox,{padding:50});},'Vesdre valley, Belgium. Every building, resident count and water depth comes from the challenge data (EFAS, GHS-POP, GHS-OBAT) and OpenStreetMap. Click any dotted number to see its source.'],
+  ['The valley, with real data',()=>{tab('sim'); S.T=0; render(); map.fitBounds(D.bbox,{padding:50});},()=>`${STUDY.name}. Every building, resident count and water depth comes from the challenge data (EFAS, GHS-POP, GHS-OBAT) and OpenStreetMap. Click any dotted number to see its source.`],
   ['Choose the flood',()=>{ const i=D.rps.indexOf(100); if(i>=0){$('size').value=i; $('size').oninput({target:$('size')});} },'The controls under the map set the scenario. 1-in-100 years is about the rain of July 2021 in this valley. You can also build a flood from your own rain.'],
   ['Watch the water rise',()=>{tab('sim'); S.T=0; setSpeed(5); setPlaying(true);},'Upstream and low ground flood first. Buildings turn colour when water reaches them; red streets are closed to cars.'],
   ['Who must leave, and where to',()=>{setPlaying(false); tab('safety'); S.T=.3; render();},'Each circle is a group of residents, with a car route on real streets to a shelter the app chose (far from water, room for many). Click a shelter pin to see the area it serves.'],
@@ -3563,7 +3569,7 @@ const TOUR=[
   ['The mayor\'s decision card',()=>{ $('drillStage').hidden=true; tab('policy'); },'One printable page: what is at stake, the sequence of actions with times, and the sources and limits. Button: "Mayor\'s decision card".']];
 let tourI=-1;
 const tab=t=>document.querySelector(`.tabs [data-t="${t}"]`)?.click();
-function tourGo(i){ tourI=i; const b=$('tour'); if(i<0||i>=TOUR.length){ b.hidden=true; tourI=-1; return; } const [t,act,txt]=TOUR[i]; try{act();}catch(e){}
+function tourGo(i){ tourI=i; const b=$('tour'); if(i<0||i>=TOUR.length){ b.hidden=true; tourI=-1; return; } const [t,act,tx]=TOUR[i],txt=typeof tx==='function'?tx():tx; try{act();}catch(e){}
   b.innerHTML=`<div class="ih"><span class="tag">Demo ${i+1} / ${TOUR.length}</span><b>${t}</b></div><p>${txt}</p>
     <div class="iopts row"><button class="btn sm" data-g="${i-1}" ${i?'':'disabled'}>Back</button><button class="btn sm primary" data-g="${i+1}">${i<TOUR.length-1?'Next':'Finish'}</button><button class="btn sm" data-g="-1">Exit</button></div>`;
   b.hidden=false; }
@@ -3685,7 +3691,7 @@ async function openReport(){ const R=DR.run; if(!R){ toast('Run the simulation f
   ol li{margin:3px 0} .t{font-family:ui-monospace,monospace;color:#56696f;margin-right:6px} .pb{page-break-before:always} .note{white-space:pre-wrap;border:1px dashed #cdd6d9;padding:6px 8px;border-radius:6px}
   @media print{button{display:none} body{margin:0}}</style></head><body>
   <button onclick="print()" style="float:right;padding:6px 12px">Save as PDF / print</button>
-  <h1>Flood scenario report</h1><div class="s">Vesdre valley (Liège province, BE) · ${esc(st.flood)} · water rises in ${st.rise_h} h · run of ${new Date().toLocaleString('en-GB')} · Flood Scenario Explorer (European AI Challenge 2026)</div>
+  <h1>Flood scenario report</h1><div class="s">${esc(STUDY.name)} · ${esc(st.flood)} · water rises in ${st.rise_h} h · run of ${new Date().toLocaleString('en-GB')} · Flood Scenario Explorer (European AI Challenge 2026)</div>
   <p class="lead"><b>First action for Anna:</b> ${first?plain(first[1]):'—'}</p>
   <div class="map"><img src="${sn.url}" alt="Flood at its peak with shelters">${sn.pins.filter(p=>p.x>0&&p.x<100&&p.y>0&&p.y<100).map(p=>`<span class="pin${p.full?' full':''}" style="left:${p.x}%;top:${p.y}%">${p.n}</span>`).join('')}</div>
   <div class="s">Water at the peak (blue, darker = deeper), buildings coloured where water reached them, shelters (numbered; red = full; + = next best site used). Scale: whole study area, ~25 × 10 km.</div>
@@ -3946,15 +3952,16 @@ FX.push(()=>{ const h=$('playHint'),on=S.T<.001&&!S.playing&&!!D; if(h.hidden===
 async function drawCities(){ const sel=$('citySel'); if(!D||isDemo||!D.towns?.length){ sel.hidden=!D?.towns?.length; return; } sel.hidden=false;
   const ti=townIndex(),r=D.zoneRule?.mid||rp(),n=D.towns.map(()=>0); D.cells.forEach((c,i)=>{ if(c.depth[r]>.01) n[ti[i]]+=c.pop; });
   const towns=D.towns.map((t,i)=>({t,i,n:n[i]})).filter(x=>x.n>=50&&x.t.cls!=='hamlet').sort((a,b)=>b.n-a.n);
-  let other=[]; try{ const j=await (await fetch('data/cities/index.json',{cache:'no-cache'})).json(); other=j.filter(x=>x.dir&&('data/'+x.dir+'/')!==DATA_DIR); }catch(e){}
-  sel.innerHTML=`<option value="">Whole area</option><optgroup label="Towns in this area (residents in water at 1-in-${r})">${towns.map(x=>`<option value="t${x.i}">${esc(x.t.name)} · ${fmt(x.n)}</option>`).join('')}</optgroup>`
-    +(other.length?`<optgroup label="Other areas">${other.map(x=>`<option value="a${esc(x.dir)}">${esc(x.name)}</option>`).join('')}</optgroup>`:'')
-    +(DATA_DIR!=='data/'?'<option value="a">Back to the main area</option>':''); }
+  let areas=[]; try{ areas=await (await fetch('data/cities/index.json',{cache:'no-cache'})).json(); }catch(e){}
+  const here=areas.find(x=>(x.dir||'')===DATA_AREA);
+  sel.innerHTML=`<option value="">${esc(here?.name||'Whole area')}</option>`
+    +(areas.length>1?`<optgroup label="Switch area (reloads)">${areas.filter(x=>x!==here).map(x=>`<option value="a${esc(x.dir||'')}">${esc(x.name)}</option>`).join('')}</optgroup>`:'')
+    +`<optgroup label="Zoom to a town (residents in water at 1-in-${r})">${towns.map(x=>`<option value="t${x.i}">${esc(x.t.name)} · ${fmt(x.n)}</option>`).join('')}</optgroup>`; }
 $('citySel').onchange=e=>{ const v=e.target.value; if(v[0]==='a'){ const q=new URLSearchParams(location.search); v.length>1?q.set('area',v.slice(1)):q.delete('area'); location.search=q.toString(); return; }
   if(!v){ cityBox(); map.fitBounds(D.bbox,{padding:30}); return; }
   const ti=townIndex(),k=+v.slice(1),pts=D.cells.filter((c,i)=>ti[i]===k&&c.pop>0).map(c=>c.c); if(!pts.length) return;
   const b=bboxOf([pts]),px=600/KX(b[1]),py=600/110540,box=[b[0]-px,b[1]-py,b[2]+px,b[3]+py]; // the town's populated cells + 600 m
-  cityBox(box); map.fitBounds(box,{padding:30,duration:900}); toast(`${D.towns[k].name}: the simulation still covers the whole valley (water comes from upstream)`); };
+  cityBox(box); map.fitBounds(box,{padding:30,duration:900}); toast(`${D.towns[k].name}: the simulation still covers the whole area (water comes from upstream)`); };
 
 </script>
 <script>

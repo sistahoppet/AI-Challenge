@@ -57,6 +57,9 @@ $('useDemo').onclick=()=>{load(ingest(makeDemo()).data,true); $('modal').hidden=
    (file://) cannot read the folder: use "Load team data" instead. */
 // returns true when team data was loaded (otherwise the caller shows the demo)
 // which data folder: data/ (default) or another area exported to data/cities/<name>/ and chosen in the top bar (?area=cities/<name>)
+// name of the area (data/cities/index.json); every text in the app uses it, nothing is tied to one valley
+let STUDY={name:'Study area',gauge:'river',gaugeAt:null};
+fetch('data/cities/index.json',{cache:'no-cache'}).then(r=>r.json()).then(j=>{ const a=j.find(x=>(x.dir||'')===DATA_AREA); if(a){ STUDY=a; if(a.gaugeAt&&typeof GAUGE!=='undefined'){ GAUGE.name=a.gauge; GAUGE.c=a.gaugeAt; } if(typeof drawCities==='function'&&D) drawCities(); } }).catch(()=>{});
 const DATA_AREA=(new URLSearchParams(location.search).get('area')||'').replace(/[^\w\-\/]/g,'').replace(/^\/+|\/+$/g,''),DATA_DIR=DATA_AREA?`data/${DATA_AREA}/`:'data/';
 async function tryAutoLoad(){
   if(!/^https?:$/.test(location.protocol)) return false;

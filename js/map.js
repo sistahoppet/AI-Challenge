@@ -80,7 +80,8 @@ function cityBox(b=D.bbox){ const [x0,y0,x1,y1]=b,px=(x1-x0)*.15,py=(y1-y0)*.15,
   if(!map.getSource('outside')){ map.addSource('outside',{type:'geojson',data:fc}); map.addLayer({id:'outside',type:'fill',source:'outside',paint:{'fill-color':css('--bg'),'fill-opacity':.82}});
     map.addLayer({id:'outside-line',type:'line',source:'outside',paint:{'line-color':css('--accent'),'line-width':2}}); }
   else map.getSource('outside').setData(fc);
-  map.setMaxBounds([[x0-px,y0-py],[x1+px,y1+py]]); const cam=map.cameraForBounds?.(b,{padding:20}); if(cam) map.setMinZoom(Math.max(0,cam.zoom-.6)); }
+  map.setMaxBounds([[x0-px,y0-py],[x1+px,y1+py]]); const cam=map.cameraForBounds?.(b,{padding:20}); if(cam) map.setMinZoom(Math.max(0,cam.zoom-.6));
+  const c=map.getCenter(); if(c.lng<x0||c.lng>x1||c.lat<y0||c.lat>y1) map.fitBounds(b,{padding:30,duration:0}); } // a new area: start framed on it
 function showNotice(){ if(S.basemap==='none') return; const n=$('notice'); n.textContent='The real map can\'t load in this preview. Open the downloaded app file in your browser to see streets, satellite photos and real hills.'; n.hidden=false; }
 function setBasemap(b){ S.basemap=b; document.querySelectorAll('.basemap [data-b]').forEach(x=>x.setAttribute('aria-pressed',x.dataset.b===b));
   if(!ready) return; const want=b==='streets'?(isDark()?'streets-dark':'streets-light'):b;
