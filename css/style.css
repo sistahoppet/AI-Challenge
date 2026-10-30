@@ -211,3 +211,14 @@ pre.schema{background:var(--bg);border-radius:6px;padding:10px;overflow-x:auto;f
 .insp .maplibregl-popup-content{pointer-events:auto;font-size:13px;line-height:1.4}
 .maplibregl-popup-close-button{position:absolute;right:4px;top:2px;border:0;background:none;font-size:16px;cursor:pointer;color:var(--muted)}
 .rsl{margin:4px 0 0;padding-left:18px;font-size:13px;display:grid;gap:3px}
+/* Live model tab (api.js) */
+.tabbody h3{font-family:var(--f-display);font-size:17px;margin:12px 0 6px}
+.apiScroll{overflow-x:auto;margin-top:8px}
+.apiT{border-collapse:collapse;font-size:12.5px;width:100%}
+.apiT th,.apiT td{border-bottom:1px solid var(--line);padding:3px 6px;text-align:left;vertical-align:top}
+.apiT th{color:var(--muted);font-weight:600}
+.apiSteps{font-size:13.5px;margin:6px 0 0;padding-left:20px}
+.err{color:var(--err)}
+.verdict{border-radius:8px;padding:8px 10px;margin:8px 0;font-weight:600;color:#fff}
+.verdict.danger{background:var(--zr)} .verdict.at_risk{background:var(--wave2)} .verdict.safe{background:var(--zg)}
+.swatch{display:inline-block;width:12px;height:12px;border-radius:2px;vertical-align:-1px;margin:0 3px 0 8px}

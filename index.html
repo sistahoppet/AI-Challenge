@@ -14,6 +14,7 @@
   <header class="top">
     <h1 class="brand">Flood Scenario Explorer<small>Learning from the July 2021 floods</small></h1>
     <span id="dataBadge" class="badge">DEMO DATA</span>
+    <span id="apiBadge" class="badge">API OFFLINE</span>
     <span class="spacer"></span>
     <button class="btn" id="helpBtn">How to use</button>
     <button class="btn primary" id="openData">Load team data</button>
@@ -99,6 +100,7 @@
         <button role="tab" aria-selected="false" data-t="safety">Evacuate</button>
         <button role="tab" aria-selected="false" data-t="coord">Alert</button>
         <button role="tab" aria-selected="false" data-t="diag">Diagrams</button>
+        <button role="tab" aria-selected="false" data-t="api">Live model</button>
         <button role="tab" aria-selected="false" data-t="policy">Policy</button>
       </div>
 
@@ -264,6 +266,84 @@
         </div>
       </div>
 
+      <div class="tabbody" id="tab-api" hidden>
+        <div>
+          <h2>Team flood API</h2>
+          <p class="hint" style="margin:0 0 8px">This tab runs the team's models on the server: any area in the study region, not only the files loaded on the map.</p>
+          <div class="row" style="justify-content:flex-start"><input class="btn" id="apiUrl" style="flex:1;min-width:0" aria-label="API address"><button class="btn sm" id="apiGo">Connect</button></div>
+          <p class="hint" id="apiState">Connecting…</p>
+        </div>
+        <div>
+          <h2>1 · Area</h2>
+          <p id="apiArea" style="font-size:14px;margin:0">–</p>
+          <div class="row" style="justify-content:flex-start;margin-top:8px"><button class="btn sm" id="aStudy">Study area</button><button class="btn sm" id="aView">Map view</button><button class="btn sm" id="aDraw">Draw a box</button></div>
+          <p class="hint">Max 3000 km², inside the study region (DE / BE / NL flood areas). Bigger areas take minutes.</p>
+        </div>
+        <div>
+          <h2>Am I in danger?</h2>
+          <p class="hint" style="margin:0 0 8px">Click any place in the study region: flood depth there for each flood size. After an area check (5) it also shows the model risk of that 100 m cell.</p>
+          <div class="row" style="justify-content:flex-start"><button class="btn sm primary" id="dPick">Click a place on the map</button></div>
+          <div id="dOut"></div>
+        </div>
+        <div>
+          <h2>2 · Flood risk and who must leave</h2>
+          <div class="row" id="fFloods" style="justify-content:flex-start;font-size:14px"><label><input type="checkbox" value="rp10"> 1-in-10</label><label><input type="checkbox" value="rp100" checked> 1-in-100</label><label><input type="checkbox" value="rp500"> 1-in-500</label><label><input type="checkbox" value="risk>=0.5"> model risk ≥ 0.5</label></div>
+          <div class="row" style="justify-content:flex-start;margin-top:8px"><button class="btn sm primary" id="fRun">Run flood model</button></div>
+          <div id="fOut"></div>
+        </div>
+        <div>
+          <h2>3 · Evacuation flow</h2>
+          <div class="form">
+            <label>Flood size<select class="btn" id="eFlood"><option value="rp10">1-in-10</option><option value="rp100" selected>1-in-100</option><option value="rp500">1-in-500</option></select></label>
+            <label>Hours of the day <span class="tag">e.g. 3 8 17</span><input class="btn" id="eHours" value="3 8 17"></label>
+            <label>Weekend<input type="checkbox" id="eWeekend" style="width:auto;justify-self:start"></label>
+          </div>
+          <div class="row" id="eWeather" style="justify-content:flex-start;font-size:14px;margin-top:8px"><label><input type="checkbox" value="dry" checked> dry</label><label><input type="checkbox" value="rain"> rain</label><label><input type="checkbox" value="heavy_rain"> heavy rain</label><label><input type="checkbox" value="fog"> fog</label><label><input type="checkbox" value="snow"> snow</label></div>
+          <div class="row" style="justify-content:flex-start;margin-top:8px"><button class="btn sm primary" id="eRun">Simulate evacuation</button></div>
+          <div id="eOut"></div>
+        </div>
+        <div>
+          <h2>4 · Flood over time (what if)</h2>
+          <div class="form">
+            <label>Peak flood size (1-in-N years)<input class="btn" type="number" id="tPeak" min="2" value="100"></label>
+            <label>Hours to the peak<input class="btn" type="number" id="tRise" min="1" value="12"></label>
+            <label>Hours to fall back<input class="btn" type="number" id="tFall" min="1" value="24"></label>
+            <label>Step, hours<input class="btn" type="number" id="tStep" min="1" value="3"></label>
+          </div>
+          <div class="row" style="justify-content:flex-start;margin-top:8px"><button class="btn sm primary" id="tRun">Run timeline</button></div>
+          <div id="tOut"></div>
+        </div>
+        <div>
+          <h2>5 · Area check</h2>
+          <p class="hint" style="margin:0 0 8px">Risk per 100 m cell, emergency places and the places to act first. The first run in a new area takes ~2 min (map data download).</p>
+          <div class="row" style="justify-content:flex-start"><button class="btn sm primary" id="rRun">Check area</button>
+            <label style="font-size:14px">Show on map <select class="btn sm" id="rShow"><option value="r">model risk</option><option value="d10">1-in-10 water</option><option value="d100" selected>1-in-100 water</option><option value="d500">1-in-500 water</option><option value="">nothing</option></select></label></div>
+          <p class="hint" id="rLegend" style="margin:6px 0 0"></p>
+          <div id="rOut"></div>
+        </div>
+        <div>
+          <h2>6 · Help a friend</h2>
+          <p class="hint" style="margin:0 0 8px">Volunteers near a person with a disability get a route that avoids flooded roads. No names are stored; requests are deleted after 72 h.</p>
+          <div class="form"><label>Flood size<select class="btn" id="hScen"><option value="rp10">1-in-10</option><option value="rp100" selected>1-in-100</option><option value="rp500">1-in-500</option></select></label></div>
+          <div class="row" style="justify-content:flex-start;margin-top:8px"><button class="btn sm" id="hZone">Set up help zone</button><button class="btn sm" id="hShel">Show shelters</button></div>
+          <p class="hint">Set up once per area (3–4 min, loads all roads); the study area is ready. A zone works only for the area it was set up for.</p>
+          <div id="hZoneOut"></div>
+          <h3>Helper</h3>
+          <div class="row" style="justify-content:flex-start;align-items:center"><button class="btn sm" id="hHelpPick">Place on map</button><select class="btn" id="hMode" aria-label="Travel mode"><option value="walk">on foot</option><option value="bike">by bike</option><option value="car">by car</option></select><button class="btn sm primary" id="hHelp">Register helper</button><span class="hint" id="hHelpAt"></span></div>
+          <div id="hHelpOut"></div>
+          <h3>Person who needs help</h3>
+          <div class="row" style="justify-content:flex-start;align-items:center"><button class="btn sm" id="hNeedPick">Place on map</button><select class="btn" id="hNeedKind" aria-label="Need"><option value="mobility">mobility</option><option value="visual">visual</option><option value="hearing">hearing</option><option value="other">other</option></select><label style="font-size:14px"><input type="checkbox" id="hUrgent"> urgent</label><button class="btn sm primary" id="hNeed">Ask for help</button><span class="hint" id="hNeedAt"></span></div>
+          <div id="hNeedOut"></div>
+        </div>
+        <div>
+          <h2>7 · Building damage, July 2021</h2>
+          <div id="iOut"><p class="hint">Loading…</p></div>
+        </div>
+        <div>
+          <details><summary style="cursor:pointer"><h2 style="display:inline">8 · The models and how well they work</h2></summary><div id="mOut"><p class="hint">Loading…</p></div></details>
+        </div>
+      </div>
+
       <div class="tabbody" id="tab-policy" hidden>
         <div>
           <h2>Impact for the mayor</h2>
@@ -355,6 +435,7 @@
 <script src="js/weather.js"></script>
 <script src="js/impact.js"></script>
 <script src="js/response.js"></script>
+<script src="js/api.js"></script>
 <script src="js/player.js"></script>
 <script src="js/camera.js"></script>
 <script src="js/panels.js"></script>
