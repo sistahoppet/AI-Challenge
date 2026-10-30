@@ -101,8 +101,8 @@ async function openReport(){ const R=DR.run; if(!R){ toast('Run the simulation f
     <p class="s">Flood map ${esc(st.flood)} (EFAS), about the July 2021 rain in this valley. The July 2021 satellite outline is incomplete in this version (data pipeline not finished): it cannot confirm or reject the map yet.</p>
     ${towns.length?`<p>Most residents in the water: ${towns.slice(0,3).map(t=>`<b>${esc(t.name)}</b> ${fmt(t.res)}`).join(' · ')} ${tag('data')}</p>`:''}</section>
    <section><h3>What has changed since 2021</h3>
-    ${q2?`<p><span class="big">${q2.length}</span> measures documented, <b>${q2Ver}</b> verified ${tag('ext')}</p><p class="s">${q2Types.slice(0,4).map(([t,n])=>`${esc(t)}: ${n}`).join(' · ')}</p>
-      <ul>${q2.slice().sort((a,b)=>isVer(b)-isVer(a)).slice(0,3).map(x=>`<li>${esc(x.area||'')}${x.area?': ':''}${esc(x.measure||'')} <span class="s">(${srcLink(x)}${isVer(x)?'':', not verified'})</span></li>`).join('')}</ul>`
+    ${q2?`<p><span class="big">${q2.length}</span> measures documented, <b>${q2Ver}</b> from official sources ${tag('ext')}</p><p class="s">${q2Types.slice(0,4).map(([t,n])=>`${esc(t)}: ${n}`).join(' · ')}</p>
+      <ul>${q2.slice().sort((a,b)=>isVer(b)-isVer(a)).slice(0,3).map(x=>`<li>${esc(x.area||'')}${x.area?': ':''}${esc(x.measure||'')} <span class="s">(${srcLink(x)}${isVer(x)?'':', press source'})</span></li>`).join('')}</ul>`
      :notes?`<div class="note">${esc(notes.slice(0,400))}${notes.length>400?'…':''}</div>`:'<p>Not documented yet.</p>'}
     <p class="s">The flood maps describe the ground before 2021: new defences, rebuilt or demolished homes do not change the numbers here.</p></section>
    <section><h3>Can we shelter everyone who must leave?</h3>

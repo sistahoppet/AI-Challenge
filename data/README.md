@@ -23,3 +23,7 @@ Only `grid.geojson` is required; every other file is optional and the app says w
 | `municipalities.geojson` | – | Statbel / IGN municipal boundaries | polygons with `name` — municipality as unit of analysis | **missing (next step)** |
 
 Rules: never put an invented number in a data file; if a value is an assumption, write it in `params.json` with status `assumption`.
+
+
+### q2_measures.json (ready, 26 measures)
+Built on 30 Oct 2026 from the Drive doc "Policies since the flood 2021" and AI desk research (SOURCES.md). `verified` = true when the source is an official document (government, parliament, water authority, peer-reviewed); false for press. The team should still open each source.
