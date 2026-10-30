@@ -84,6 +84,12 @@ flood-scenario-explorer-project/
 ├── scripts/              how the data/ files were made (see below)
 ├── build.py              bundles the code into ONE html file → dist/
 └── dist/                 output of build.py
+├── data/                 put grid.geojson (+ observed_2021, buildings) here
+├── scripts/
+│   ├── colab_export_for_app.py   for the data person (Colab)
+│   └── serve.py          server with gzip (data 21 MB → ~2 MB): python3 scripts/serve.py
+├── build.py              bundles everything into ONE html file
+└── dist/                 output of build.py (the file to submit)
 ```
 
 ## Remake the data files

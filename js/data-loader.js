@@ -55,11 +55,14 @@ $('useDemo').onclick=()=>{load(ingest(makeDemo()).data,true); $('modal').hidden=
    data/grid.geojson (+ optional observed_2021.geojson, buildings.geojson)
    and shows them instead of the demo. Opening index.html by double-click
    (file://) cannot read the folder: use "Load team data" instead. */
+// returns true when team data was loaded (otherwise the caller shows the demo)
 async function tryAutoLoad(){
-  if(!/^https?:$/.test(location.protocol)) return;
-  const get=async n=>{ try{ const r=await fetch('data/'+n,{cache:'no-store'}); return r.ok?await r.json():null; }catch(e){ return null; } };
-  const grid=await get('grid.geojson'); if(!grid) return;
-  const r=ingest({grid,observed:await get('observed_2021.geojson'),buildings:await get('buildings_fp.geojson')||await get('buildings.geojson'),places:await get('places.geojson'),roads:await get('roads.geojson'),towns:await get('towns.geojson')});
-  if(r.data){ load(r.data,false); toast('Team data loaded from the data folder'); }
-  else toast('data/grid.geojson has a problem: '+r.log.filter(l=>l.e).map(l=>l.m).join(' '));
+  if(!/^https?:$/.test(location.protocol)) return false;
+  // all files at once; 'no-cache' re-downloads only when a file changed. Real building outlines when exported, else GHS-OBAT points
+  const get=async n=>{ try{ const r=await fetch('data/'+n,{cache:'no-cache'}); return r.ok?await r.json():null; }catch(e){ return null; } };
+  const [grid,observed,fp,pts,places,roads,towns]=await Promise.all(['grid','observed_2021','buildings_fp','buildings','places','roads','towns'].map(n=>get(n+'.geojson')));
+  if(!grid) return false;
+  const r=ingest({grid,observed,buildings:fp||pts,places,roads,towns});
+  if(r.data){ load(r.data,false); toast('Team data loaded from the data folder'); return true; }
+  toast('data/grid.geojson has a problem: '+r.log.filter(l=>l.e).map(l=>l.m).join(' ')); return false;
 }

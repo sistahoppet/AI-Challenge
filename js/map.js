@@ -98,8 +98,10 @@ function applyLayers(){
   pinVis();
 }
 // paint expressions that follow the video (cheap: no data is re-sent to the map)
-let lastFilter=0;
-function paintDynamic(force){ if(!ready) return; const cols=S.l3d&&$('tCols').checked;
+// each call makes MapLibre recolour every building, so during playback it runs ~10×/s (the last call always lands)
+let lastFilter=0,lastPaint=0,paintT=0;
+function paintDynamic(force){ if(!ready) return; const t=performance.now(); clearTimeout(paintT);
+  if(!force&&t-lastPaint<100){ paintT=setTimeout(()=>paintDynamic(true),100-(t-lastPaint)); return; } lastPaint=t; const cols=S.l3d&&$('tCols').checked;
   map.setPaintProperty('bld-2d','fill-color',bldColor()); map.setPaintProperty('bld-3d','fill-extrusion-color',bldColor()); map.setPaintProperty('bld-roof','fill-extrusion-color',roofColor());
   const hit=['>',overMax(),.01],now=['>',over(),.01];
   map.setPaintProperty('bld-hit','circle-color',bldColor()); map.setPaintProperty('bld-hit','circle-opacity',['case',hit,.95,0]);
@@ -123,20 +125,24 @@ function recolor(){ if(!ready) return;
   map.setPaintProperty('zones','fill-color',zoneColor()); map.setPaintProperty('obs-line','line-color',css('--obs')); map.setPaintProperty('obs-fill','fill-color',css('--obs'));
   recolorDetails(); recolorEvac(); recolorPlaces(); if(WV) WV.lut=waterLut(); setBasemap(S.basemap); drawLegend(); if(S.tab==='diag') drawDiagram();
 }
-// while playing, numbers and building/road colours refresh 10×/s (the water image keeps its own 30 fps loop); paused or scrubbing: next frame
-let pending=false,lastDraw=0; function render(){ if(pending) return; pending=true; const wait=S.playing?Math.max(0,100-(performance.now()-lastDraw)):0;
-  setTimeout(()=>requestAnimationFrame(()=>{pending=false; lastDraw=performance.now(); draw();}),wait); }
+let pending=false; function render(){ if(pending) return; pending=true; requestAnimationFrame(()=>{pending=false; draw();}); }
+// the numbers scan every cell and building, so during playback they refresh ~5×/s (the last call always lands)
+let lastStats=0,statsT=0;
 function draw(){
-  if(!D) return; const p=level(S.T),e=exposure(rp(),true);
+  if(!D) return; const p=level(S.T);
   paintDynamic();
-  $('sPeople').textContent=fmt(e.people); $('sBld').textContent=fmt(e.bld); $('sArea').textContent=e.area.toFixed(e.area<10?2:1);
-  $('classes').innerHTML=e.cc.map((c,k)=>`<div class="crow"><span class="sw" style="background:var(${CLASSES[k].v})"></span><span>${CLASSES[k].name}</span><span class="mono">${fmt(c.people)} people · ${fmt(c.bld)} bld</span></div>`).join('')
-    +`<div class="crow"><span class="sw" style="background:var(--cut)"></span><span>Streets closed to cars (≥ ${CAR_DEPTH} m)</span><span class="mono">${cutKm(rp(),true).toFixed(1)} km</span></div>`;
-  checkAlerts(e.people);
   const ph=S.T<0.45?0:S.T<0.6?1:2; [0,1,2].forEach(i=>$('ph'+i).classList.toggle('on',i===ph));
   $('nowLbl').textContent=ph===1?'Peak':`${['Rising','Peak','Going down'][ph]} · ${Math.round(p*100)}% of peak`;
   $('time').value=Math.round(S.T*1000);
   if(typeof drillTick==='function') drillTick();
+  const t=performance.now(); clearTimeout(statsT);
+  if(t-lastStats<200){ statsT=setTimeout(drawStats,200-(t-lastStats)); return; } drawStats();
+}
+function drawStats(){ if(!D) return; lastStats=performance.now(); const e=exposure(rp(),true);
+  $('sPeople').textContent=fmt(e.people); $('sBld').textContent=fmt(e.bld); $('sArea').textContent=e.area.toFixed(e.area<10?2:1);
+  $('classes').innerHTML=e.cc.map((c,k)=>`<div class="crow"><span class="sw" style="background:var(${CLASSES[k].v})"></span><span>${CLASSES[k].name}</span><span class="mono">${fmt(c.people)} people · ${fmt(c.bld)} bld</span></div>`).join('')
+    +`<div class="crow"><span class="sw" style="background:var(--cut)"></span><span>Streets closed to cars (≥ ${CAR_DEPTH} m)</span><span class="mono">${cutKm(rp(),true).toFixed(1)} km</span></div>`;
+  checkAlerts(e.people);
 }
 
 /* ---------- legend, tooltip ---------- */
