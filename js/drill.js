@@ -98,7 +98,11 @@ const rangeOf=o=>[simulate(o),simulate({...o,comply:Math.min(1,o.comply+.1),v:o.
 function drillReset(){ if(!$('dk-size')||+$('dk-size').max!==D.rps.length-1) drawDock(); DR.prep=drillPrep(); DR.best=null; DR.sel=null; drillRun();
   if(ready&&DR.prep){ map.getSource('catch')?.setData(DR.prep.catchFC); selectShelter(null); } }
 let drT=null;
-function drillRun(){ if(!DR.prep){ DR.run=null; drawDrill(); return; } const o=drillOpts(); DR.run=simulate(o); DR.range=rangeOf(o);
+// saved = not evacuated with no evacuation order (same flood, everyone stays home) − not evacuated with the plan (upstairs counts as not evacuated)
+// can be negative: sending everyone out when shelters are too small leaves people at full shelters ("no place")
+const savedBy=run=>(DR.none?.score??0)-(run?.score??0);
+const savedTxt=run=>{ const v=Math.round(savedBy(run)); return v>=0?`${fmt(v)} more people evacuated`:`${fmt(-v)} more people left in danger or without a place`; };
+function drillRun(){ if(!DR.prep){ DR.run=null; DR.none=null; drawDrill(); return; } const o=drillOpts(); DR.run=simulate(o); DR.range=rangeOf(o); DR.none=simulate({...o,comply:0,door:false});
   DR.base=simulate(drillOpts({},{comply:DR0.comply/100,capX:DR0.capX/100,rate:DR0.rescue,lead:DR0.lead,mob:DR0.mob,delay:DR0.delay,v:DR0.speed*1000/60}));
   clearTimeout(drT); drT=setTimeout(()=>{ DR.best=bestPlan(); drawDrill(); },250); drawDrill(); extraPins(); if(ready) render(); }
 // every combination of the choices; best = fewest people not evacuated at the peak, then fewest changes
@@ -189,6 +193,7 @@ function showDebrief(){ const B=DR.best,R=DR.run,st=$('drillStage'); if(!B||!R){
   $('drillBody').innerHTML=`<div class="stats"><div class="stat${R.score>B.run.score+.5?' warn':''}"><b data-src="drill">${fmt(R.score)}</b><span>not evacuated at the peak with your choices (${fmt(DR.range[0])}–${fmt(DR.range[1])})</span></div>
     <div class="stat"><b data-src="drill">${fmt(B.run.score)}</b><span>with the best actions (${fmt(B.range[0])}–${fmt(B.range[1])})</span></div>
     <div class="stat"><b>${fmt(Math.max(0,R.score-B.run.score))}</b><span>more people evacuated</span></div></div>
+    <p><b>Compared with no evacuation order</b> (${fmt(DR.none.score)} not evacuated): <b>${savedTxt(R)}</b> with your choices, <b>${savedTxt(B.run)}</b> with the best actions.</p>
     <ol class="steps">${actionPlan(B).map(([t,x])=>`<li><span class="mono">${isFinite(t)?clockM(t):'Before'}</span><span>${x}</span></li>`).join('')}</ol>
     <div class="row" style="justify-content:flex-start"><button class="btn primary sm" id="dbUse">Use these choices and play</button></div>
     <p class="hint">"Not evacuated" = in danger (trapped without a floor above the water, or stuck in a flooded street), without a shelter place, or upstairs at home, when the water is highest. Upstairs at home is a last resort: in July 2021 fast water damaged houses in the Vesdre valley. Evacuating before the water is the goal. ${3*4*2*2} combinations tested on the same flood. "Upstairs" is not risk-free: people must be checked on. A planning aid with assumptions, not a prediction of deaths.</p>`;

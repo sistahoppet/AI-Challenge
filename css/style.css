@@ -353,7 +353,8 @@ body:not(.explain) .tabbody details.info, body:not(.explain) .tabbody p.hint:not
 /* hidden interface: map + play bar only */
 body.hideui .top,body.hideui .panel,body.hideui .dock,body.hideui .hud,body.hideui .tools,body.hideui #alertBar,body.hideui .legend,body.hideui .legbtn,body.hideui .guide,body.hideui .basemap{display:none!important}
 body.hideui .app{grid-template-rows:1fr} body.hideui .layout{grid-template-columns:1fr}
-.uishow{top:12px;left:12px;z-index:10;padding:6px 12px;font:600 13px var(--f-body);cursor:pointer;color:var(--ink)}
+.uishow{top:12px;left:50%;transform:translateX(-50%);z-index:20;padding:10px 18px;font:700 15px var(--f-body);cursor:pointer;color:var(--accent-ink);background:var(--accent);border-color:var(--accent);box-shadow:0 2px 12px rgb(0 0 0 / .35)}
+.uishow:hover{filter:brightness(1.1)}
 /* side panel folds away */
 body.nopanel .layout,body.hideui .layout{grid-template-columns:1fr} body.nopanel .panel{display:none}
 .panelbtn{right:0;top:50%;transform:translateY(-50%);z-index:6;width:22px;height:56px;padding:0;border-radius:8px 0 0 8px;border-right:0;font:700 16px var(--f-body);color:var(--ink);cursor:pointer}
@@ -372,3 +373,7 @@ body.nopanel .panelbtn{width:auto;padding:0 8px;height:40px;font-size:13px}
 @media (max-width:1400px){ .top{flex-wrap:nowrap;gap:6px} .top .btn{padding-inline:9px;font-size:13.5px} .citysel{max-width:160px} .brand small{display:none} }
 .citylab{display:flex;align-items:center;gap:4px;font:600 12px var(--f-body);color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
 .citysel{max-width:260px;font-weight:600;border-color:var(--accent)}
+
+/* loading an area from the team server */
+.srvload{position:fixed;inset:0;z-index:60;border:0;border-radius:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:16px;font-size:15px;text-align:center}
+.srvload[hidden]{display:none}

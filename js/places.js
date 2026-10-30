@@ -6,7 +6,8 @@ let FOOT_DEPTH=0.15;  // (editable in Evacuate) water a walker should not cross;
 const SPHERE_M2=3.5;    // m² of covered floor per person in a shelter (Sphere humanitarian minimum standard)
 const CAR_KMH=30;       // average car speed in town, for travel times only
 const KINDS={hospital:['H','Hospital'],clinic:['+','Clinic'],care_home:['C','Care home'],fire_station:['F','Fire station'],police:['P','Police'],town_hall:['T','Town hall'],
-  power:['E','Power'],water_works:['W','Water works'],school:['S','School'],sports_hall:['G','Sports hall'],stadium:['St','Stadium'],community_centre:['CC','Community centre'],park:['','Park']};
+  power:['E','Power'],water_works:['W','Water works'],school:['S','School'],sports_hall:['G','Sports hall'],stadium:['St','Stadium'],community_centre:['CC','Community centre'],park:['','Park'],
+  ambulance_station:['A','Ambulance station'],shelter:['Sh','Official shelter'],candidate_shelter:['cs','Candidate shelter (school / hall)']};
 const kindName=k=>KINDS[k]?.[1]||k;
 
 /* ---------- map layer ---------- */

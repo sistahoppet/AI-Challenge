@@ -10,8 +10,10 @@ const A={url:(new URLSearchParams(location.search).get('api')||(()=>{try{const u
   ok:false,area:null,pick:null,corner:null,helper:null,req:null,shelters:null,busy:0,cells:[],res:{}};
 
 /* ---------- calls ---------- */
+// a busy server sometimes drops a request (gateway error without CORS = network error in the browser): 3 tries, 4 s apart
+async function fetchRetry(u,o,n=3){ for(let i=1;;i++){ try{ const r=await fetch(u,o); if(r.status<502||r.status>504||i>=n) return r; }catch(e){ if(i>=n) throw e; } await new Promise(r=>setTimeout(r,4000)); } }
 async function api(path,body,method){
-  let r; try{ r=await fetch(A.url+path,{method:method||(body?'POST':'GET'),headers:body?{'content-type':'application/json'}:{},body:body?JSON.stringify(body):undefined}); }
+  let r; try{ r=await fetchRetry(A.url+path,{method:method||(body?'POST':'GET'),headers:body?{'content-type':'application/json'}:{},body:body?JSON.stringify(body):undefined}); }
   catch(e){ setApiOk(false); throw new Error('The API can\'t be reached at '+A.url+'. Check the address and your internet connection.'); }
   const j=await r.json().catch(()=>({error:'HTTP '+r.status}));
   if(!r.ok) throw new Error(j.error||('HTTP '+r.status)); keepRes(path,j); return j;
@@ -23,7 +25,7 @@ async function apiJob(path,body,out){
   const t0=Date.now(); let j=await api(path+(path.includes('?')?'&':'?')+'async=1',body);
   while(j.status==='running'&&j.job){ if(out) out.innerHTML=`<p class="hint">Working… ${Math.round((Date.now()-t0)/1000)} s (big areas can take a few minutes).</p>`;
     await new Promise(r=>setTimeout(r,3000));
-    let r; try{ r=await fetch(`${A.url}/jobs/${j.job}`,{cache:'no-store'}); }catch(e){ throw new Error('Lost the API while waiting; try again.'); }
+    let r; try{ r=await fetchRetry(`${A.url}/jobs/${j.job}`,{cache:'no-store'}); }catch(e){ throw new Error('Lost the API while waiting; try again.'); }
     const k=await r.json().catch(()=>({error:'HTTP '+r.status}));
     if(r.status===202) continue; if(!r.ok) throw new Error(k.error||('HTTP '+r.status)); keepRes(path,k); return k; }
   return j; }

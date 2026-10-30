@@ -1,4 +1,4 @@
 [
- {"name": "Vesdre valley, Pepinster–Verviers (BE)", "dir": "", "gauge": "Vesdre at Pepinster", "gaugeAt": [5.807, 50.567]},
- {"name": "Ahr valley, Bad Neuenahr-Ahrweiler (DE)", "dir": "cities/ahr", "gauge": "Ahr at Altenahr", "gaugeAt": [6.99, 50.52]}
+ {"name": "Vesdre valley, Pepinster–Verviers (BE)", "country": "Belgium", "dir": "", "gauge": "Vesdre at Pepinster", "gaugeAt": [5.807, 50.567]},
+ {"name": "Ahr valley, Bad Neuenahr-Ahrweiler (DE)", "country": "Germany", "dir": "cities/ahr", "gauge": "Ahr at Altenahr", "gaugeAt": [6.99, 50.52]}
 ]

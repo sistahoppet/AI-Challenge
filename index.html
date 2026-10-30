@@ -14,7 +14,7 @@
   <header class="top">
     <h1 class="brand"><svg class="logo" viewBox="0 0 40 40" aria-hidden="true"><path d="M20 3l14 6v10c0 9-6 15-14 18C12 34 6 28 6 19V9z" fill="var(--accent)"/><path d="M13 20l7-6 7 6v7H13z" fill="var(--surface)"/><path d="M8 27q3-3 6 0t6 0t6 0t6 0" fill="none" stroke="var(--surface)" stroke-width="2.4" stroke-linecap="round"/></svg><span>Flood Scenario Explorer<small>Learning from the July 2021 floods</small></span></h1>
     <span id="dataBadge" class="badge">DEMO DATA</span>
-    <label class="citylab" for="citySel"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-7-6-7-12a7 7 0 0 1 14 0c0 6-7 12-7 12z"/><circle cx="12" cy="9" r="2.5"/></svg>Area</label><select class="btn citysel" id="citySel" aria-label="Area shown" title="Choose a town of the loaded area, or another area exported by the data team"><option value="">Whole area</option></select>
+    <label class="citylab" for="citySel"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-7-6-7-12a7 7 0 0 1 14 0c0 6-7 12-7 12z"/><circle cx="12" cy="9" r="2.5"/></svg>Area</label><select class="btn citysel" id="citySel" aria-label="Area shown" title="Choose a town of the loaded area, or another area exported by the data team"><option value="">Whole area</option></select><button class="btn sm" id="srcBtn" title="Where every layer and number of this area comes from">Data sources</button>
     <span id="apiBadge" class="badge">API OFFLINE</span>
     <span class="spacer"></span>
     <button class="btn" id="uiBtn" title="Hide the panels to see only the map (key H)" aria-pressed="false">Hide UI</button>
@@ -94,7 +94,7 @@
         <div class="ov alertbar" id="alertBar" hidden></div>
         <button class="ov panelbtn" id="panelBtn" title="Hide the side panel" aria-label="Hide the side panel" aria-expanded="true">›</button>
         <div class="ov playhint" id="playHint" hidden>Press ▶ to run this scenario</div>
-        <button class="ov uishow" id="uiShow" hidden title="Show the panels again (key H)">Show UI</button>
+        <button class="ov uishow" id="uiShow" hidden title="Show the panels again (key H)">☰ Show the panels <span style="opacity:.8;font-weight:400">(or press H)</span></button>
         <div class="ov hud" id="hud" hidden aria-live="off" aria-label="People right now"></div>
         <div class="ov shelcard" id="shelCard" hidden aria-label="Shelter"></div>
         <div class="ov inject tour" id="runEnd" hidden role="dialog" aria-label="Run finished"></div>
@@ -105,6 +105,7 @@
             <button class="btn primary sm" id="docPrint">Save as PDF / print</button><button class="btn sm" id="docClose">Back to map</button></div>
           <iframe id="docFrame" title="Report" style="width:100%;height:100%;border:1px solid var(--line);border-radius:6px;background:#fff"></iframe>
         </div>
+        <div class="ov srvload" id="srvLoad" hidden></div>
         <div class="ov stage" id="drillStage" hidden>
           <div class="head"><b style="font-family:var(--f-display);font-size:18px;text-transform:uppercase;letter-spacing:.04em">Debrief</b><span class="spacer"></span>
             <button class="btn primary sm" id="drillCard">Mayor's decision card</button><button class="btn sm" id="drillClose">Back to map</button></div>
@@ -595,6 +596,7 @@
 <script src="js/scenario.js"></script>
 <script src="js/api.js"></script>
 <script src="js/policy.js"></script>
+<script src="js/server-areas.js"></script>
 <script src="js/player.js"></script>
 <script src="js/camera.js"></script>
 <script src="js/panels.js"></script>
