@@ -76,7 +76,8 @@ function computeZones(D){
 
 /* ---------- state ---------- */
 let D=null,isDemo=true;
-const S={sizeIdx:1,T:0.5,playing:false,speed:2,exag:1,mode:'2d',l3d:false,lift:0,tab:'sim',diag:'size',metric:'people',basemap:'detail',cmp:'both'};
+const S={sizeIdx:1,T:0.5,playing:false,speed:2,exag:1,mode:'2d',l3d:false,lift:0,tab:'sim',diag:'size',metric:'people',cmp:'both',
+  basemap:(()=>{try{return localStorage.getItem('fse-basemap');}catch(e){return null;}})()||'satellite'}; // satellite photo by default (Esri World Imagery), the viewer's last choice after
 let cellFC,bldFC,map,ready=false,markers=[],peakCache={};
 const rp=()=>D.rps[S.sizeIdx];
 function level(T){return T<=0?0:T<0.45?(1-Math.cos(Math.PI*T/0.45))/2:T<0.6?1:Math.max(0,1-(T-0.6)/0.4);} // 0..1 share of the local peak

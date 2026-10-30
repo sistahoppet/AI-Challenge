@@ -131,8 +131,11 @@ The **📍 Area** menu lists two kinds of areas:
   2. the box of the 1 km cells it returns, then `POST /region` on that box: 100 m cells with EFAS water depth (1-in-10/100/500),
      GHS-POP residents, ground height and terrain risk, plus hospitals, fire stations, police and shelters (OpenStreetMap);
   3. the same results go to the Live model tab and the policy advice.
-  When part of an area lies outside the server's study region (NL), the app takes the largest middle part the server accepts
-  and says so ("part").
+  When the server cannot run the whole area (bigger than 3000 km², partly outside its study region, or a server error), the app
+  takes the largest box around the most affected 1 km cell that the server accepts (20 → 3 km) and says so ("part", and on the
+  Data sources page).
+  Town names come from the OpenStreetMap labels of the background map inside the area; the area is named after the city or town
+  with most residents in the water. The **Zoom to a town** list shows every town and village, most residents in water first.
 
 **What the server does not send stays empty** (no invented data): building outlines and heights, roads for car routes,
 shelter sizes, town names. So for these areas the car drill has no shelter capacity: use the Vesdre or the Ahr for the full drill.
