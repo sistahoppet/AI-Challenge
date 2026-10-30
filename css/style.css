@@ -354,3 +354,14 @@ body:not(.explain) .tabbody details.info, body:not(.explain) .tabbody p.hint:not
 body.hideui .top,body.hideui .panel,body.hideui .dock,body.hideui .hud,body.hideui .tools,body.hideui #alertBar,body.hideui .legend,body.hideui .legbtn,body.hideui .guide,body.hideui .basemap{display:none!important}
 body.hideui .app{grid-template-rows:1fr} body.hideui .layout{grid-template-columns:1fr}
 .uishow{top:12px;left:12px;z-index:10;padding:6px 12px;font:600 13px var(--f-body);cursor:pointer;color:var(--ink)}
+/* side panel folds away */
+body.nopanel .layout,body.hideui .layout{grid-template-columns:1fr} body.nopanel .panel{display:none}
+.panelbtn{right:0;top:50%;transform:translateY(-50%);z-index:6;width:22px;height:56px;padding:0;border-radius:8px 0 0 8px;border-right:0;font:700 16px var(--f-body);color:var(--ink);cursor:pointer}
+body.hideui .panelbtn{display:none}
+.playhint{left:50%;transform:translateX(-50%);bottom:12px;z-index:5;padding:6px 12px;font-size:13px;font-weight:600;border-left:4px solid var(--accent)}
+.pbtn.main.pulse{animation:pbPulse 1.6s ease-in-out infinite}
+@keyframes pbPulse{0%,100%{box-shadow:0 0 0 0 color-mix(in srgb,var(--accent) 60%,transparent)}50%{box-shadow:0 0 0 10px transparent}}
+@media (prefers-reduced-motion:reduce){ .pbtn.main.pulse{animation:none} }
+.tools{right:28px}
+.citysel{max-width:230px;min-height:32px;font-size:13.5px}
+.tools{top:auto;bottom:40px;right:28px;grid-auto-flow:column}

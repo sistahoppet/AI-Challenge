@@ -87,5 +87,5 @@ $('wxLoad').onclick=()=>loadWeather(WX.mode);
 $('wxWorst').onchange=drawWeather;
 $('wxSave').onclick=()=>WX.data?saveFile('weather.json',JSON.stringify(WX.data)):toast('Load the data first');
 // start from data/weather.json (offline demo) or the browser cache
-setTimeout(async()=>{ let d=null; if(/^https?:$/.test(location.protocol)){ try{ const r=await fetch('data/weather.json',{cache:'no-store'}); if(r.ok) d=await r.json(); }catch(e){} }
+setTimeout(async()=>{ let d=null; if(/^https?:$/.test(location.protocol)){ try{ const r=await fetch(DATA_DIR+'weather.json',{cache:'no-store'}); if(r.ok) d=await r.json(); }catch(e){} }
   if(!d){ try{ d=JSON.parse(store.get('fse-weather')||'null'); }catch(e){} } WX.data=d; if(D){ drawWeather(); drawCmp(); } });

@@ -364,6 +364,17 @@ body:not(.explain) .tabbody details.info, body:not(.explain) .tabbody p.hint:not
 body.hideui .top,body.hideui .panel,body.hideui .dock,body.hideui .hud,body.hideui .tools,body.hideui #alertBar,body.hideui .legend,body.hideui .legbtn,body.hideui .guide,body.hideui .basemap{display:none!important}
 body.hideui .app{grid-template-rows:1fr} body.hideui .layout{grid-template-columns:1fr}
 .uishow{top:12px;left:12px;z-index:10;padding:6px 12px;font:600 13px var(--f-body);cursor:pointer;color:var(--ink)}
+/* side panel folds away */
+body.nopanel .layout,body.hideui .layout{grid-template-columns:1fr} body.nopanel .panel{display:none}
+.panelbtn{right:0;top:50%;transform:translateY(-50%);z-index:6;width:22px;height:56px;padding:0;border-radius:8px 0 0 8px;border-right:0;font:700 16px var(--f-body);color:var(--ink);cursor:pointer}
+body.hideui .panelbtn{display:none}
+.playhint{left:50%;transform:translateX(-50%);bottom:12px;z-index:5;padding:6px 12px;font-size:13px;font-weight:600;border-left:4px solid var(--accent)}
+.pbtn.main.pulse{animation:pbPulse 1.6s ease-in-out infinite}
+@keyframes pbPulse{0%,100%{box-shadow:0 0 0 0 color-mix(in srgb,var(--accent) 60%,transparent)}50%{box-shadow:0 0 0 10px transparent}}
+@media (prefers-reduced-motion:reduce){ .pbtn.main.pulse{animation:none} }
+.tools{right:28px}
+.citysel{max-width:230px;min-height:32px;font-size:13.5px}
+.tools{top:auto;bottom:40px;right:28px;grid-auto-flow:column}
 </style>
 </head>
 <body>
@@ -371,6 +382,7 @@ body.hideui .app{grid-template-rows:1fr} body.hideui .layout{grid-template-colum
   <header class="top">
     <h1 class="brand"><svg class="logo" viewBox="0 0 40 40" aria-hidden="true"><path d="M20 3l14 6v10c0 9-6 15-14 18C12 34 6 28 6 19V9z" fill="var(--accent)"/><path d="M13 20l7-6 7 6v7H13z" fill="var(--surface)"/><path d="M8 27q3-3 6 0t6 0t6 0t6 0" fill="none" stroke="var(--surface)" stroke-width="2.4" stroke-linecap="round"/></svg><span>Flood Scenario Explorer<small>Learning from the July 2021 floods</small></span></h1>
     <span id="dataBadge" class="badge">DEMO DATA</span>
+    <select class="btn citysel" id="citySel" aria-label="Area shown" title="Choose a town of the loaded area, or another area exported by the data team"><option value="">Whole area</option></select>
     <span id="apiBadge" class="badge">API OFFLINE</span>
     <span class="spacer"></span>
     <button class="btn" id="uiBtn" title="Hide the panels to see only the map (key H)" aria-pressed="false">Hide UI</button>
@@ -390,14 +402,14 @@ body.hideui .app{grid-template-rows:1fr} body.hideui .layout{grid-template-colum
           <ol>
             <li>Set the flood and the scenario in the bar under the map.</li>
             <li>Press <b>▶</b>. Pause (space) and click the map to check a place.</li>
-            <li><b>Training mode</b>: the run stops when you must decide.</li>
-            <li><b>Debrief</b>: the best sequence of actions.</li>
+            <li>Choose the order, what happens when a shelter is full, and rescue support <b>before</b> pressing ▶.</li>
+            <li><b>Best actions</b>: the best sequence; <b>Report</b>: PDF at the end of each run.</li>
             <li><b>Policy</b> tab: the mayor's decision card.</li>
           </ol>
           <h4>Counters on the map</h4>
           <dl>
             <dt>Home</dt><dd>still at home, water not there yet</dd>
-            <dt>Walking</dt><dd>on the way to a shelter</dd>
+            <dt>Driving</dt><dd>on the way to a shelter by car</dd>
             <dt>Sheltered</dt><dd>arrived in a shelter (places in brackets)</dd>
             <dt>Upstairs</dt><dd>water at home, building has a floor above it</dd>
             <dt>Danger</dt><dd>trapped without a safe floor, or stuck in a flooded street</dd>
@@ -448,6 +460,8 @@ body.hideui .app{grid-template-rows:1fr} body.hideui .layout{grid-template-colum
         <div class="ov attr" id="attr"></div>
         <div class="ov tip" id="tip" hidden></div>
         <div class="ov alertbar" id="alertBar" hidden></div>
+        <button class="ov panelbtn" id="panelBtn" title="Hide the side panel" aria-label="Hide the side panel" aria-expanded="true">›</button>
+        <div class="ov playhint" id="playHint" hidden>Press ▶ to run this scenario</div>
         <button class="ov uishow" id="uiShow" hidden title="Show the panels again (key H)">Show UI</button>
         <div class="ov hud" id="hud" hidden aria-live="off" aria-label="People right now"></div>
         <div class="ov shelcard" id="shelCard" hidden aria-label="Shelter"></div>
@@ -1049,10 +1063,12 @@ $('useDemo').onclick=()=>{load(ingest(makeDemo()).data,true); $('modal').hidden=
    and shows them instead of the demo. Opening index.html by double-click
    (file://) cannot read the folder: use "Load team data" instead. */
 // returns true when team data was loaded (otherwise the caller shows the demo)
+// which data folder: data/ (default) or another area exported to data/cities/<name>/ and chosen in the top bar (?area=cities/<name>)
+const DATA_AREA=(new URLSearchParams(location.search).get('area')||'').replace(/[^\w\-\/]/g,'').replace(/^\/+|\/+$/g,''),DATA_DIR=DATA_AREA?`data/${DATA_AREA}/`:'data/';
 async function tryAutoLoad(){
   if(!/^https?:$/.test(location.protocol)) return false;
   // all files at once; 'no-cache' re-downloads only when a file changed. Real building outlines when exported, else GHS-OBAT points
-  const get=async n=>{ try{ const r=await fetch('data/'+n,{cache:'no-cache'}); return r.ok?await r.json():null; }catch(e){ return null; } };
+  const get=async n=>{ try{ const r=await fetch(DATA_DIR+n,{cache:'no-cache'}); return r.ok?await r.json():null; }catch(e){ return null; } };
   const [grid,observed,fp,pts,places,roads,towns]=await Promise.all(['grid','observed_2021','buildings_fp','buildings','places','roads','towns'].map(n=>get(n+'.geojson')));
   if(!grid) return false;
   const r=ingest({grid,observed,buildings:fp||pts,places,roads,towns});
@@ -1236,12 +1252,12 @@ function refreshData(){ if(!ready) return;
   map.getSource('cells').setData(cellFC); map.getSource('bld').setData(bldFC); map.getSource('bldpt').setData({type:'FeatureCollection',features:D.blds.map((b,i)=>({type:'Feature',geometry:{type:'Point',coordinates:b.c},properties:bldFC.features[i].properties}))}); map.getSource('obs').setData(D.observed||empty());
   buildWater(); buildPeople(); placesData(); roadsReset(); evacReset(); cityBox(); }
 // the map stays inside the chosen area: outside is dimmed and you cannot pan or zoom far away from it
-function cityBox(){ const [x0,y0,x1,y1]=D.bbox,px=(x1-x0)*.15,py=(y1-y0)*.15,ring=[[x0,y0],[x1,y0],[x1,y1],[x0,y1],[x0,y0]];
+function cityBox(b=D.bbox){ const [x0,y0,x1,y1]=b,px=(x1-x0)*.15,py=(y1-y0)*.15,ring=[[x0,y0],[x1,y0],[x1,y1],[x0,y1],[x0,y0]];
   const fc={type:'FeatureCollection',features:[{type:'Feature',geometry:{type:'Polygon',coordinates:[[[-180,-85],[180,-85],[180,85],[-180,85],[-180,-85]],ring.slice().reverse()]},properties:{}}]};
   if(!map.getSource('outside')){ map.addSource('outside',{type:'geojson',data:fc}); map.addLayer({id:'outside',type:'fill',source:'outside',paint:{'fill-color':css('--bg'),'fill-opacity':.82}});
     map.addLayer({id:'outside-line',type:'line',source:'outside',paint:{'line-color':css('--accent'),'line-width':2}}); }
   else map.getSource('outside').setData(fc);
-  map.setMaxBounds([[x0-px,y0-py],[x1+px,y1+py]]); const cam=map.cameraForBounds?.(D.bbox,{padding:20}); if(cam) map.setMinZoom(Math.max(0,cam.zoom-.6)); }
+  map.setMaxBounds([[x0-px,y0-py],[x1+px,y1+py]]); const cam=map.cameraForBounds?.(b,{padding:20}); if(cam) map.setMinZoom(Math.max(0,cam.zoom-.6)); }
 function showNotice(){ if(S.basemap==='none') return; const n=$('notice'); n.textContent='The real map can\'t load in this preview. Open the downloaded app file in your browser to see streets, satellite photos and real hills.'; n.hidden=false; }
 function setBasemap(b){ S.basemap=b; document.querySelectorAll('.basemap [data-b]').forEach(x=>x.setAttribute('aria-pressed',x.dataset.b===b));
   if(!ready) return; const want=b==='streets'?(isDark()?'streets-dark':'streets-light'):b;
@@ -2030,7 +2046,7 @@ $('wxLoad').onclick=()=>loadWeather(WX.mode);
 $('wxWorst').onchange=drawWeather;
 $('wxSave').onclick=()=>WX.data?saveFile('weather.json',JSON.stringify(WX.data)):toast('Load the data first');
 // start from data/weather.json (offline demo) or the browser cache
-setTimeout(async()=>{ let d=null; if(/^https?:$/.test(location.protocol)){ try{ const r=await fetch('data/weather.json',{cache:'no-store'}); if(r.ok) d=await r.json(); }catch(e){} }
+setTimeout(async()=>{ let d=null; if(/^https?:$/.test(location.protocol)){ try{ const r=await fetch(DATA_DIR+'weather.json',{cache:'no-store'}); if(r.ok) d=await r.json(); }catch(e){} }
   if(!d){ try{ d=JSON.parse(store.get('fse-weather')||'null'); }catch(e){} } WX.data=d; if(D){ drawWeather(); drawCmp(); } });
 
 </script>
@@ -3911,6 +3927,29 @@ function setUI(hide){ document.body.classList.toggle('hideui',hide); $('uiBtn').
 $('uiBtn').onclick=()=>setUI(true); $('uiShow').onclick=()=>setUI(false);
 document.addEventListener('keydown',e=>{ if((e.key==='h'||e.key==='H')&&!e.ctrlKey&&!e.metaKey&&!/INPUT|TEXTAREA|SELECT/.test(document.activeElement?.tagName)) setUI(!document.body.classList.contains('hideui')); });
 
+/* ---------- side panel folds away (button on the map edge); the controls bar folds on small screens ---------- */
+function setPanel(open){ document.body.classList.toggle('nopanel',!open); const b=$('panelBtn'); b.textContent=open?'›':'‹'; b.setAttribute('aria-expanded',open);
+  b.title=b.ariaLabel=open?'Hide the side panel':'Show the side panel'; try{ localStorage.setItem('fse-panel',open?'1':'0'); }catch(e){} setTimeout(()=>map?.resize(),60); }
+$('panelBtn').onclick=()=>setPanel(document.body.classList.contains('nopanel'));
+try{ if(localStorage.getItem('fse-panel')==='0') setPanel(false); }catch(e){}
+if(innerHeight<760) $('dockHide').click(); // small screen: the map gets the room, the controls open with one click
+// at the start of a run (clock 0, paused) the map has no water yet: say so next to the play button
+FX.push(()=>{ const h=$('playHint'),on=S.T<.001&&!S.playing&&!!D; if(h.hidden===on) h.hidden=!on; $('play').classList.toggle('pulse',on); });
+
+/* ---------- choose the area: a town of the loaded data (focus box), or another area exported to data/cities/ ---------- */
+async function drawCities(){ const sel=$('citySel'); if(!D||isDemo||!D.towns?.length){ sel.hidden=!D?.towns?.length; return; } sel.hidden=false;
+  const ti=townIndex(),r=D.zoneRule?.mid||rp(),n=D.towns.map(()=>0); D.cells.forEach((c,i)=>{ if(c.depth[r]>.01) n[ti[i]]+=c.pop; });
+  const towns=D.towns.map((t,i)=>({t,i,n:n[i]})).filter(x=>x.n>=50&&x.t.cls!=='hamlet').sort((a,b)=>b.n-a.n);
+  let other=[]; try{ const j=await (await fetch('data/cities/index.json',{cache:'no-cache'})).json(); other=j.filter(x=>x.dir&&('data/'+x.dir+'/')!==DATA_DIR); }catch(e){}
+  sel.innerHTML=`<option value="">Whole area</option><optgroup label="Towns in this area (residents in water at 1-in-${r})">${towns.map(x=>`<option value="t${x.i}">${esc(x.t.name)} · ${fmt(x.n)}</option>`).join('')}</optgroup>`
+    +(other.length?`<optgroup label="Other areas">${other.map(x=>`<option value="a${esc(x.dir)}">${esc(x.name)}</option>`).join('')}</optgroup>`:'')
+    +(DATA_DIR!=='data/'?'<option value="a">Back to the main area</option>':''); }
+$('citySel').onchange=e=>{ const v=e.target.value; if(v[0]==='a'){ const q=new URLSearchParams(location.search); v.length>1?q.set('area',v.slice(1)):q.delete('area'); location.search=q.toString(); return; }
+  if(!v){ cityBox(); map.fitBounds(D.bbox,{padding:30}); return; }
+  const ti=townIndex(),k=+v.slice(1),pts=D.cells.filter((c,i)=>ti[i]===k&&c.pop>0).map(c=>c.c); if(!pts.length) return;
+  const b=bboxOf([pts]),px=600/KX(b[1]),py=600/110540,box=[b[0]-px,b[1]-py,b[2]+px,b[3]+py]; // the town's populated cells + 600 m
+  cityBox(box); map.fitBounds(box,{padding:30,duration:900}); toast(`${D.towns[k].name}: the simulation still covers the whole valley (water comes from upstream)`); };
+
 </script>
 <script>
 // main.js - Start-up: how-to-use guide, load demo data, auto-load team files from /data.
@@ -3926,7 +3965,7 @@ function load(data,demo){
   $('dataBadge').textContent=demo?'DEMO DATA':'TEAM DATA'; $('dataBadge').classList.toggle('real',!demo);
   buildSources(); drawSize(); drawLegend(); drawZones(); drawActor(); drawAgree(); drawCmp(); drawDList();
   if(!map) initMap(); else if(ready){ refreshData(); applyLayers(); render(); map.fitBounds(D.bbox,{padding:50}); }
-  if(S.tab==='diag') drawDiagram(); if(S.tab==='fc') drawForecast(); if(typeof drawScenarioInfo==='function') drawScenarioInfo();
+  if(S.tab==='diag') drawDiagram(); if(S.tab==='fc') drawForecast(); if(typeof drawCities==='function') drawCities(); if(typeof drawScenarioInfo==='function') drawScenarioInfo();
 }
 const mq=matchMedia('(prefers-color-scheme: dark)'); mq.addEventListener?.('change',recolor);
 new MutationObserver(recolor).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});

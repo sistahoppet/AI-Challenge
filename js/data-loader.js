@@ -56,10 +56,12 @@ $('useDemo').onclick=()=>{load(ingest(makeDemo()).data,true); $('modal').hidden=
    and shows them instead of the demo. Opening index.html by double-click
    (file://) cannot read the folder: use "Load team data" instead. */
 // returns true when team data was loaded (otherwise the caller shows the demo)
+// which data folder: data/ (default) or another area exported to data/cities/<name>/ and chosen in the top bar (?area=cities/<name>)
+const DATA_AREA=(new URLSearchParams(location.search).get('area')||'').replace(/[^\w\-\/]/g,'').replace(/^\/+|\/+$/g,''),DATA_DIR=DATA_AREA?`data/${DATA_AREA}/`:'data/';
 async function tryAutoLoad(){
   if(!/^https?:$/.test(location.protocol)) return false;
   // all files at once; 'no-cache' re-downloads only when a file changed. Real building outlines when exported, else GHS-OBAT points
-  const get=async n=>{ try{ const r=await fetch('data/'+n,{cache:'no-cache'}); return r.ok?await r.json():null; }catch(e){ return null; } };
+  const get=async n=>{ try{ const r=await fetch(DATA_DIR+n,{cache:'no-cache'}); return r.ok?await r.json():null; }catch(e){ return null; } };
   const [grid,observed,fp,pts,places,roads,towns]=await Promise.all(['grid','observed_2021','buildings_fp','buildings','places','roads','towns'].map(n=>get(n+'.geojson')));
   if(!grid) return false;
   const r=ingest({grid,observed,buildings:fp||pts,places,roads,towns});

@@ -104,6 +104,24 @@ Needs Python with `requests mapbox-vector-tile shapely pyproj` (and the challeng
 | `scripts/export_towns.py` | towns.geojson (town and village names) | OpenStreetMap tiles |
 | `scripts/export_weather.py` | weather.json (rain records, July 2021) | Open-Meteo / ERA5 |
 
+## Switch area or town
+
+- **Town of the loaded area**: the menu next to *TEAM DATA* lists the towns with residents in the water. Choosing one frames it
+  (the rest is dimmed); the simulation still covers the whole valley, because the water comes from upstream.
+- **Another area** (another city in BE / DE / NL): the data team exports the same files into `data/cities/<name>/`
+  (grid, buildings or buildings_fp, observed_2021, places, roads, towns, weather.json) and lists it in `data/cities/index.json`:
+
+```json
+[{"name": "Bad Neuenahr-Ahrweiler (DE)", "dir": "cities/ahrweiler"}]
+```
+
+  It then appears under *Other areas* in the menu (the page reloads with `?area=cities/<name>`).
+
+## Hide the panels
+
+**Hide UI** (or key **H**) keeps only the map and the play bar. The small **›** tab on the right edge of the map folds the side
+panel; **Controls ▴ / ▾** folds the bar under the map (folded by default on small screens).
+
 ## Make the single file
 
 ```bash

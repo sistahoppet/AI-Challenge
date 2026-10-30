@@ -134,3 +134,26 @@ document.addEventListener('change',e=>{ const b=document.querySelector(`#tools [
 function setUI(hide){ document.body.classList.toggle('hideui',hide); $('uiBtn').setAttribute('aria-pressed',hide); $('uiShow').hidden=!hide; setTimeout(()=>map?.resize(),50); }
 $('uiBtn').onclick=()=>setUI(true); $('uiShow').onclick=()=>setUI(false);
 document.addEventListener('keydown',e=>{ if((e.key==='h'||e.key==='H')&&!e.ctrlKey&&!e.metaKey&&!/INPUT|TEXTAREA|SELECT/.test(document.activeElement?.tagName)) setUI(!document.body.classList.contains('hideui')); });
+
+/* ---------- side panel folds away (button on the map edge); the controls bar folds on small screens ---------- */
+function setPanel(open){ document.body.classList.toggle('nopanel',!open); const b=$('panelBtn'); b.textContent=open?'›':'‹'; b.setAttribute('aria-expanded',open);
+  b.title=b.ariaLabel=open?'Hide the side panel':'Show the side panel'; try{ localStorage.setItem('fse-panel',open?'1':'0'); }catch(e){} setTimeout(()=>map?.resize(),60); }
+$('panelBtn').onclick=()=>setPanel(document.body.classList.contains('nopanel'));
+try{ if(localStorage.getItem('fse-panel')==='0') setPanel(false); }catch(e){}
+if(innerHeight<760) $('dockHide').click(); // small screen: the map gets the room, the controls open with one click
+// at the start of a run (clock 0, paused) the map has no water yet: say so next to the play button
+FX.push(()=>{ const h=$('playHint'),on=S.T<.001&&!S.playing&&!!D; if(h.hidden===on) h.hidden=!on; $('play').classList.toggle('pulse',on); });
+
+/* ---------- choose the area: a town of the loaded data (focus box), or another area exported to data/cities/ ---------- */
+async function drawCities(){ const sel=$('citySel'); if(!D||isDemo||!D.towns?.length){ sel.hidden=!D?.towns?.length; return; } sel.hidden=false;
+  const ti=townIndex(),r=D.zoneRule?.mid||rp(),n=D.towns.map(()=>0); D.cells.forEach((c,i)=>{ if(c.depth[r]>.01) n[ti[i]]+=c.pop; });
+  const towns=D.towns.map((t,i)=>({t,i,n:n[i]})).filter(x=>x.n>=50&&x.t.cls!=='hamlet').sort((a,b)=>b.n-a.n);
+  let other=[]; try{ const j=await (await fetch('data/cities/index.json',{cache:'no-cache'})).json(); other=j.filter(x=>x.dir&&('data/'+x.dir+'/')!==DATA_DIR); }catch(e){}
+  sel.innerHTML=`<option value="">Whole area</option><optgroup label="Towns in this area (residents in water at 1-in-${r})">${towns.map(x=>`<option value="t${x.i}">${esc(x.t.name)} · ${fmt(x.n)}</option>`).join('')}</optgroup>`
+    +(other.length?`<optgroup label="Other areas">${other.map(x=>`<option value="a${esc(x.dir)}">${esc(x.name)}</option>`).join('')}</optgroup>`:'')
+    +(DATA_DIR!=='data/'?'<option value="a">Back to the main area</option>':''); }
+$('citySel').onchange=e=>{ const v=e.target.value; if(v[0]==='a'){ const q=new URLSearchParams(location.search); v.length>1?q.set('area',v.slice(1)):q.delete('area'); location.search=q.toString(); return; }
+  if(!v){ cityBox(); map.fitBounds(D.bbox,{padding:30}); return; }
+  const ti=townIndex(),k=+v.slice(1),pts=D.cells.filter((c,i)=>ti[i]===k&&c.pop>0).map(c=>c.c); if(!pts.length) return;
+  const b=bboxOf([pts]),px=600/KX(b[1]),py=600/110540,box=[b[0]-px,b[1]-py,b[2]+px,b[3]+py]; // the town's populated cells + 600 m
+  cityBox(box); map.fitBounds(box,{padding:30,duration:900}); toast(`${D.towns[k].name}: the simulation still covers the whole valley (water comes from upstream)`); };
