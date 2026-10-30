@@ -91,6 +91,7 @@ async function openReport(){ const R=DR.run; if(!R){ toast('Run the simulation f
   let SUM=null; try{ SUM=await (await fetch(DATA_DIR+'summary.json')).json(); }catch(e){}
   const ps=SUM?.['rp'+r],resIn=ps?ps.residents_in_water:pk.people,bldIn=ps?ps.buildings_in_water:pk.bld;
   // ---- emergency and public-service sites inside the flood
+  crit.splice(0,crit.length,...crit.filter((x,i,A)=>x.p.name||!A.some(y=>y!==x&&y.p.name&&y.p.kind===x.p.kind&&Math.abs(y.d-x.d)<.01)));
   const EMK=['fire_station','police','town_hall','hospital','clinic','care_home'],emerg=crit.filter(({p})=>EMK.includes(p.kind));
   // ---- buildings: what can be protected before the next flood (depth classes, thresholds in data/params.json)
   const dryM=+(PARAMS?.dryProofMaxM?.value??0.9),wetM=+(PARAMS?.wetProofMaxM?.value??2),ti=townIndex();
@@ -109,7 +110,10 @@ async function openReport(){ const R=DR.run; if(!R){ toast('Run the simulation f
   const pr=DR.prep,G0=pr?.groups||[],cmp=+(st.follow_pct||80)/100,tName=g=>{ const i=D.G.at(g.c[0],g.c[1]); return ti&&i>=0?D.towns[ti[i]]?.name:''; };
   // waves = one order per locality, from the simulation's own flood timing (g.ts = when the water reaches the group's homes):
   // each locality's deadline is its earliest group; the time span is split in three equal parts (wave 1 = water first)
-  const TW={}; G0.forEach(g=>{ const n=tName(g)||'Other'; const t=TW[n]=TW[n]||{n,pop:0,noFloor:0,first:Infinity,sk:{}}; t.pop+=g.pop; t.noFloor+=g.pop*(1-g.up); t.first=Math.min(t.first,g.ts); g.legs.forEach(L=>{ t.sk[L.k]=(t.sk[L.k]||0)+L.n; }); });
+  const TW={},Bk=Math.max(1,Math.round(400/D.G.m)),gOf=new Map(G0.map(g=>[g.key,g])),seen=new Set();
+  D.cells.forEach((c,i)=>{ if(!(c.depth[r]>.01)||!c.pop) return; const g=gOf.get(Math.floor(c.gx/Bk)+':'+Math.floor(c.gy/Bk)); const n=(ti&&D.towns[ti[i]]?.name)||'Other'; const t=TW[n]=TW[n]||{n,pop:0,noFloor:0,first:Infinity,sk:{}};
+    t.pop+=c.pop; t.noFloor+=c.pop*(1-(g?.up??0)); if(g){ t.first=Math.min(t.first,g.ts); if(!seen.has(n+'|'+g.key)){ seen.add(n+'|'+g.key); g.legs.forEach(L=>{ t.sk[L.k]=(t.sk[L.k]||0)+L.n; }); } } });
+  Object.keys(TW).forEach(n=>{ if(!isFinite(TW[n].first)) TW[n].first=Math.max(...G0.map(g=>g.ts)); }); // cells outside any group: last deadline
   const TL=Object.values(TW),t0=Math.min(...TL.map(t=>t.first)),t1=Math.max(...TL.map(t=>t.first)),dt=(t1-t0)/3||1;
   TL.forEach(t=>t.w=Math.min(3,1+Math.floor((t.first-t0)/dt)));
   const waves=[1,2,3].map(w=>{ const ts=TL.filter(t=>t.w===w).sort((a,b)=>a.first-b.first); if(!ts.length) return null; const sk={}; ts.forEach(t=>{ for(const k in t.sk) sk[k]=(sk[k]||0)+t.sk[k]; });
@@ -151,7 +155,7 @@ async function openReport(){ const R=DR.run; if(!R){ toast('Run the simulation f
   <table><thead><tr><th>#</th><th>Site</th><th>Type</th><th class="n">Places</th><th class="n">Expected arrivals</th><th>Full at</th><th>Site check</th></tr></thead><tbody>${used.map(s=>`<tr><td>${s.i<E.shelters.length?s.i+1:'B'}</td><td><a href="${osm(s.c)}">${esc(s.name)}</a></td><td>${s.src?esc(kindName(s.src.kind)):''}</td><td class="n">${fmtFull(s.cap)}</td><td class="n">${fmtFull(s.load)}</td><td>${s.full!=null?clockM(s.full):'—'}</td>
     <td class="s">${s.src?[s.src.margin!=null?`${Math.round(s.src.margin)} m above the water`:'',`${Math.round(s.src.dmin)} m from the water`,s.src.capSrc||''].filter(Boolean).join(' · '):''}</td></tr>`).join('')}</tbody></table>
   <p class="s">B = back-up site opened when the first shelters are full. Places = published capacity when known, otherwise floor area ÷ 3.5 m² per person (Sphere standard)${mk('ext')}: a maximum before beds, sanitation and staff. ${unk} further sites have no known capacity and are not counted: their capacity should be confirmed with the municipalities.</p>
-  <p><b>Cross-border sheltering:</b> ${noPl>=1?`<span class="warn">needed</span>: ${fmtFull(noPl)} people find no place in this area at the peak. An agreement with Dutch Limburg and Region Aachen (through EMRIC) is required; none exists for sheltering evacuees today.`:`not needed for this scenario: the shelters in this area cover everyone expected to need a public place (${fmtFull(spare)} places spare). To be reviewed if the public-shelter share is higher (see Annex B).`}</p>
+  <p><b>Cross-border sheltering:</b> ${noPl>=1?`<span class="warn">needed</span>: ${fmtFull(noPl)} people find no place in this area at the peak. An agreement with Dutch Limburg and Region Aachen (through EMRIC) is required; none exists for sheltering evacuees today.`:`not needed for this scenario: the shelters in this area cover everyone expected to need a public place (${fmtFull(spare)} places spare).`}</p>
 
   <h2>2. Where people remain exposed at the peak</h2>
   <p><b>${fmtFull(Math.round(R.score))}</b> residents are not yet evacuated at the peak${mk('est')}: ${fmtFull(Math.round(R.peak.danger))} in danger (trapped or stuck on the road), ${fmtFull(Math.round(R.peak.noplace))} without a shelter place and <b>${fmtFull(Math.round(R.peak.up))} sheltering upstairs at home</b>. Going upstairs is a last resort only: these residents remain to be evacuated or rescued.${away?` A further ${fmtFull(Math.round(away))} residents leave to family or friends.`:''}</p>
@@ -186,10 +190,10 @@ async function openReport(){ const R=DR.run; if(!R){ toast('Run the simulation f
   <table><thead><tr><th>Assumption</th><th>Lower / higher value</th><th class="n">Result (lower)</th><th class="n">Result (higher)</th><th style="width:28%"></th></tr></thead><tbody>${sens.rows.map(x=>`<tr><td>${x.n}</td><td class="s">${x.v}</td><td class="n">${fmtFull(x.lo)}</td><td class="n">${fmtFull(x.hi)}</td>
     <td><div class="bar"><i style="left:${Math.min(x.lo,x.hi)/mx*100}%;width:${Math.max(1,Math.abs(x.hi-x.lo)/mx*100)}%"></i><u style="left:${sens.base/mx*100}%"></u></div></td></tr>`).join('')}</tbody></table>
   ${RUNS.length>1?`<h2>Annex C. Scenarios compared</h2><table><thead><tr><th>Run</th><th>Flood</th><th class="n">Rise h</th><th class="n">Warning min</th><th class="n">Follow</th><th class="n">Not yet evacuated</th><th class="n">Sheltered</th></tr></thead><tbody>${RUNS.slice(-8).map((x,i)=>`<tr><td>${RUNS.length-Math.min(8,RUNS.length)+i+1} <span class="s">${esc(x.at)}</span></td><td>${esc(x.flood.replace(/ \(.*\)/,''))}</td><td class="n">${x.rise_h}</td><td class="n">${x.warning_min}</td><td class="n">${x.follow_pct}%</td><td class="n">${fmtFull(x.unsafe)}</td><td class="n">${fmtFull(x.shel)}</td></tr>`).join('')}</tbody></table>`:''}
-  <h2 class="pb">Annex D. Data sources and flood sizes</h2>
+  <h2 class="pb">Annex ${RUNS.length>1?'D':'C'}. Data sources and flood sizes</h2>
   <table><thead><tr><th>Flood</th><th class="n">Residents in the flood area</th><th class="n">Flooded area, km²</th><th class="n">Direct damage (JRC values)</th></tr></thead><tbody>${D.rps.map(x=>{ const q=SUM?.['rp'+x],k=peak(x); return `<tr><td>1-in-${x} years${x===r?' (this scenario)':''}</td><td class="n">${fmtFull(Math.round(q?q.residents_in_water:k.people))}</td><td class="n">${k.area.toFixed(1)}</td><td class="n">${eur(floodCost(x).damage)}</td></tr>`; }).join('')}</tbody></table>
   ${typeof SRC_ROWS==='function'?`<table><thead><tr><th>What</th><th>Source</th><th>Note</th><th>Where it comes from</th></tr></thead><tbody>${SRC_ROWS().filter(x=>!/^Policy advice/.test(x[0])&&!/^not loaded/.test(x[1])&&(STUDY.server||!/2021/.test(x[0]))).map(x=>`<tr>${x.map(c=>`<td class="s">${esc(c)}</td>`).join('')}</tr>`).join('')}</tbody></table>`:''}
-  <p class="s foot">Source markers: <b>D</b> challenge datasets (EFAS flood maps, GHS-POP, GHS-OBAT, Copernicus EMS, OpenStreetMap) · <b>S</b> published source or standard · <b>E</b> estimate from this scenario · <b>A</b> planning assumption (Annex A). Full list of sources in Annex D.</p>
+  <p class="s foot">Source markers: <b>D</b> challenge datasets (EFAS flood maps, GHS-POP, GHS-OBAT, Copernicus EMS, OpenStreetMap) · <b>S</b> published source or standard · <b>E</b> estimate from this scenario · <b>A</b> planning assumption (Annex A). Full list of sources in Annex ${RUNS.length>1?'D':'C'}.</p>
   </body></html>`); w.document.close(); }
 const P_total=()=>E.plan?.total||0;
 
