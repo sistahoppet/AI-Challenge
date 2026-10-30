@@ -73,7 +73,14 @@ function initMap(){
 // (re)fill every map source after new data is loaded
 function refreshData(){ if(!ready) return;
   map.getSource('cells').setData(cellFC); map.getSource('bld').setData(bldFC); map.getSource('bldpt').setData({type:'FeatureCollection',features:D.blds.map((b,i)=>({type:'Feature',geometry:{type:'Point',coordinates:b.c},properties:bldFC.features[i].properties}))}); map.getSource('obs').setData(D.observed||empty());
-  buildWater(); buildPeople(); placesData(); roadsReset(); evacReset(); }
+  buildWater(); buildPeople(); placesData(); roadsReset(); evacReset(); cityBox(); }
+// the map stays inside the chosen area: outside is dimmed and you cannot pan or zoom far away from it
+function cityBox(){ const [x0,y0,x1,y1]=D.bbox,px=(x1-x0)*.15,py=(y1-y0)*.15,ring=[[x0,y0],[x1,y0],[x1,y1],[x0,y1],[x0,y0]];
+  const fc={type:'FeatureCollection',features:[{type:'Feature',geometry:{type:'Polygon',coordinates:[[[-180,-85],[180,-85],[180,85],[-180,85],[-180,-85]],ring.slice().reverse()]},properties:{}}]};
+  if(!map.getSource('outside')){ map.addSource('outside',{type:'geojson',data:fc}); map.addLayer({id:'outside',type:'fill',source:'outside',paint:{'fill-color':css('--bg'),'fill-opacity':.82}});
+    map.addLayer({id:'outside-line',type:'line',source:'outside',paint:{'line-color':css('--accent'),'line-width':2}}); }
+  else map.getSource('outside').setData(fc);
+  map.setMaxBounds([[x0-px,y0-py],[x1+px,y1+py]]); const cam=map.cameraForBounds?.(D.bbox,{padding:20}); if(cam) map.setMinZoom(Math.max(0,cam.zoom-.6)); }
 function showNotice(){ if(S.basemap==='none') return; const n=$('notice'); n.textContent='The real map can\'t load in this preview. Open the downloaded app file in your browser to see streets, satellite photos and real hills.'; n.hidden=false; }
 function setBasemap(b){ S.basemap=b; document.querySelectorAll('.basemap [data-b]').forEach(x=>x.setAttribute('aria-pressed',x.dataset.b===b));
   if(!ready) return; const want=b==='streets'?(isDark()?'streets-dark':'streets-light'):b;
@@ -120,7 +127,7 @@ function paintDynamic(force){ if(!ready) return; const t=performance.now(); clea
       map.setPaintProperty('water-3d','fill-extrusion-height',['*',['max',over(),0.15],S.exag*S.lift]); } }
   paintDetails(); paintPlaces();
 }
-function recolor(){ if(!ready) return;
+function recolor(){ if(!ready) return; if(map.getLayer('outside')){ map.setPaintProperty('outside','fill-color',css('--bg')); map.setPaintProperty('outside-line','line-color',css('--accent')); }
   map.setPaintProperty('bg','background-color',css('--land'));
   map.setPaintProperty('zones','fill-color',zoneColor()); map.setPaintProperty('obs-line','line-color',css('--obs')); map.setPaintProperty('obs-fill','fill-color',css('--obs'));
   recolorDetails(); recolorEvac(); recolorPlaces(); if(WV) WV.lut=waterLut(); setBasemap(S.basemap); drawLegend(); if(S.tab==='diag') drawDiagram();

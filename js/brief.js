@@ -22,7 +22,7 @@ addEventListener('keydown',e=>{ if(e.key==='Escape'){ $('srcPop').hidden=true; }
 /* ---------- mayor's decision card: one printable page ---------- */
 function openCard(){ const r=rp(),pk=peak(r),c=floodCost(r),B=DR.best,R=DR.run,P=E.plan; if(!B||!R){ toast('Still computing the best plan…'); return; }
   const places=E.shelters.reduce((s,x,k)=>s+capOf(k),0),strip=s=>s.replace(/<span class="gain">(.*?)<\/span>/g,'<em>($1)</em>');
-  const w=open('','_blank'); if(!w){ toast('Allow pop-ups to open the card'); return; }
+  const w=docStage("Mayor's decision card");
   w.document.write(`<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Flood decision card</title><style>
     body{font:14px/1.45 system-ui,sans-serif;color:#1d2529;max-width:760px;margin:24px auto;padding:0 16px}h1{font-size:22px;margin:0}h2{font-size:15px;margin:18px 0 6px;text-transform:uppercase;letter-spacing:.04em}
     .k{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}.k div{border:1px solid #ccd;border-radius:6px;padding:8px}.k b{display:block;font-size:20px}

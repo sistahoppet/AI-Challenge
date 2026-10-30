@@ -129,3 +129,8 @@ const TOOLS=[['tZones','Safety zones','<path d="M12 3l8 4v6c0 5-4 8-8 9-4-1-8-4-
 $('tools').innerHTML=TOOLS.map(([id,t,p])=>`<button data-for="${id}" title="${t}" aria-label="${t}" aria-pressed="${$(id).checked}"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${p}</svg></button>`).join('');
 $('tools').onclick=e=>{ const b=e.target.closest('[data-for]'); if(!b) return; const c=$(b.dataset.for); c.checked=!c.checked; c.dispatchEvent(new Event('change',{bubbles:true})); };
 document.addEventListener('change',e=>{ const b=document.querySelector(`#tools [data-for="${e.target.id}"]`); if(b) b.setAttribute('aria-pressed',e.target.checked); });
+
+/* ---------- hide / show the interface: only the map and the play bar stay (button or key H) ---------- */
+function setUI(hide){ document.body.classList.toggle('hideui',hide); $('uiBtn').setAttribute('aria-pressed',hide); $('uiShow').hidden=!hide; setTimeout(()=>map?.resize(),50); }
+$('uiBtn').onclick=()=>setUI(true); $('uiShow').onclick=()=>setUI(false);
+document.addEventListener('keydown',e=>{ if((e.key==='h'||e.key==='H')&&!e.ctrlKey&&!e.metaKey&&!/INPUT|TEXTAREA|SELECT/.test(document.activeElement?.tagName)) setUI(!document.body.classList.contains('hideui')); });

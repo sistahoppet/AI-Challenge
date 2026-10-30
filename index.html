@@ -16,6 +16,7 @@
     <span id="dataBadge" class="badge">DEMO DATA</span>
     <span id="apiBadge" class="badge">API OFFLINE</span>
     <span class="spacer"></span>
+    <button class="btn" id="uiBtn" title="Hide the panels to see only the map (key H)" aria-pressed="false">Hide UI</button>
     <button class="btn" id="tourBtn">Guided demo</button>
     <button class="btn" id="helpBtn" aria-expanded="false">Explain</button>
     <button class="btn primary" id="openData">Load team data</button>
@@ -90,11 +91,17 @@
         <div class="ov attr" id="attr"></div>
         <div class="ov tip" id="tip" hidden></div>
         <div class="ov alertbar" id="alertBar" hidden></div>
+        <button class="ov uishow" id="uiShow" hidden title="Show the panels again (key H)">Show UI</button>
         <div class="ov hud" id="hud" hidden aria-live="off" aria-label="People right now"></div>
         <div class="ov shelcard" id="shelCard" hidden aria-label="Shelter"></div>
         <div class="ov inject tour" id="runEnd" hidden role="dialog" aria-label="Run finished"></div>
         <div class="ov tools" id="tools" role="toolbar" aria-label="Map layers"></div>
         <div class="ov inject tour" id="tour" hidden role="dialog" aria-label="Guided demo"></div>
+        <div class="ov stage docstage" id="docStage" hidden>
+          <div class="head"><b id="docTitle" style="font-family:var(--f-display);font-size:18px;text-transform:uppercase;letter-spacing:.04em">Report</b><span class="spacer"></span>
+            <button class="btn primary sm" id="docPrint">Save as PDF / print</button><button class="btn sm" id="docClose">Back to map</button></div>
+          <iframe id="docFrame" title="Report" style="width:100%;height:100%;border:1px solid var(--line);border-radius:6px;background:#fff"></iframe>
+        </div>
         <div class="ov stage" id="drillStage" hidden>
           <div class="head"><b style="font-family:var(--f-display);font-size:18px;text-transform:uppercase;letter-spacing:.04em">Debrief</b><span class="spacer"></span>
             <button class="btn primary sm" id="drillCard">Mayor's decision card</button><button class="btn sm" id="drillClose">Back to map</button></div>

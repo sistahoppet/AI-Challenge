@@ -3,6 +3,11 @@
 // researcher needs to check and reuse it: the run's data files, a sensitivity table, the methods, and a comparison of runs.
 // The PDF is the browser's "Save as PDF" on a print-ready page (no extra library). Loaded as a classic script.
 
+// documents (report, decision card) open inside the app, not in a pop-up (browsers often block those silently)
+function docStage(title){ const st=$('docStage'),fr=$('docFrame'); $('docTitle').textContent=title; st.hidden=false; let html='';
+  fr.srcdoc='<p style="font:16px sans-serif;padding:24px">Preparing…</p>';
+  return {document:{open(){ html=''; },write(h){ html+=h; },close(){ fr.srcdoc=html; }}}; }
+$('docPrint').onclick=()=>$('docFrame').contentWindow?.print(); $('docClose').onclick=()=>{ $('docStage').hidden=true; };
 const RUNS=(()=>{ try{ return JSON.parse(localStorage.getItem('fse-runs')||'[]'); }catch(e){ return []; } })(); // finished runs, kept in this browser
 const saveRuns=()=>{ try{ localStorage.setItem('fse-runs',JSON.stringify(RUNS.slice(-12))); }catch(e){} };
 
@@ -59,8 +64,7 @@ async function snapMap(){ const cam={center:map.getCenter(),zoom:map.getZoom(),p
   Object.assign(S,keep); map.jumpTo(cam); applyLayers(); render(); return {url,pins,ratio:cv.clientHeight/cv.clientWidth}; }
 
 /* ---------- the report ---------- */
-async function openReport(){ const R=DR.run; if(!R){ toast('Run the simulation first'); return; } const w=open('','_blank'); if(!w){ toast('Allow pop-ups to open the report'); return; }
-  w.document.write('<p style="font:16px sans-serif;padding:24px">Preparing the report…</p>');
+async function openReport(){ const R=DR.run; if(!R){ toast('Run the simulation first'); return; } const w=docStage('Report of this run');
   const B=DR.best||bestPlan(),sn=await snapMap(),sens=sensitivity(),r=rp(),pk=peak(r),st=runSettings(),towns=townStats(R),cost=floodCost(r),g=agreePix?.(r);
   const used=R.sh.map((s,i)=>({...s,i,src:i<E.shelters.length?E.shelters[i].src:(E.cands||[]).find(c=>c.c===s.c)})).filter(s=>!s.extra||s.load>0);
   const crit=(D.places||[]).filter(p=>p.ci>=0&&(p.group==='critical'||p.group==='shelter')&&D.cells[p.ci].depth[r]>.01).map(p=>({p,d:D.cells[p.ci].depth[r]})).sort((a,b)=>b.d-a.d);

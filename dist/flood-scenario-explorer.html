@@ -66,7 +66,7 @@ button,input,select{font:inherit;color:inherit}
 #map{position:absolute;inset:0;background:var(--land)}
 /* right panel */
 .panel{display:grid;grid-template-rows:auto 1fr;min-height:0;border-left:1px solid var(--line);background:var(--surface);min-width:0}
-.tabs{display:grid;grid-template-columns:repeat(6,1fr);border-bottom:1px solid var(--line)}
+.tabs{display:grid;grid-template-columns:repeat(8,1fr);border-bottom:1px solid var(--line)}
 .tabs button{border:0;border-bottom:3px solid transparent;background:none;padding:10px 4px 8px;cursor:pointer;font-family:var(--f-display);font-weight:600;font-size:15px;letter-spacing:.03em;text-transform:uppercase;color:var(--muted)}
 .tabs button[aria-selected="true"]{border-color:var(--accent);color:var(--ink)}
 .tabbody{overflow-y:auto;padding:16px 18px 24px;display:flex;flex-direction:column;gap:20px;min-width:0}
@@ -348,6 +348,22 @@ body:not(.explain) .tabbody details.info, body:not(.explain) .tabbody p.hint:not
 .agreehead{display:flex;gap:8px;align-items:flex-start;margin-top:8px;padding:8px 10px;border-radius:8px;background:color-mix(in srgb,var(--zg) 14%,transparent);color:var(--ink);font-size:13px}
 .agreehead svg{color:var(--zg);flex:none;margin-top:1px}
 .agreehead.warn{background:color-mix(in srgb,var(--zy) 16%,transparent)} .agreehead.warn svg{color:var(--zy)}
+/* Live model tab (api.js) */
+.tabbody h3{font-family:var(--f-display);font-size:17px;margin:12px 0 6px}
+.apiScroll{overflow-x:auto;margin-top:8px}
+.apiT{border-collapse:collapse;font-size:12.5px;width:100%}
+.apiT th,.apiT td{border-bottom:1px solid var(--line);padding:3px 6px;text-align:left;vertical-align:top}
+.apiT th{color:var(--muted);font-weight:600}
+.apiSteps{font-size:13.5px;margin:6px 0 0;padding-left:20px}
+.err{color:var(--err)}
+.verdict{border-radius:8px;padding:8px 10px;margin:8px 0;font-weight:600;color:#fff}
+.verdict.danger{background:var(--zr)} .verdict.at_risk{background:var(--wave2)} .verdict.safe{background:var(--zg)}
+.swatch{display:inline-block;width:12px;height:12px;border-radius:2px;vertical-align:-1px;margin:0 3px 0 8px}
+.docstage{z-index:9;grid-template-rows:auto 1fr}
+/* hidden interface: map + play bar only */
+body.hideui .top,body.hideui .panel,body.hideui .dock,body.hideui .hud,body.hideui .tools,body.hideui #alertBar,body.hideui .legend,body.hideui .legbtn,body.hideui .guide,body.hideui .basemap{display:none!important}
+body.hideui .app{grid-template-rows:1fr} body.hideui .layout{grid-template-columns:1fr}
+.uishow{top:12px;left:12px;z-index:10;padding:6px 12px;font:600 13px var(--f-body);cursor:pointer;color:var(--ink)}
 </style>
 </head>
 <body>
@@ -355,7 +371,9 @@ body:not(.explain) .tabbody details.info, body:not(.explain) .tabbody p.hint:not
   <header class="top">
     <h1 class="brand"><svg class="logo" viewBox="0 0 40 40" aria-hidden="true"><path d="M20 3l14 6v10c0 9-6 15-14 18C12 34 6 28 6 19V9z" fill="var(--accent)"/><path d="M13 20l7-6 7 6v7H13z" fill="var(--surface)"/><path d="M8 27q3-3 6 0t6 0t6 0t6 0" fill="none" stroke="var(--surface)" stroke-width="2.4" stroke-linecap="round"/></svg><span>Flood Scenario Explorer<small>Learning from the July 2021 floods</small></span></h1>
     <span id="dataBadge" class="badge">DEMO DATA</span>
+    <span id="apiBadge" class="badge">API OFFLINE</span>
     <span class="spacer"></span>
+    <button class="btn" id="uiBtn" title="Hide the panels to see only the map (key H)" aria-pressed="false">Hide UI</button>
     <button class="btn" id="tourBtn">Guided demo</button>
     <button class="btn" id="helpBtn" aria-expanded="false">Explain</button>
     <button class="btn primary" id="openData">Load team data</button>
@@ -430,11 +448,17 @@ body:not(.explain) .tabbody details.info, body:not(.explain) .tabbody p.hint:not
         <div class="ov attr" id="attr"></div>
         <div class="ov tip" id="tip" hidden></div>
         <div class="ov alertbar" id="alertBar" hidden></div>
+        <button class="ov uishow" id="uiShow" hidden title="Show the panels again (key H)">Show UI</button>
         <div class="ov hud" id="hud" hidden aria-live="off" aria-label="People right now"></div>
         <div class="ov shelcard" id="shelCard" hidden aria-label="Shelter"></div>
         <div class="ov inject tour" id="runEnd" hidden role="dialog" aria-label="Run finished"></div>
         <div class="ov tools" id="tools" role="toolbar" aria-label="Map layers"></div>
         <div class="ov inject tour" id="tour" hidden role="dialog" aria-label="Guided demo"></div>
+        <div class="ov stage docstage" id="docStage" hidden>
+          <div class="head"><b id="docTitle" style="font-family:var(--f-display);font-size:18px;text-transform:uppercase;letter-spacing:.04em">Report</b><span class="spacer"></span>
+            <button class="btn primary sm" id="docPrint">Save as PDF / print</button><button class="btn sm" id="docClose">Back to map</button></div>
+          <iframe id="docFrame" title="Report" style="width:100%;height:100%;border:1px solid var(--line);border-radius:6px;background:#fff"></iframe>
+        </div>
         <div class="ov stage" id="drillStage" hidden>
           <div class="head"><b style="font-family:var(--f-display);font-size:18px;text-transform:uppercase;letter-spacing:.04em">Debrief</b><span class="spacer"></span>
             <button class="btn primary sm" id="drillCard">Mayor's decision card</button><button class="btn sm" id="drillClose">Back to map</button></div>
@@ -485,7 +509,9 @@ body:not(.explain) .tabbody details.info, body:not(.explain) .tabbody p.hint:not
         <button role="tab" aria-selected="true" data-t="sim">Simulate</button>
         <button role="tab" aria-selected="false" data-t="safety">Evacuate</button>
         <button role="tab" aria-selected="false" data-t="coord">Alert</button>
+        <button role="tab" aria-selected="false" data-t="fc">Forecast</button>
         <button role="tab" aria-selected="false" data-t="diag">Diagrams</button>
+        <button role="tab" aria-selected="false" data-t="api">Live model</button>
         <button role="tab" aria-selected="false" data-t="policy">Policy</button>
         <button role="tab" aria-selected="false" data-t="data">Data</button>
       </div>
@@ -666,11 +692,148 @@ body:not(.explain) .tabbody details.info, body:not(.explain) .tabbody p.hint:not
         </div>
       </div>
 
+      <div class="tabbody" id="tab-fc" hidden>
+        <div>
+          <h2>Flood forecast model</h2>
+          <p class="hint" style="margin:0 0 8px">Rain and how wet the ground is → river flow → flood size → people and buildings in the water. Trained in your browser on 40 years of rain (ERA5) and river flow (GloFAS) for the river point of the loaded area: external data from Open-Meteo, not challenge data.</p>
+          <div class="row" style="justify-content:flex-start"><button class="btn sm primary" id="fcTrain">Train model</button></div>
+          <p class="hint" id="fcModel"></p>
+        </div>
+        <div>
+          <h2>1 · Sandbox: what if the conditions change?</h2>
+          <div class="form">
+            <label>Rain day 1: <b id="fcR1V"></b><input type="range" id="fcR1" min="0" max="150" value="20"></label>
+            <label>Rain day 2: <b id="fcR2V"></b><input type="range" id="fcR2" min="0" max="150" value="10"></label>
+            <label>Rain day 3: <b id="fcR3V"></b><input type="range" id="fcR3" min="0" max="150" value="0"></label>
+            <label>Rain in the 30 days before (how wet the ground is): <b id="fcPastV"></b><input type="range" id="fcPast" min="0" max="300" value="60"></label>
+            <label>Month<select class="btn" id="fcMonth"><option value="1">January</option><option value="2">February</option><option value="3">March</option><option value="4">April</option><option value="5">May</option><option value="6">June</option><option value="7" selected>July</option><option value="8">August</option><option value="9">September</option><option value="10">October</option><option value="11">November</option><option value="12">December</option></select></label>
+          </div>
+          <div class="row" style="justify-content:flex-start;margin-top:8px"><button class="btn sm" id="fc21">Use July 2021</button></div>
+          <div id="fcSOut" style="margin-top:8px"></div>
+        </div>
+        <div>
+          <h2>2 · Now: today's data</h2>
+          <p class="hint" style="margin:0 0 8px">Last 60 days of rain + the 16-day rain forecast through the model, next to the GloFAS river-flow forecast.</p>
+          <div class="row" style="justify-content:flex-start"><button class="btn sm primary" id="fcLive">Load today's forecast</button></div>
+          <div class="wxbox" style="margin-top:8px"><div id="fcChart"></div></div>
+          <div id="fcLOut"></div>
+        </div>
+        <div>
+          <div class="row" style="justify-content:flex-start"><button class="btn sm" id="fcShow">Show the last result on the map</button></div>
+          <ul class="limits" style="margin-top:8px">
+            <li>Predicts the GloFAS river flow (a model, ~5 km), not gauge readings. Rivers with an upstream area under ~500 km² and town drainage floods are not covered.</li>
+            <li>One river point for the whole area; rain is the plain mean of a few points around it.</li>
+            <li>Vesdre check (trained 1984–2014, tested 2015–2021): July 2021 flagged beyond the 1-in-500 flow, one day late; of 2 weeks above the 1-in-10 flow, 1 caught, with 2 false alarms.</li>
+            <li>Numbers use EFAS depths blended between the 1-in-10/100/500 maps; the map shows the rarest of those maps not beyond the predicted flood.</li>
+            <li>A planning aid, not a warning: official warnings come from the national services (e.g. SPW / IRM in Belgium, DWD in Germany).</li>
+          </ul>
+        </div>
+      </div>
       <div class="tabbody" id="tab-diag" hidden>
         <div>
           <h2>Pick a diagram</h2>
           <div class="dlist" id="dlist"></div>
           <p class="hint">Each diagram can be downloaded as an image for the brief, as a vector file for editing, or as a data table (CSV) for Excel.</p>
+        </div>
+      </div>
+
+      <div class="tabbody" id="tab-api" hidden>
+        <div>
+          <h2>Team flood API</h2>
+          <p class="hint" style="margin:0 0 8px">This tab runs the team's models on the server: any area in the study region, not only the files loaded on the map.</p>
+          <div class="row" style="justify-content:flex-start"><input class="btn" id="apiUrl" style="flex:1;min-width:0" aria-label="API address"><button class="btn sm" id="apiGo">Connect</button></div>
+          <p class="hint" id="apiState">Connecting…</p>
+        </div>
+        <div>
+          <h2>1 · Area</h2>
+          <p id="apiArea" style="font-size:14px;margin:0">–</p>
+          <div class="row" style="justify-content:flex-start;margin-top:8px"><button class="btn sm" id="aStudy">Study area</button><button class="btn sm" id="aView">Map view</button><button class="btn sm" id="aDraw">Draw a box</button></div>
+          <p class="hint">Max 3000 km², inside the study region (DE / BE / NL flood areas). Bigger areas take minutes.</p>
+        </div>
+        <div>
+          <h2>Am I in danger?</h2>
+          <p class="hint" style="margin:0 0 8px">Click any place in the study region: flood depth there for each flood size. After an area check (5) it also shows the model risk of that 100 m cell.</p>
+          <div class="row" style="justify-content:flex-start"><button class="btn sm primary" id="dPick">Click a place on the map</button></div>
+          <div id="dOut"></div>
+        </div>
+        <div>
+          <h2>2 · Flood risk and who must leave</h2>
+          <div class="row" id="fFloods" style="justify-content:flex-start;font-size:14px"><label><input type="checkbox" value="rp10"> 1-in-10</label><label><input type="checkbox" value="rp100" checked> 1-in-100</label><label><input type="checkbox" value="rp500"> 1-in-500</label><label><input type="checkbox" value="risk>=0.5"> model risk ≥ 0.5</label></div>
+          <div class="row" style="justify-content:flex-start;margin-top:8px"><button class="btn sm primary" id="fRun">Run flood model</button></div>
+          <div id="fOut"></div>
+        </div>
+        <div>
+          <h2>3 · Evacuation flow</h2>
+          <div class="form">
+            <label>Flood size<select class="btn" id="eFlood"><option value="rp10">1-in-10</option><option value="rp100" selected>1-in-100</option><option value="rp500">1-in-500</option></select></label>
+            <label>Hours of the day <span class="tag">e.g. 3 8 17</span><input class="btn" id="eHours" value="3 8 17"></label>
+            <label>Weekend<input type="checkbox" id="eWeekend" style="width:auto;justify-self:start"></label>
+          </div>
+          <div class="row" id="eWeather" style="justify-content:flex-start;font-size:14px;margin-top:8px"><label><input type="checkbox" value="dry" checked> dry</label><label><input type="checkbox" value="rain"> rain</label><label><input type="checkbox" value="heavy_rain"> heavy rain</label><label><input type="checkbox" value="fog"> fog</label><label><input type="checkbox" value="snow"> snow</label></div>
+          <div class="row" style="justify-content:flex-start;margin-top:8px"><button class="btn sm primary" id="eRun">Simulate evacuation</button></div>
+          <div id="eOut"></div>
+        </div>
+        <div>
+          <h2>4 · Flood over time (what if)</h2>
+          <div class="form">
+            <label>Peak flood size (1-in-N years)<input class="btn" type="number" id="tPeak" min="2" value="100"></label>
+            <label>Hours to the peak<input class="btn" type="number" id="tRise" min="1" value="12"></label>
+            <label>Hours to fall back<input class="btn" type="number" id="tFall" min="1" value="24"></label>
+            <label>Step, hours<input class="btn" type="number" id="tStep" min="1" value="3"></label>
+          </div>
+          <div class="row" style="justify-content:flex-start;margin-top:8px"><button class="btn sm primary" id="tRun">Run timeline</button></div>
+          <div id="tOut"></div>
+        </div>
+        <div>
+          <h2>5 · Area check</h2>
+          <p class="hint" style="margin:0 0 8px">Risk per 100 m cell, emergency places and the places to act first. The first run in a new area takes ~2 min (map data download).</p>
+          <div class="row" style="justify-content:flex-start"><button class="btn sm primary" id="rRun">Check area</button>
+            <label style="font-size:14px">Show on map <select class="btn sm" id="rShow"><option value="r">model risk</option><option value="d10">1-in-10 water</option><option value="d100" selected>1-in-100 water</option><option value="d500">1-in-500 water</option><option value="">nothing</option></select></label></div>
+          <p class="hint" id="rLegend" style="margin:6px 0 0"></p>
+          <div class="row" style="justify-content:flex-start;margin-top:8px"><button class="btn sm" id="rAnim" disabled>Animate this area</button><button class="btn sm" id="rBack">Back to the study area</button></div>
+          <p class="hint" style="margin:4px 0 0">Plays the rising water for the checked area in the Simulate tab (EFAS depths; people and buildings only where the API sends them).</p>
+          <div id="rOut"></div>
+        </div>
+        <div>
+          <h2>6 · Help a friend</h2>
+          <p class="hint" style="margin:0 0 8px">Volunteers near a person with a disability get a route that avoids flooded roads. No names are stored; requests are deleted after 72 h.</p>
+          <div class="form"><label>Flood size<select class="btn" id="hScen"><option value="rp10">1-in-10</option><option value="rp100" selected>1-in-100</option><option value="rp500">1-in-500</option></select></label></div>
+          <div class="row" style="justify-content:flex-start;margin-top:8px"><button class="btn sm" id="hZone">Set up help zone</button><button class="btn sm" id="hShel">Show shelters</button></div>
+          <p class="hint">Set up once per area (3–4 min, loads all roads); the study area is ready. A zone works only for the area it was set up for.</p>
+          <div id="hZoneOut"></div>
+          <h3>Helper</h3>
+          <div class="row" style="justify-content:flex-start;align-items:center"><button class="btn sm" id="hHelpPick">Place on map</button><select class="btn" id="hMode" aria-label="Travel mode"><option value="walk">on foot</option><option value="bike">by bike</option><option value="car">by car</option></select><button class="btn sm primary" id="hHelp">Register helper</button><span class="hint" id="hHelpAt"></span></div>
+          <div id="hHelpOut"></div>
+          <h3>Person who needs help</h3>
+          <div class="row" style="justify-content:flex-start;align-items:center"><button class="btn sm" id="hNeedPick">Place on map</button><select class="btn" id="hNeedKind" aria-label="Need"><option value="mobility">mobility</option><option value="visual">visual</option><option value="hearing">hearing</option><option value="other">other</option></select><label style="font-size:14px"><input type="checkbox" id="hUrgent"> urgent</label><button class="btn sm primary" id="hNeed">Ask for help</button><span class="hint" id="hNeedAt"></span></div>
+          <div id="hNeedOut"></div>
+        </div>
+        <div>
+          <h2>7 · Building damage, July 2021</h2>
+          <div id="iOut"><p class="hint">Loading…</p></div>
+        </div>
+        <div>
+          <details><summary style="cursor:pointer"><h2 style="display:inline">8 · The models and how well they work</h2></summary><div id="mOut"><p class="hint">Loading…</p></div></details>
+        </div>
+        <div>
+          <h2>9 · Which policy should the mayor take?</h2>
+          <p class="hint" style="margin:0 0 8px">Sends the results of the runs above to the team's policy advisor. It picks from our policies (Policy Brief, Policies since the 2021 flood) and cites the model numbers it used.</p>
+          <div class="row" style="justify-content:flex-start"><input class="btn" id="pUrl" style="flex:1;min-width:0" aria-label="Policy API address"><button class="btn sm" id="pGo">Connect</button></div>
+          <p class="hint" id="pState">Connecting…</p>
+          <div class="form">
+            <label>Answer by<select class="btn" id="pProv"><option value="claude">Claude (Anthropic API key)</option><option value="local">Local model</option><option value="rules">Rules only (no AI, instant)</option></select></label>
+            <label>Language<select class="btn" id="pLang"><option>English</option><option>Français</option><option>Nederlands</option><option>Deutsch</option></select></label>
+            <label>Question <span class="tag">optional</span><input class="btn" id="pQ" placeholder="Which policies first, in which order?"></label>
+          </div>
+          <div id="pKeyRow" style="margin-top:8px">
+            <div class="row" style="justify-content:flex-start;align-items:center"><input class="btn" id="pKey" type="password" autocomplete="off" placeholder="sk-ant-…" style="flex:1;min-width:0" aria-label="Claude API key"><button class="btn sm" id="pForget">Forget</button></div>
+            <label style="font-size:14px"><input type="checkbox" id="pKeep"> remember on this device</label>
+            <p class="hint" id="pKeyHint" style="margin:4px 0 0"></p>
+            <p class="hint" style="margin:2px 0 0">The key goes only to the team policy API, for this one request; the server does not store or log it. Not remembered = gone when you close the tab.</p>
+          </div>
+          <p class="hint" id="pInputs"></p>
+          <div class="row" style="justify-content:flex-start;margin-top:8px"><button class="btn sm primary" id="pRun">Get policy advice</button></div>
+          <div id="pOut"></div>
         </div>
       </div>
 
@@ -885,13 +1048,16 @@ $('useDemo').onclick=()=>{load(ingest(makeDemo()).data,true); $('modal').hidden=
    data/grid.geojson (+ optional observed_2021.geojson, buildings.geojson)
    and shows them instead of the demo. Opening index.html by double-click
    (file://) cannot read the folder: use "Load team data" instead. */
+// returns true when team data was loaded (otherwise the caller shows the demo)
 async function tryAutoLoad(){
-  if(!/^https?:$/.test(location.protocol)) return;
-  const get=async n=>{ try{ const r=await fetch('data/'+n,{cache:'no-store'}); return r.ok?await r.json():null; }catch(e){ return null; } };
-  const grid=await get('grid.geojson'); if(!grid) return;
-  const r=ingest({grid,observed:await get('observed_2021.geojson'),buildings:await get('buildings_fp.geojson')||await get('buildings.geojson'),places:await get('places.geojson'),roads:await get('roads.geojson'),towns:await get('towns.geojson')});
-  if(r.data){ load(r.data,false); toast('Team data loaded from the data folder'); }
-  else toast('data/grid.geojson has a problem: '+r.log.filter(l=>l.e).map(l=>l.m).join(' '));
+  if(!/^https?:$/.test(location.protocol)) return false;
+  // all files at once; 'no-cache' re-downloads only when a file changed. Real building outlines when exported, else GHS-OBAT points
+  const get=async n=>{ try{ const r=await fetch('data/'+n,{cache:'no-cache'}); return r.ok?await r.json():null; }catch(e){ return null; } };
+  const [grid,observed,fp,pts,places,roads,towns]=await Promise.all(['grid','observed_2021','buildings_fp','buildings','places','roads','towns'].map(n=>get(n+'.geojson')));
+  if(!grid) return false;
+  const r=ingest({grid,observed,buildings:fp||pts,places,roads,towns});
+  if(r.data){ load(r.data,false); toast('Team data loaded from the data folder'); return true; }
+  toast('data/grid.geojson has a problem: '+r.log.filter(l=>l.e).map(l=>l.m).join(' ')); return false;
 }
 
 </script>
@@ -903,7 +1069,11 @@ async function tryAutoLoad(){
 function buildGrid(D){
   const bx=D.cells.map(c=>bboxOf([c.ring])),w=median(bx.map(b=>b[2]-b[0]))||1e-3,h=median(bx.map(b=>b[3]-b[1]))||1e-3;
   const [x0,y0,x1,y1]=D.bbox,nx=Math.max(1,Math.round((x1-x0)/w)),ny=Math.max(1,Math.round((y1-y0)/h)),idx=new Int32Array(nx*ny).fill(-1);
-  D.cells.forEach((c,i)=>{c.gx=Math.min(nx-1,Math.floor((c.c[0]-x0)/w)); c.gy=Math.min(ny-1,Math.floor((c.c[1]-y0)/h)); idx[c.gy*nx+c.gx]=i;});
+  // cells from the API are slightly skewed squares: when a slot is taken, use the free neighbour on the side the centre leans to
+  D.cells.forEach((c,i)=>{const fx=(c.c[0]-x0)/w,fy=(c.c[1]-y0)/h; c.gx=Math.min(nx-1,Math.floor(fx)); c.gy=Math.min(ny-1,Math.floor(fy));
+    if(idx[c.gy*nx+c.gx]>=0){const sx=fx-c.gx<.5?-1:1,sy=fy-c.gy<.5?-1:1;
+      for(const [dx,dy] of [[sx,0],[0,sy],[sx,sy],[-sx,0],[0,-sy]]){const x=c.gx+dx,y=c.gy+dy; if(x>=0&&y>=0&&x<nx&&y<ny&&idx[y*nx+x]<0){c.gx=x;c.gy=y;break;}}}
+    idx[c.gy*nx+c.gx]=i;});
   D.G={x0,y0,w,h,nx,ny,idx,m:w*111320*Math.cos(y0*Math.PI/180),
     at:(x,y)=>{const ix=Math.floor((x-x0)/w),iy=Math.floor((y-y0)/h); return ix<0||iy<0||ix>=nx||iy>=ny?-1:idx[iy*nx+ix];}};
   D.dmax={}; D.rps.forEach(r=>D.dmax[r]=maxDepth(r));
@@ -917,9 +1087,10 @@ function buildGrid(D){
 let LAG_MAX=.15; // share of the video by which the most downstream section rises after the most upstream one (scenario "terrain slope" changes it)
 let INIT=0;      // scenario: water already in the river at the start (m): low ground near the channel is wet from the first minute
 function stageModel(D){ const G=D.G,kx=Math.max(1,Math.round(250/G.m)),ky=Math.max(1,Math.round(250/(G.h*110540))),hasZ=D.cells.some(c=>c.elev!=null);
+  const wetC=D.cells.map(c=>D.rps.some(r=>c.depth[r]>0)); // dry neighbours change neither L nor the riverbed height
   D.cells.forEach(c=>{ c.L={}; D.rps.forEach(r=>c.L[r]=c.depth[r]); c.ech=c.elev;
-    for(let dy=-ky;dy<=ky;dy++) for(let dx=-kx;dx<=kx;dx++){ const x=c.gx+dx,y=c.gy+dy; if(x<0||y<0||x>=G.nx||y>=G.ny) continue; const j=G.idx[y*G.nx+x]; if(j<0) continue; const o=D.cells[j];
-      D.rps.forEach(r=>{if(o.depth[r]>c.L[r]) c.L[r]=o.depth[r];}); if(hasZ&&o.elev!=null&&D.rps.some(r=>o.depth[r]>0)&&(c.ech==null||o.elev<c.ech)) c.ech=o.elev; } });
+    for(let dy=-ky;dy<=ky;dy++) for(let dx=-kx;dx<=kx;dx++){ const x=c.gx+dx,y=c.gy+dy; if(x<0||y<0||x>=G.nx||y>=G.ny) continue; const j=G.idx[y*G.nx+x]; if(j<0||!wetC[j]) continue; const o=D.cells[j];
+      for(const r of D.rps) if(o.depth[r]>c.L[r]) c.L[r]=o.depth[r]; if(hasZ&&o.elev!=null&&(c.ech==null||o.elev<c.ech)) c.ech=o.elev; } });
   const wz=D.cells.filter(c=>c.ech!=null&&D.rps.some(r=>c.depth[r]>0)).map(c=>c.ech),hi=wz.length?Math.max(...wz):0,lo=wz.length?Math.min(...wz):0;
   D.cells.forEach(c=>c.lag=hasZ&&hi>lo&&c.ech!=null?LAG_MAX*Math.min(1,Math.max(0,(hi-c.ech)/(hi-lo))):0);
   D.hasTerrain=hasZ; }
@@ -947,8 +1118,21 @@ function computeZones(D){
   const lat0=D.cells[0]?.c[1]||50,kx=111320*Math.cos(lat0*Math.PI/180),ky=110540,dist=(a,b)=>Math.hypot((a[0]-b[0])*kx,(a[1]-b[1])*ky);
   const wet=D.cells.filter(c=>c.z>1),red=D.cells.filter(c=>c.z===3),bCount=new Map();
   D.blds.forEach(b=>{if(b.ci>=0) bCount.set(b.ci,(bCount.get(b.ci)||0)+1);});
-  const cand=[]; D.cells.forEach((c,i)=>{if(c.z!==1||!bCount.get(i)) return; let dmin=Infinity; for(const w of wet){const d=dist(c.c,w.c); if(d<dmin) dmin=d;}
-    if(dmin<150) return; let near=0; for(const r of red) if(dist(c.c,r.c)<=1000) near+=r.pop; if(near>0) cand.push({i,c:c.c,b:bCount.get(i),dmin,near});});
+  // red cells in 1 km buckets: the people-nearby sum only looks at the 3×3 buckets around a cell; the exact distance to water
+  // is then measured only for cells that have red cells nearby
+  const bk=(x,y)=>Math.floor(x*kx/1000)+','+Math.floor(y*ky/1000),redB=new Map();
+  red.forEach(r=>{const k=bk(r.c[0],r.c[1]); if(!redB.has(k)) redB.set(k,[]); redB.get(k).push(r);});
+  // exact distance to the nearest wet cell: 250 m buckets searched ring by ring until no closer cell can exist
+  const WB=250,wetB=new Map(),wk=(x,y)=>x+','+y;
+  wet.forEach(w=>{const k=wk(Math.floor(w.c[0]*kx/WB),Math.floor(w.c[1]*ky/WB)); if(!wetB.has(k)) wetB.set(k,[]); wetB.get(k).push(w);});
+  const nearestWet=p=>{ if(!wet.length) return Infinity; const bx=Math.floor(p[0]*kx/WB),by=Math.floor(p[1]*ky/WB); let best=Infinity;
+    for(let r=0;(r-1)*WB<best;r++){ for(let dx=-r;dx<=r;dx++) for(let dy=-r;dy<=r;dy++){ if(Math.max(Math.abs(dx),Math.abs(dy))!==r) continue;
+      for(const w of wetB.get(wk(bx+dx,by+dy))||[]){const d=dist(p,w.c); if(d<best) best=d;} } } return best; };
+  const cand=[]; D.cells.forEach((c,i)=>{if(c.z!==1||!bCount.get(i)) return;
+    const bx=Math.floor(c.c[0]*kx/1000),by=Math.floor(c.c[1]*ky/1000); let near=0;
+    for(let dx=-1;dx<=1;dx++) for(let dy=-1;dy<=1;dy++) for(const r of redB.get((bx+dx)+','+(by+dy))||[]) if(dist(c.c,r.c)<=1000) near+=r.pop;
+    if(!(near>0)) return; const dmin=nearestWet(c.c); if(dmin<150) return;
+    cand.push({i,c:c.c,b:bCount.get(i),dmin,near});});
   cand.sort((a,b)=>b.near-a.near); const pick=[]; for(const k of cand){if(pick.every(p=>dist(p.c,k.c)>500)) pick.push(k); if(pick.length===5) break;}
   D.safe=pick;
   D.zoneTot=[1,2,3].map(z=>({people:D.cells.filter(c=>c.z===z).reduce((s,c)=>s+c.pop,0),bld:D.blds.filter(b=>b.ci>=0&&D.cells[b.ci].z===z).length}));
@@ -1050,7 +1234,14 @@ function initMap(){
 // (re)fill every map source after new data is loaded
 function refreshData(){ if(!ready) return;
   map.getSource('cells').setData(cellFC); map.getSource('bld').setData(bldFC); map.getSource('bldpt').setData({type:'FeatureCollection',features:D.blds.map((b,i)=>({type:'Feature',geometry:{type:'Point',coordinates:b.c},properties:bldFC.features[i].properties}))}); map.getSource('obs').setData(D.observed||empty());
-  buildWater(); buildPeople(); placesData(); roadsReset(); evacReset(); }
+  buildWater(); buildPeople(); placesData(); roadsReset(); evacReset(); cityBox(); }
+// the map stays inside the chosen area: outside is dimmed and you cannot pan or zoom far away from it
+function cityBox(){ const [x0,y0,x1,y1]=D.bbox,px=(x1-x0)*.15,py=(y1-y0)*.15,ring=[[x0,y0],[x1,y0],[x1,y1],[x0,y1],[x0,y0]];
+  const fc={type:'FeatureCollection',features:[{type:'Feature',geometry:{type:'Polygon',coordinates:[[[-180,-85],[180,-85],[180,85],[-180,85],[-180,-85]],ring.slice().reverse()]},properties:{}}]};
+  if(!map.getSource('outside')){ map.addSource('outside',{type:'geojson',data:fc}); map.addLayer({id:'outside',type:'fill',source:'outside',paint:{'fill-color':css('--bg'),'fill-opacity':.82}});
+    map.addLayer({id:'outside-line',type:'line',source:'outside',paint:{'line-color':css('--accent'),'line-width':2}}); }
+  else map.getSource('outside').setData(fc);
+  map.setMaxBounds([[x0-px,y0-py],[x1+px,y1+py]]); const cam=map.cameraForBounds?.(D.bbox,{padding:20}); if(cam) map.setMinZoom(Math.max(0,cam.zoom-.6)); }
 function showNotice(){ if(S.basemap==='none') return; const n=$('notice'); n.textContent='The real map can\'t load in this preview. Open the downloaded app file in your browser to see streets, satellite photos and real hills.'; n.hidden=false; }
 function setBasemap(b){ S.basemap=b; document.querySelectorAll('.basemap [data-b]').forEach(x=>x.setAttribute('aria-pressed',x.dataset.b===b));
   if(!ready) return; const want=b==='streets'?(isDark()?'streets-dark':'streets-light'):b;
@@ -1075,8 +1266,10 @@ function applyLayers(){
   pinVis();
 }
 // paint expressions that follow the video (cheap: no data is re-sent to the map)
-let lastFilter=0;
-function paintDynamic(force){ if(!ready) return; const cols=S.l3d&&$('tCols').checked;
+// each call makes MapLibre recolour every building, so during playback it runs ~10×/s (the last call always lands)
+let lastFilter=0,lastPaint=0,paintT=0;
+function paintDynamic(force){ if(!ready) return; const t=performance.now(); clearTimeout(paintT);
+  if(!force&&t-lastPaint<100){ paintT=setTimeout(()=>paintDynamic(true),100-(t-lastPaint)); return; } lastPaint=t; const cols=S.l3d&&$('tCols').checked;
   map.setPaintProperty('bld-2d','fill-color',bldColor()); map.setPaintProperty('bld-3d','fill-extrusion-color',bldColor()); map.setPaintProperty('bld-roof','fill-extrusion-color',roofColor());
   const hit=['>',overMax(),.01],now=['>',over(),.01];
   map.setPaintProperty('bld-hit','circle-color',bldColor()); map.setPaintProperty('bld-hit','circle-opacity',['case',hit,.95,0]);
@@ -1095,25 +1288,29 @@ function paintDynamic(force){ if(!ready) return; const cols=S.l3d&&$('tCols').ch
       map.setPaintProperty('water-3d','fill-extrusion-height',['*',['max',over(),0.15],S.exag*S.lift]); } }
   paintDetails(); paintPlaces();
 }
-function recolor(){ if(!ready) return;
+function recolor(){ if(!ready) return; if(map.getLayer('outside')){ map.setPaintProperty('outside','fill-color',css('--bg')); map.setPaintProperty('outside-line','line-color',css('--accent')); }
   map.setPaintProperty('bg','background-color',css('--land'));
   map.setPaintProperty('zones','fill-color',zoneColor()); map.setPaintProperty('obs-line','line-color',css('--obs')); map.setPaintProperty('obs-fill','fill-color',css('--obs'));
   recolorDetails(); recolorEvac(); recolorPlaces(); if(WV) WV.lut=waterLut(); setBasemap(S.basemap); drawLegend(); if(S.tab==='diag') drawDiagram();
 }
-// while playing, numbers and building/road colours refresh 10×/s (the water image keeps its own 30 fps loop); paused or scrubbing: next frame
-let pending=false,lastDraw=0; function render(){ if(pending) return; pending=true; const wait=S.playing?Math.max(0,100-(performance.now()-lastDraw)):0;
-  setTimeout(()=>requestAnimationFrame(()=>{pending=false; lastDraw=performance.now(); draw();}),wait); }
+let pending=false; function render(){ if(pending) return; pending=true; requestAnimationFrame(()=>{pending=false; draw();}); }
+// the numbers scan every cell and building, so during playback they refresh ~5×/s (the last call always lands)
+let lastStats=0,statsT=0;
 function draw(){
-  if(!D) return; const p=level(S.T),e=exposure(rp(),true);
+  if(!D) return; const p=level(S.T);
   paintDynamic();
-  $('sPeople').textContent=fmt(e.people); $('sBld').textContent=fmt(e.bld); $('sArea').textContent=e.area.toFixed(e.area<10?2:1);
-  $('classes').innerHTML=e.cc.map((c,k)=>`<div class="crow"><span class="sw" style="background:var(${CLASSES[k].v})"></span><span>${CLASSES[k].name}</span><span class="mono">${fmt(c.people)} people · ${fmt(c.bld)} bld</span></div>`).join('')
-    +`<div class="crow"><span class="sw" style="background:var(--cut)"></span><span>Streets closed to cars (≥ ${CAR_DEPTH} m)</span><span class="mono">${cutKm(rp(),true).toFixed(1)} km</span></div>`;
-  checkAlerts(e.people);
   const ph=S.T<0.45?0:S.T<0.6?1:2; [0,1,2].forEach(i=>$('ph'+i).classList.toggle('on',i===ph));
   $('nowLbl').textContent=ph===1?'Peak':`${['Rising','Peak','Going down'][ph]} · ${Math.round(p*100)}% of peak`;
   $('time').value=Math.round(S.T*1000);
   if(typeof drillTick==='function') drillTick();
+  const t=performance.now(); clearTimeout(statsT);
+  if(t-lastStats<200){ statsT=setTimeout(drawStats,200-(t-lastStats)); return; } drawStats();
+}
+function drawStats(){ if(!D) return; lastStats=performance.now(); const e=exposure(rp(),true);
+  $('sPeople').textContent=fmt(e.people); $('sBld').textContent=fmt(e.bld); $('sArea').textContent=e.area.toFixed(e.area<10?2:1);
+  $('classes').innerHTML=e.cc.map((c,k)=>`<div class="crow"><span class="sw" style="background:var(${CLASSES[k].v})"></span><span>${CLASSES[k].name}</span><span class="mono">${fmt(c.people)} people · ${fmt(c.bld)} bld</span></div>`).join('')
+    +`<div class="crow"><span class="sw" style="background:var(--cut)"></span><span>Streets closed to cars (≥ ${CAR_DEPTH} m)</span><span class="mono">${cutKm(rp(),true).toFixed(1)} km</span></div>`;
+  checkAlerts(e.people);
 }
 
 /* ---------- legend, tooltip ---------- */
@@ -1188,14 +1385,17 @@ function buildWater(){
     sc:Math.max(.5,Math.min(3,G.m/k/2)),key:''};
   const x1=G.x0+G.nx*G.w,y1=G.y0+G.ny*G.h,coordinates=[[G.x0,y1],[x1,y1],[x1,G.y0],[G.x0,G.y0]];
   if(map.getLayer('water-img')) map.removeLayer('water-img'); if(map.getSource('water-img')) map.removeSource('water-img');
-  map.addSource('water-img',{type:'canvas',canvas:cv,coordinates,animate:true});
+  map.addSource('water-img',{type:'canvas',canvas:cv,coordinates,animate:false}); // re-read only while playing (waterLive) or after a repaint
   map.addLayer({id:'water-img',type:'raster',source:'water-img',paint:{'raster-fade-duration':0,'raster-resampling':'linear'}},'water-2d');
   paintWater(performance.now(),0,true);
 }
+// ripples move only while the video plays; paused (or reduced motion) the image is redrawn only when the water level changes,
+// so the map can stop redrawing every frame
+function waterLive(on){ const src=ready&&map.getSource('water-img'); if(!src) return; on?src.play():src.pause(); }
 function paintWater(now,_dt,force){
-  if(!WV||S.tab==='safety') return; const r=rp(),key=r+':'+S.T.toFixed(4);
-  if(reduce&&!force&&key===WV.key) return; WV.key=key; // reduced motion: only repaint when the water level changes
-  const {img,fx,fy,wet,lut,noise,W,sc,lag,lvl}=WV,dep=WV.dep[r],Lm=WV.Lm[r],T=S.T,d=img.data,t=reduce?0:now/1000*.22,a=t%1,b=(t+.5)%1,bl=Math.abs(1-2*a),L=40;
+  if(!WV||S.tab==='safety') return; const r=rp(),key=r+':'+S.T.toFixed(4),still=reduce||!S.playing;
+  if(still&&!force&&key===WV.key) return; WV.key=key; if(!still) WV.t=now/1000*.22;
+  const {img,fx,fy,wet,lut,noise,W,sc,lag,lvl}=WV,dep=WV.dep[r],Lm=WV.Lm[r],T=S.T,d=img.data,t=reduce?0:WV.t||0,a=t%1,b=(t+.5)%1,bl=Math.abs(1-2*a),L=40;
   for(let n=0;n<wet.length;n++){ const q=wet[n],x0=T-lag[q],o=q*4,s=dep[q]-(1-Math.max(lvl[x0<=-.2?0:x0>=1?1200:((x0+.2)*1000)|0],Math.min(1,INIT/(Lm[q]||1))))*Lm[q]; if(s<=0.003){d[o+3]=0; continue;}
     // two ripple layers pushed along the flow, cross-faded so they never stretch
     const x=(q%W)*sc,y=((q/W)|0)*sc,sp=(.5+Math.min(1,s*.5))*L,ux=fx[q]*sp,uy=-fy[q]*sp;
@@ -1203,6 +1403,7 @@ function paintWater(now,_dt,force){
     const li=(s>=3?255:(s*85)|0)*3,f=.75+rip*.5,fo=s<.15?(1-s/.15)*.55:0,g=1-fo,w=255*fo; // ripple light + white foam at the water's edge
     d[o]=lut[li]*f*g+w; d[o+1]=lut[li+1]*f*g+w; d[o+2]=lut[li+2]*f*g+w; d[o+3]=s>=.06?215:s*3583; }
   WV.ctx.putImageData(img,0,0);
+  if(still){ waterLive(true); waterLive(false); map.triggerRepaint(); } // pause() uploads the canvas once
 }
 FX.push(paintWater);
 
@@ -1486,7 +1687,7 @@ $('safeList').onchange=e=>{const i=e.target.dataset.cap; if(i!=null){const v=+e.
 $('candList').onclick=e=>{const b=e.target.closest('[data-add]'); if(b){E.shelters.push(asShelter(E.cands[+b.dataset.add])); makePlan(); toast('Added to the plan');}};
 $('safeList').onclick=e=>{ if(e.target.closest('input')) return; const d=e.target.closest('[data-del]'); if(d){E.shelters.splice(+d.dataset.del,1); makePlan(); return;} const b=e.target.closest('[data-k]'); if(b) flyTo(+b.dataset.k);};
 $('evGroups').onclick=e=>{const b=e.target.closest('[data-r]'); if(!b) return; const r=E.plan.routes[+b.dataset.r]; map.fitBounds(bboxOf([r.pts]),{padding:80,duration:1000,pitch:map.getPitch(),bearing:map.getBearing()});};
-function onMapClick(e){ const p=[e.lngLat.lng,e.lngLat.lat]; if(abPick(p)) return;
+function onMapClick(e){ const p=[e.lngLat.lng,e.lngLat.lat]; if(apiPick(p)||abPick(p)) return;
   if(E.adding){ E.adding=false; $('evAdd').setAttribute('aria-pressed',false); map.getCanvas().style.cursor='';
     const d=depthAt(p),wet=d&&D.rps.some(r=>d[r]>0); E.shelters.push({c:p,auto:false,name:`Shelter ${String.fromCharCode(65+E.shelters.filter(s=>!s.auto).length%26)}`});
     toast(wet?'Careful: this place floods in at least one flood size':'Shelter added'); makePlan(); return; }
@@ -1834,6 +2035,147 @@ setTimeout(async()=>{ let d=null; if(/^https?:$/.test(location.protocol)){ try{ 
 
 </script>
 <script>
+// forecast.js - Flood forecast model: rain + how wet the ground is → river flow → flood size (1-in-N years) → people and buildings in the water.
+// Two uses: Sandbox (set the conditions yourself) and Now (today's data from Open-Meteo). The model is trained in the browser
+// for the river point of the loaded area and kept in this browser.
+// Loaded as a classic script: top-level names are shared between files (order set in index.html).
+// External sources, not challenge data: Open-Meteo ERA5 archive + forecast (rain, evapotranspiration), GloFAS river flow (~5 km).
+// Method (checked in Python on the Vesdre, trained 1984-2014, tested 2015-2021): ridge regression on log river flow; the weights of
+// rain, wetness and dryness are kept ≥ 0 so wetter conditions never lower the flood. Test NSE 0.72 (log flow); July 2021 predicted
+// at ~170 m³/s (GloFAS 153, 1-in-500 flow 100), one day late. Weeks above the 1-in-10 flow 2015-2021: 1 of 2 caught, 2 false alarms.
+
+const FC={model:null,live:null,busy:false,lastT:null};
+const FC_NPOS=9; // r0 r1 r2 R3 R7 api sqR3 R3xapi dry30 (≥ 0), then season sin, cos (free)
+
+/* ---------- river point: the Vesdre gauge in the study area, otherwise the area centre ---------- */
+function fcPoint(){ const b=D.bbox,inB=p=>p[0]>=b[0]&&p[0]<=b[2]&&p[1]>=b[1]&&p[1]<=b[3];
+  if(inB(GAUGE.c)) return {name:GAUGE.name,c:GAUGE.c,rain:RAIN_PTS};
+  const c=[(b[0]+b[2])/2,(b[1]+b[3])/2].map(v=>+v.toFixed(3)),o=.08;
+  return {name:`river cell nearest ${c[1]} N, ${c[0]} E`,c,rain:[c,[c[0]-o,c[1]],[c[0]+o,c[1]],[c[0],c[1]-o],[c[0],c[1]+o]]}; }
+const fcKey=()=>'fse-fc1:'+fcPoint().c.join(',');
+
+/* ---------- features per day (rain on day i counts: in a forecast that is the forecast rain) ---------- */
+function fcFeatures(R,E,dates){ const out=[],k=.9; let v=0;
+  for(let i=0;i<R.length;i++){ const api=v; v=v*k+(i>=3?(R[i-3]||0):0); if(i<29){ out.push(null); continue; } // api: wetness from rain up to 3 days before
+    const sum=(a,m)=>{let t=0; for(let j=i-m+1;j<=i;j++) t+=a[j]; return t;},R3=sum(R,3),d=new Date(dates[i]);
+    const doy=(d-Date.UTC(d.getUTCFullYear(),0,0))/864e5,w=2*Math.PI*doy/365.25;
+    const f=[R[i],R[i-1],R[i-2],R3,sum(R,7),api,Math.sqrt(R3),R3*api/100,-sum(E,30),Math.sin(w),Math.cos(w)];
+    out.push(f.every(Number.isFinite)?f:null); }
+  return out; }
+// ridge on standardised features, first FC_NPOS weights ≥ 0 (coordinate descent on the Gram matrix)
+function fcFit(X,y,lam=1,it=500){ const n=X.length,p=X[0].length,mu=Array(p).fill(0),sd=Array(p).fill(0);
+  X.forEach(r=>r.forEach((v,j)=>mu[j]+=v/n)); X.forEach(r=>r.forEach((v,j)=>sd[j]+=(v-mu[j])**2/n)); for(let j=0;j<p;j++) sd[j]=Math.sqrt(sd[j])||1;
+  const ym=y.reduce((s,v)=>s+v,0)/n,G=Array.from({length:p},()=>Array(p).fill(0)),c=Array(p).fill(0),b=Array(p).fill(0);
+  X.forEach((r,i)=>{ const z=r.map((v,j)=>(v-mu[j])/sd[j]); for(let j=0;j<p;j++){ c[j]+=z[j]*(y[i]-ym); for(let l=0;l<p;l++) G[j][l]+=z[j]*z[l]; } });
+  for(let t=0;t<it;t++) for(let j=0;j<p;j++){ let s=c[j]; for(let l=0;l<p;l++) if(l!==j) s-=G[j][l]*b[l]; const v=s/(G[j][j]+lam); b[j]=j<FC_NPOS?Math.max(0,v):v; }
+  return {mu,sd,ym,b}; }
+const fcLogQ=(m,f)=>m.ym+f.reduce((s,v,j)=>s+(v-m.mu[j])/m.sd[j]*m.b[j],0);
+const fcQ=(m,f)=>f?Math.max(0,Math.expm1(fcLogQ(m,f))):null;
+// flow ↔ return period: Gumbel on yearly maxima (method of moments)
+const qOfT=(g,T)=>g.mu-g.b*Math.log(-Math.log(1-1/T)), tOfQ=(g,q)=>1/(1-Math.exp(-Math.exp(-(q-g.mu)/g.b)));
+const tLabel=T=>!isFinite(T)||T>500?'beyond 1-in-500':T<2?'below 1-in-2 (normal flow)':`1-in-${T<20?T.toFixed(1):Math.round(T)}`;
+const meanPts=(a,k)=>a[0].daily.time.map((_,i)=>{ let s=0; for(const x of a){ const v=x.daily[k][i]; if(v==null) return NaN; s+=v; } return s/a.length; });
+
+/* ---------- training (two Open-Meteo calls, then a few milliseconds) ---------- */
+async function fcTrain(force){ const P=fcPoint(),key=fcKey();
+  if(!force){ try{ const m=JSON.parse(store.get(key)||'null'); if(m){ FC.model=m; return m; } }catch(e){} }
+  const y1=new Date().getUTCFullYear()-1,end=`${y1}-12-31`;
+  const [rain,flow]=await Promise.all([om(`https://archive-api.open-meteo.com/v1/archive?${ll(P.rain)}&start_date=1984-01-01&end_date=${end}&daily=precipitation_sum,et0_fao_evapotranspiration&timezone=Europe%2FBrussels`),
+    om(`https://flood-api.open-meteo.com/v1/flood?latitude=${P.c[1]}&longitude=${P.c[0]}&daily=river_discharge&start_date=1984-01-01&end_date=${end}`)]);
+  const ra=Array.isArray(rain)?rain:[rain],dates=ra[0].daily.time,R=meanPts(ra,'precipitation_sum'),E=meanPts(ra,'et0_fao_evapotranspiration');
+  const qBy=new Map(flow.daily.time.map((t,i)=>[t,flow.daily.river_discharge[i]])),F=fcFeatures(R,E,dates),rows=[];
+  dates.forEach((t,i)=>{ const q=qBy.get(t); if(F[i]&&q!=null&&q>=0) rows.push({t,y:+t.slice(0,4),f:F[i],ly:Math.log1p(q)}); });
+  if(rows.length<3650) throw new Error('not enough river-flow history for this point');
+  // honest skill: train without the last 7 years, test on them; then train on everything
+  const cut=y1-6,trn=rows.filter(r=>r.y<cut),tst=rows.filter(r=>r.y>=cut),m0=fcFit(trn.map(r=>r.f),trn.map(r=>r.ly));
+  const om_=tst.reduce((s,r)=>s+r.ly,0)/tst.length,nse=1-tst.reduce((s,r)=>s+(r.ly-fcLogQ(m0,r.f))**2,0)/tst.reduce((s,r)=>s+(r.ly-om_)**2,0);
+  const m=fcFit(rows.map(r=>r.f),rows.map(r=>r.ly)),am={};
+  rows.forEach(r=>{ const q=Math.expm1(r.ly); am[r.y]=Math.max(am[r.y]||0,q); });
+  const x=Object.values(am),mean=x.reduce((s,v)=>s+v,0)/x.length,sdv=Math.sqrt(x.reduce((s,v)=>s+(v-mean)**2,0)/(x.length-1)),gb=sdv*Math.sqrt(6)/Math.PI,g={mu:mean-.5772*gb,b:gb};
+  const et0m=Array(12).fill(0),cnt=Array(12).fill(0); dates.forEach((t,i)=>{ if(Number.isFinite(E[i])){ const k=+t.slice(5,7)-1; et0m[k]+=E[i]; cnt[k]++; } });
+  const i13=dates.indexOf('2021-07-13'); let p21=null;
+  if(i13>=30){ const fq=dates.slice(i13-3,i13+8).map(t=>qBy.get(t)??0),mq=[...Array(11)].map((_,j)=>fcQ(m,F[i13-3+j])||0);
+    p21={rain:[R[i13],R[i13+1],R[i13+2]].map(v=>Math.round(v)),past30:Math.round(R.slice(i13-30,i13).reduce((s,v)=>s+(v||0),0)),model:Math.max(...mq),glofas:Math.max(...fq)}; }
+  FC.model={key,name:P.name,c:P.c,...m,g,q:{10:qOfT(g,10),100:qOfT(g,100),500:qOfT(g,500)},nse,test:[cut,y1],years:[1984,y1],
+    et0m:et0m.map((s,k)=>s/(cnt[k]||1)),p21,maxSeen:Math.max(...x),gauge:[flow.longitude,flow.latitude]};
+  store.set(key,JSON.stringify(FC.model)); return FC.model; }
+
+/* ---------- people and buildings in the water for any flood size (EFAS depths blended on log T, as in risk_model.blend_T) ---------- */
+function blendDepth(c,T){ if(T<=2) return 0; let lo=2,dlo=0;
+  for(const r of D.rps){ const d=c.depth[r]; if(T<=r){ const w=(Math.log(T)-Math.log(lo))/(Math.log(r)-Math.log(lo)); return (1-w)*dlo+w*d; } lo=r; dlo=d; }
+  return dlo; } // above the rarest map: keep its depth (no extrapolation)
+function fcImpact(T){ const wet=new Uint8Array(D.cells.length); let people=0,area=0,deep=0,bld=0;
+  D.cells.forEach((c,i)=>{ const d=blendDepth(c,T); if(d>.01){ wet[i]=1; people+=c.pop; area+=c.area; if(d>1.5) deep+=c.pop; } });
+  D.blds.forEach(b=>{ if(b.ci>=0&&wet[b.ci]) bld++; }); return {people,area:area/1e6,deep,bld}; }
+
+/* ---------- sandbox: build a 60-day series from the sliders, predict the next 5 days ---------- */
+const FCS=['fcR1','fcR2','fcR3','fcPast'];
+function fcSandbox(){ const m=FC.model,mo=+$('fcMonth').value,rain=FCS.slice(0,3).map(id=>+$(id).value),past=+$('fcPast').value,N=60,R=[],E=[],dates=[];
+  for(let i=0;i<N+5;i++){ R.push(i<N?past/30:i<N+3?rain[i-N]:0); E.push(m.et0m[mo-1]); dates.push(`2023-${String(mo).padStart(2,'0')}-15`); }
+  const F=fcFeatures(R,E,dates),Q=Math.max(...F.slice(N).map(f=>fcQ(m,f))),base=fcQ(m,F[N-1]); return {Q,base,T:tOfQ(m.g,Q)}; }
+function fcLabels(){ FCS.forEach(id=>$(id+'V').textContent=$(id).value+' mm'); }
+function drawSandbox(){ fcLabels(); const box=$('fcSOut'); if(!fcReady()){ box.innerHTML=''; return; }
+  const s=fcSandbox(); FC.lastT={T:s.T,src:'sandbox'}; box.innerHTML=fcResult(s.Q,s.T,`flow before the rain ~${s.base.toFixed(0)} m³/s`); }
+function fcResult(Q,T,extra){ const m=FC.model,Tc=Math.min(isFinite(T)?T:500,500),im=fcImpact(Tc),k=planFromRp(Tc),warn=T>=10;
+  return `<div class="stats"><div class="stat${warn?' warn':''}"><b>${Q.toFixed(0)}</b><span>m³/s peak river flow (1-in-10: ${m.q[10].toFixed(0)}, 1-in-100: ${m.q[100].toFixed(0)})</span></div>
+    <div class="stat${warn?' warn':''}"><b>${!isFinite(T)||T>500?'>500':T<2?'<2':Math.round(T)}</b><span>years: flood size (${tLabel(T)})</span></div>
+    <div class="stat"><b>${fmt(im.people)}</b><span>residents in the water${im.deep?`, ${fmt(im.deep)} over 1.5 m`:''}</span></div></div>
+    <p class="hint">${fmt(im.bld)} buildings · ${im.area.toFixed(2)} km² wet in the loaded area${extra?' · '+esc(extra):''}.
+    ${k==null?'Below the smallest flood map: no map to show.':`Map: the ${sizeWord(D.rps[k]).toLowerCase()} flood map (1-in-${D.rps[k]}), the rarest one not beyond this flood.`}</p>`; }
+const fcReady=()=>FC.model&&FC.model.key===fcKey();
+
+/* ---------- now: last 60 days + 16-day forecast (rain) and the GloFAS flow forecast ---------- */
+async function fcLoadLive(){ const P=fcPoint(),m=FC.model;
+  const w=await om(`https://api.open-meteo.com/v1/forecast?${ll(P.rain)}&daily=precipitation_sum,et0_fao_evapotranspiration&past_days=60&forecast_days=16&timezone=Europe%2FBrussels`);
+  const wa=Array.isArray(w)?w:[w],dates=wa[0].daily.time,R=meanPts(wa,'precipitation_sum'),E=meanPts(wa,'et0_fao_evapotranspiration'),F=fcFeatures(R,E,dates);
+  let g=null; for(const days of [30,16,7]){ try{ g=await om(`https://flood-api.open-meteo.com/v1/flood?latitude=${P.c[1]}&longitude=${P.c[0]}&daily=river_discharge,river_discharge_median,river_discharge_max&past_days=3&forecast_days=${days}`); break; }catch(e){ g=null; } }
+  const gBy=g?new Map(g.daily.time.map((t,i)=>[t,g.daily.river_discharge_median?.[i]??g.daily.river_discharge[i]])):new Map();
+  const today=new Date().toISOString().slice(0,10),i0=Math.max(29,dates.indexOf(today)-7),days=dates.slice(i0);
+  FC.live={at:new Date().toISOString(),days,today,rain:R.slice(i0),qm:F.slice(i0).map(f=>fcQ(m,f)),qg:days.map(t=>gBy.get(t)??null),hasG:!!g}; }
+function drawLive(){ const box=$('fcChart'),out=$('fcLOut'),L=FC.live;
+  if(!L||!fcReady()){ box.innerHTML=''; out.innerHTML=L?'<p class="hint">Train the model for this area, then load again.</p>':''; return; }
+  const m=FC.model,n=L.days.length,W=340,pl=34,pr=56,H=150,top=14,cw=(W-pl-pr)/n,cx=i=>pl+i*cw+cw/2,ti=L.days.indexOf(L.today);
+  const vals=[...L.qm,...L.qg].filter(v=>v!=null),mx=Math.max(m.q[100],...vals)*1.1,y=v=>H-v/mx*(H-top);
+  const path=a=>a.map((v,i)=>v==null?'':`${i&&a[i-1]!=null?'L':'M'}${cx(i).toFixed(1)},${y(v).toFixed(1)}`).join('');
+  const thr=[10,100,500].filter(T=>m.q[T]<mx).map(T=>`<line x1="${pl}" x2="${W-pr}" y1="${y(m.q[T])}" y2="${y(m.q[T])}" stroke="var(--muted)" stroke-dasharray="3 3"/><text x="${W-pr+4}" y="${y(m.q[T])+4}" font-size="10" fill="var(--muted)">1-in-${T}</text>`).join('');
+  const rMax=Math.max(10,...L.rain.filter(Number.isFinite)),tick=i=>`<text x="${cx(i)}" y="${H+14}" font-size="10" text-anchor="middle" fill="var(--muted)">${L.days[i].slice(8)}/${L.days[i].slice(5,7)}</text>`;
+  box.innerHTML=`<svg viewBox="0 0 ${W} ${H+20}" role="img" aria-label="Predicted river flow per day with flood levels">
+    <text x="0" y="9" font-size="10" fill="var(--muted)">River flow, m³/s: solid = our model from rain${L.hasG?', dashed = GloFAS forecast':''}; bars = rain</text>
+    ${L.rain.map((v,i)=>Number.isFinite(v)?`<rect x="${pl+i*cw+1}" y="${H-v/rMax*40}" width="${Math.max(1,cw-2)}" height="${v/rMax*40}" fill="var(--w1)" opacity=".6"/>`:'').join('')}
+    <line x1="${pl}" x2="${W-pr}" y1="${H}" y2="${H}" stroke="var(--line)"/>${thr}
+    <path d="${path(L.qg)}" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-dasharray="4 3"/>
+    <path d="${path(L.qm)}" fill="none" stroke="var(--w3)" stroke-width="2" stroke-linejoin="round"/>
+    <text x="${pl-4}" y="${y(Math.round(mx/1.1))+4}" font-size="10" text-anchor="end" fill="var(--muted)">${Math.round(mx/1.1)}</text>
+    ${ti>=0?`<line x1="${cx(ti)}" x2="${cx(ti)}" y1="${top}" y2="${H}" stroke="var(--ink)"/><text x="${cx(ti)+3}" y="${top+8}" font-size="10" fill="var(--ink)">today</text>`:''}
+    ${tick(0)}${ti>0?tick(ti):''}${tick(n-1)}</svg>`;
+  const fut=L.days.map((t,i)=>({t,q:L.qm[i],g:L.qg[i]})).filter(x=>x.t>=L.today&&x.q!=null),pk=fut.reduce((b,x)=>x.q>b.q?x:b,fut[0]||{q:0,t:L.today});
+  const gpk=fut.filter(x=>x.g!=null).reduce((b,x)=>!b||x.g>b.g?x:b,null),T=tOfQ(m.g,pk.q); FC.lastT={T,src:'now'};
+  out.innerHTML=fcResult(pk.q,T,`peak on ${pk.t}`)+(gpk?`<p class="hint">GloFAS forecast (Copernicus river model) peaks at ${gpk.g.toFixed(0)} m³/s on ${gpk.t}: ${tLabel(tOfQ(m.g,gpk.g))}. When the two disagree, trust neither alone: check the official gauges.</p>`:'<p class="hint">GloFAS forecast not available right now (free daily quota): model only.</p>')
+    +`<p class="hint">Loaded ${L.at.slice(0,16).replace('T',' ')} UTC.</p>`; }
+
+/* ---------- panel ---------- */
+function drawModel(){ const el=$('fcModel'),P=fcPoint();
+  if(!fcReady()){ try{ const m=JSON.parse(store.get(fcKey())||'null'); if(m) FC.model=m; }catch(e){} }
+  if(!fcReady()){ el.innerHTML=`River point: ${esc(P.name)}. <b>Train the model</b> to use the sandbox and today's data (downloads ~2 MB from Open-Meteo once).`; $('fc21').disabled=true; return; }
+  const m=FC.model; $('fc21').disabled=!m.p21;
+  el.innerHTML=`River point: ${esc(m.name)} (GloFAS cell ${m.gauge.map(v=>v.toFixed(3)).join(', ')}). Trained on ${m.years[0]}–${m.years[1]}.
+    Skill on ${m.test[0]}–${m.test[1]} (left out): NSE ${m.nse.toFixed(2)} on log flow (1 = perfect, 0 = no better than the average).
+    ${m.p21?`July 2021 (inside the training years): model ${m.p21.model.toFixed(0)} m³/s, GloFAS ${m.p21.glofas.toFixed(0)} m³/s (1-in-500 flow ${m.q[500].toFixed(0)}).`:''}`; }
+function drawForecast(){ drawModel(); drawSandbox(); drawLive(); }
+$('fcTrain').onclick=async e=>{ const b=e.target; if(FC.busy) return; FC.busy=true; b.disabled=true; $('fcModel').textContent='Downloading 40 years of rain and river flow…';
+  try{ await fcTrain(true); toast('Forecast model trained'); }catch(err){ $('fcModel').innerHTML=`<span style="color:var(--err)">Could not train: ${esc(err.message)}.</span> Open-Meteo limits free requests per day: try later.`; FC.busy=false; b.disabled=false; return; }
+  FC.busy=false; b.disabled=false; drawForecast(); };
+$('fcLive').onclick=async e=>{ const b=e.target; if(!fcReady()){ toast('Train the model first'); return; } b.disabled=true; $('fcLOut').innerHTML='<p class="hint">Loading today\'s data…</p>';
+  try{ await fcLoadLive(); drawLive(); }catch(err){ $('fcLOut').innerHTML=`<p class="hint" style="color:var(--err)">Could not load: ${esc(err.message)}.</p>`; } b.disabled=false; };
+FCS.forEach(id=>$(id).oninput=drawSandbox); $('fcMonth').onchange=drawSandbox;
+$('fc21').onclick=()=>{ const p=FC.model?.p21; if(!p) return; ['fcR1','fcR2','fcR3'].forEach((id,i)=>$(id).value=p.rain[i]); $('fcPast').value=p.past30; $('fcMonth').value=7; drawSandbox(); };
+$('fcShow').onclick=()=>{ const t=FC.lastT; if(!t){ toast('Run the sandbox or load today\'s data first'); return; } const k=planFromRp(Math.min(isFinite(t.T)?t.T:500,500));
+  if(k==null){ toast('Below the smallest flood map (1-in-'+D.rps[0]+'): nothing to show'); return; }
+  S.sizeIdx=k; $('size').value=k; $('size').oninput({target:$('size')}); setTab('sim'); toast(`Showing the 1-in-${D.rps[k]} flood map (${t.src})`); };
+fcLabels();
+
+</script>
+<script>
 // impact.js - "Impact for the mayor": the team's three-stage framework (anticipation, coordination, institutionalisation)
 // computed from the app's data where it exists; behaviour and money stay visible assumptions (defaults = the framework's examples).
 // Loaded as a classic script: top-level names are shared between files (order set in index.html).
@@ -2014,13 +2356,312 @@ function checkAlerts(nowPeople){ const r=rp(),b=$('alertBar');
 
 </script>
 <script>
+// api.js - "Live model" tab: the team's flood API (flood_api) runs the models for any area: flood risk + who must leave, evacuation flow,
+// flood timeline, area check (/region), Help a friend + shelters, building damage (impact) and model checks.
+// Loaded as a classic script: top-level names are shared between files (order set in index.html).
+// API address: ?api=http://host:port in the page URL, or the field in the tab (remembered in this browser).
+
+// served from valencia (hosted copy) → the live API on the same host; elsewhere (laptop preview) → the :8081 test server
+const API_DEFAULT=/^valencia\b|^100\.108\.90\.108$/.test(location.hostname)?`http://${location.hostname}:8080`:'http://valencia.tail142ce3.ts.net:8081';
+const A={url:(new URLSearchParams(location.search).get('api')||(()=>{try{return localStorage.getItem('fse-api');}catch(e){return null;}})()||API_DEFAULT).replace(/\/+$/,''),
+  ok:false,area:null,pick:null,corner:null,helper:null,req:null,shelters:null,busy:0,cells:[],res:{}};
+
+/* ---------- calls ---------- */
+async function api(path,body,method){
+  let r; try{ r=await fetch(A.url+path,{method:method||(body?'POST':'GET'),headers:body?{'content-type':'application/json'}:{},body:body?JSON.stringify(body):undefined}); }
+  catch(e){ setApiOk(false); throw new Error('The API can\'t be reached at '+A.url+'. Check the address and that you are on the team network (Tailscale).'); }
+  const j=await r.json().catch(()=>({error:'HTTP '+r.status}));
+  if(!r.ok) throw new Error(j.error||('HTTP '+r.status)); keepRes(path,j); return j;
+}
+// last result of each model run, sent to the policy API by policy.js
+function keepRes(path,j){ const k=path.split('?')[0].slice(1); if(['flood','evacuation','timeline','region','impact','models'].includes(k)&&j&&!j.job){ A.res[k]=j; if(typeof policyForm==='function') policyForm(); } }
+// slow runs (new areas, help zones): ?async=1 returns a job at once, then poll /jobs/{id} so the browser never waits minutes on one request
+async function apiJob(path,body,out){
+  const t0=Date.now(); let j=await api(path+(path.includes('?')?'&':'?')+'async=1',body);
+  while(j.status==='running'&&j.job){ if(out) out.innerHTML=`<p class="hint">Working… ${Math.round((Date.now()-t0)/1000)} s (big areas can take a few minutes).</p>`;
+    await new Promise(r=>setTimeout(r,3000));
+    let r; try{ r=await fetch(`${A.url}/jobs/${j.job}`,{cache:'no-store'}); }catch(e){ throw new Error('Lost the API while waiting; try again.'); }
+    const k=await r.json().catch(()=>({error:'HTTP '+r.status}));
+    if(r.status===202) continue; if(!r.ok) throw new Error(k.error||('HTTP '+r.status)); keepRes(path,k); return k; }
+  return j; }
+const fileUrl=u=>typeof u==='string'&&u.startsWith('/files/')?A.url+u:null;
+function setApiOk(ok){ A.ok=ok; const b=$('apiBadge'); b.textContent=ok?'API ONLINE':'API OFFLINE'; b.classList.toggle('real',ok);
+  $('apiState').textContent=ok?`Connected to ${A.url}`:`Not connected. The Live model tab needs the team API at ${A.url}.`; $('apiState').classList.toggle('err',!ok); }
+async function apiConnect(){ $('apiState').textContent='Connecting…';
+  try{ const r=await fetch(A.url+'/health',{cache:'no-store'}); setApiOk(r.ok); }catch(e){ setApiOk(false); }
+  if(A.ok){ loadModels(); loadImpact(); } }
+// one button = one run: the button shows "Running…" and long model runs (up to minutes) can't be started twice
+async function run(btn,out,f){ if(btn.disabled) return; const lbl=btn.textContent; btn.disabled=true; btn.textContent='Running…'; A.busy++;
+  out.innerHTML='<p class="hint">Working… big areas can take a few minutes.</p>';
+  try{ await f(); }catch(e){ out.innerHTML=`<p class="hint err">✗ ${esc(e.message)}</p>`; }
+  finally{ btn.disabled=false; btn.textContent=lbl; A.busy--; } }
+
+/* ---------- area for model runs ---------- */
+const km2=b=>(b[2]-b[0])*111.32*Math.cos((b[1]+b[3])/2*Math.PI/180)*(b[3]-b[1])*111.32;
+const r4=v=>Math.round(v*1e4)/1e4;
+// run name from the area: the same area reuses the same output folder on the server instead of filling its disk
+const runName=p=>p+'_'+A.area.map(v=>Math.round(v*1000)).join('_').replace(/-/g,'m');
+const region=()=>({type:'bbox',bbox:A.area});
+function setArea(b){ A.area=b.map(r4); const k=km2(A.area);
+  $('apiArea').innerHTML=`${A.area.join(', ')} <span class="hint">(W, S, E, N) · ${fmtFull(k)} km²${k>3000?' · <b class="err">too big: max 3000 km²</b>':''}</span>`;
+  map?.getSource('apiArea')?.setData({type:'FeatureCollection',features:[{type:'Feature',properties:{},geometry:{type:'Polygon',coordinates:[[[b[0],b[1]],[b[2],b[1]],[b[2],b[3]],[b[0],b[3]],[b[0],b[1]]]]}}]}); }
+const needArea=()=>{ if(!A.area) throw new Error('Choose an area first.'); return region(); };
+
+/* ---------- map layers (added once the map is ready) ---------- */
+function apiLayers(){
+  ['apiArea','apiRoute','apiPts','apiFlood'].forEach(id=>map.addSource(id,{type:'geojson',data:empty()}));
+  map.addLayer({id:'api-flood',type:'fill',source:'apiFlood',layout:{visibility:'none'},paint:{'fill-opacity':.65,'fill-color':'#4292c6'}});
+  map.addLayer({id:'api-area',type:'line',source:'apiArea',layout:{visibility:'none'},paint:{'line-color':css('--accent'),'line-width':2,'line-dasharray':[3,2]}});
+  map.addLayer({id:'api-route',type:'line',source:'apiRoute',layout:{visibility:'none','line-cap':'round','line-join':'round'},paint:{'line-color':css('--unit'),'line-width':5,'line-opacity':.85}});
+  map.addLayer({id:'api-pts',type:'circle',source:'apiPts',layout:{visibility:'none'},paint:{'circle-radius':['match',['get','k'],'shelter',6,8],'circle-stroke-width':2,'circle-stroke-color':'#fff',
+    'circle-color':['match',['get','k'],'helper',css('--shel'),'person',css('--cut'),'shelter',['case',['get','dry'],css('--zg'),css('--zr')],'cell',css('--crit'),css('--unit')]}});
+  if(A.area) setArea(A.area); apiShow();
+}
+function apiShow(){ if(S.tab==='api'&&!A.area&&D) setArea(D.bbox); if(!ready||!map.getLayer('api-area')) return; const v=S.tab==='api'?'visible':'none'; ['api-flood','api-area','api-route','api-pts'].forEach(l=>map.setLayoutProperty(l,'visibility',v)); floodStyle(); }
+const pts={helper:null,person:null,shelters:[],cells:[],here:null};
+function drawPts(){ const f=(c,k,p)=>({type:'Feature',properties:Object.assign({k},p||{}),geometry:{type:'Point',coordinates:c}});
+  map?.getSource('apiPts')?.setData({type:'FeatureCollection',features:[...pts.shelters.map(s=>f([s.lon,s.lat],'shelter',{dry:s.dry})),...pts.cells.map(c=>f(c,'cell')),
+    ...(pts.helper?[f(pts.helper,'helper')]:[]),...(pts.person?[f(pts.person,'person')]:[]),...(pts.here?[f(pts.here,'person')]:[])]}); }
+const drawRoute=g=>map?.getSource('apiRoute')?.setData(g?{type:'Feature',properties:{},geometry:g}:empty());
+
+/* ---------- clicks on the map while picking (box corners, helper, person) ---------- */
+function apiPick(p){ if(!A.pick) return false; const k=A.pick; map.getCanvas().style.cursor='';
+  if(k==='box'){ if(!A.corner){ A.corner=p; map.getCanvas().style.cursor='crosshair'; toast('Now click the opposite corner'); return true; }
+    const c=A.corner; A.corner=null; A.pick=null; setArea([Math.min(c[0],p[0]),Math.min(c[1],p[1]),Math.max(c[0],p[0]),Math.max(c[1],p[1])]); return true; }
+  A.pick=null; if(k==='danger'){ dangerAt(p); return true; }
+  pts[k]=p; drawPts(); $(k==='helper'?'hHelpAt':'hNeedAt').textContent=`${r4(p[1])}, ${r4(p[0])}`; return true; }
+function startPick(k,msg){ A.pick=k; A.corner=null; map.getCanvas().style.cursor='crosshair'; toast(msg); }
+
+/* ---------- small renderers ---------- */
+const stat=(v,l)=>`<div class="stat"><b>${v==null||v===''?'–':typeof v==='number'?fmt(v):esc(v)}</b><span>${esc(l)}</span></div>`;
+const dist=m=>m==null||!isFinite(m)?'none nearby':fmtFull(m)+' m';
+function links(files){ const out=[]; const walk=(o,pre)=>{ for(const [k,v] of Object.entries(o||{})){ const u=fileUrl(v);
+  if(u) out.push(`<a class="btn sm" href="${esc(u)}" target="_blank" rel="noopener">${esc((pre?pre+' ':'')+k.replace(/_/g,' '))}</a>`); else if(v&&typeof v==='object') walk(v,k); } }; walk(files,'');
+  return out.length?`<div class="row" style="justify-content:flex-start;margin-top:8px">${out.join('')}</div>`:''; }
+const table=(rows,cols)=>rows?.length?`<div class="apiScroll"><table class="apiT"><tr>${cols.map(c=>`<th>${esc(c[1])}</th>`).join('')}</tr>${rows.map(r=>`<tr>${cols.map(c=>{const v=r[c[0]];
+  return `<td>${typeof v==='number'?(Math.abs(v)<10&&v%1?v.toFixed(2):fmtFull(v)):esc(v??'')}</td>`;}).join('')}</tr>`).join('')}</table></div>`:'<p class="hint">No rows.</p>';
+const mins=s=>s<90?`${Math.round(s)} s`:`${Math.round(s/60)} min`;
+
+/* ---------- 1. flood risk + who must leave (/flood) ---------- */
+$('fRun').onclick=e=>run(e.target,$('fOut'),async()=>{
+  const floods=[...document.querySelectorAll('#fFloods input:checked')].map(i=>i.value); if(!floods.length) throw new Error('Pick at least one flood size.');
+  const j=await apiJob('/flood',{name:runName('app'),region:needArea(),floods},$('fOut'));
+  const fl=Object.entries(j.floods||{}); pts.cells=(fl[0]?.[1].evacuation?.first_cells||[]).map(c=>[c.lon,c.lat]); drawPts();
+  $('fOut').innerHTML=fl.map(([k,f],n)=>{ const ev=f.evacuation||{};
+    return `<h3>${esc(floodLabel(k))}</h3><div class="stats">${stat(f.people_flooded_or_cut_off,'people flooded or cut off')}${stat(ev.people_now,'leave now')}${stat(ev.people_early,'leave early')}
+      ${stat(ev.people_by_boat_or_air,'only by boat or air')}${stat(f.buildings_flooded,'buildings flooded')}${stat(f.roads_closed_km,'km of road closed')}</div>
+      <p class="hint">km² cells by danger: ${Object.entries(f.cells||{}).map(([a,b])=>`${esc(a)} ${fmtFull(b)}`).join(' · ')}</p>`
+      +(n===0&&ev.first_cells?.length?`<h3>Evacuate first <span class="tag data">purple dots</span></h3><ol class="safe">${ev.first_cells.slice(0,8).map(c=>
+        `<li><button data-ll="${c.lon},${c.lat}"><span class="n crit">${c.evac_priority}</span><span>${esc(c.evac_level)}<br><span class="hint">${esc(c.evac_reasons)}</span></span></button></li>`).join('')}</ol>`:''); }).join('')
+    +(j.caveats?.length?`<p class="hint">Limits: ${j.caveats.map(esc).join(' · ')}</p>`:'')+`<p class="hint">Area ${fmtFull(j.region_km2||0)} km² · mean relative risk ${j.relative_risk?.mean??'–'}${j.outside_study_region_pct?` · ${j.outside_study_region_pct}% outside the study region`:''}</p>`+links(j.files);
+});
+const floodLabel=k=>({rp10:'1-in-10-year flood',rp100:'1-in-100-year flood',rp500:'1-in-500-year flood',observed:'July 2021 (satellite)'})[k]||k.replace('risk_ge_','model risk ≥ ');
+
+/* ---------- 2. evacuation flow (/evacuation) ---------- */
+$('eRun').onclick=e=>run(e.target,$('eOut'),async()=>{
+  const hours=$('eHours').value.split(/[ ,]+/).filter(Boolean).map(Number), weather=[...document.querySelectorAll('#eWeather input:checked')].map(i=>i.value);
+  if(!weather.length) throw new Error('Pick at least one weather.');
+  const j=await apiJob('/evacuation',{name:runName('app'),region:needArea(),flood:$('eFlood').value,hours,weekend:$('eWeekend').checked,weather},$('eOut'));
+  $('eOut').innerHTML=`<p class="hint">${esc(j.roads||'')} · ${fmtFull(j.buildings_flooded||0)} buildings flooded, ${fmtFull(j.buildings_cut_off||0)} cut off</p>`
+    +table(j.runs,[['run','Run'],['evacuees','Evacuees'],['cars','Cars'],['boat_or_air','Boat / air'],['need_transport','Need transport'],['roads_congested_km','km jammed'],['time_to_safety_p95_h','Hours to safety (95 %)']])
+    +(j.caveats?.length?`<p class="hint">Limits: ${esc(j.caveats.at(-1))}</p>`:'')+links(j.files);
+});
+
+/* ---------- 3. timeline (/timeline, what-if flood) ---------- */
+$('tRun').onclick=e=>run(e.target,$('tOut'),async()=>{
+  const j=await apiJob('/timeline',{name:runName('app'),region:needArea(),driver:{type:'whatif',peak_rp:+$('tPeak').value,rise_h:+$('tRise').value,fall_h:+$('tFall').value,step_h:+$('tStep').value}},$('tOut'));
+  $('tOut').innerHTML=table(j.steps,[['time','Time'],['T','Flood size (1-in-N)'],['flooded_km2','km² flooded'],['buildings_flooded','Bldgs flooded'],['roads_closed_km','km roads closed'],['people_now','Leave now'],['people_early','Leave early'],['people_air','Boat / air']])+links(j.files);
+});
+
+/* ---------- 4. area check (/region) ---------- */
+$('rRun').onclick=e=>run(e.target,$('rOut'),async()=>{ needArea();
+  const j=await apiJob('/region',{name:runName('app'),bbox:A.area,top_n:20},$('rOut')); const rk=j.risk, ck=j.region_check;
+  pts.cells=(rk?.priority_cells||[]).map(c=>[c.lon,c.lat]); drawPts(); await loadCells(j.files?.cells).catch(()=>{});
+  const lvl={critical:'crit',high:'crit',elevated:'',low:''};
+  $('rOut').innerHTML=`<div class="stats">${stat(j.area_km2,'km² checked')}${stat(rk?.high_risk_km2,'km² high risk')}${stat(rk?.people_in_high_risk_approx,'people in high risk (approx.)')}</div>`
+    +(rk?.by_scenario?.length?'<h3>EFAS flood maps in this area</h3>'+table(rk.by_scenario.map(r=>({...r,scenario:floodLabel(r.scenario)})),
+      [['scenario','Flood'],['flooded_km2','km² wet'],['deep_km2','km² ≥ 0.3 m'],['people_approx','People in wet cells'],['max_depth_m','Max depth m']]):'')
+    +`<h3>Emergency places inside the area</h3><p class="hint">${Object.entries(j.facilities||{}).map(([k,v])=>`${esc(k.replace(/_/g,' '))} ${v}`).join(' · ')||'none found'}</p>`
+    +(rk?.priority_cells?.length?`<h3>Top places to act first <span class="tag data">purple dots</span></h3><ol class="safe">${rk.priority_cells.slice(0,8).map(c=>{
+      const why=(c.factors||[]).filter(f=>f.level==='high'||f.level==='medium').map(f=>`${f.level==='high'?'HIGH':'medium'}: ${esc(f.reason)}`).join('; ');
+      return `<li><button data-ll="${c.lon},${c.lat}"><span class="n ${lvl[c.overall]??'crit'}">${c.rank}</span><span>${esc(c.overall||'')} · ~${fmt(c.people)} people · risk ${c.risk.toFixed(2)}<br><span class="hint">${why||`fire station ${dist(c.dist_fire_station_m)} · hospital ${dist(c.dist_hospital_m)} (straight line)`}</span></span></button></li>`;}).join('')}</ol>
+      <p class="hint">Road and building factors (cut off, bridges, flooded buildings) are not in this check: run “Flood risk + who must leave” for them.</p>`:'')
+    +(ck?`<p class="hint${ck.cells_outside_training_range_pct>10?' err':''}">Model fit: ${ck.cells_outside_training_range_pct}% of cells outside the training range · nearest training area ${esc(ck.nearest_training_aoi)} (${ck.nearest_training_aoi_km} km away, held-out AUC ${ck.nearest_training_aoi_held_out_auc??'–'})</p>`:'')
+    +(j.caveats?.length?`<p class="hint">Limits: ${j.caveats.map(esc).join(' · ')}</p>`:'')+links(j.files);
+});
+
+/* ---------- flood layer from the area check (cells.geojson: r = risk, d10/d100/d500 = EFAS depth m) ---------- */
+const DEPTH=[[0.01,'#c6dbef'],[0.3,'#6baed6'],[1,'#2171b5'],[3,'#08306b']], RISK=[[0.2,'#fee391'],[0.5,'#fe9929'],[0.8,'#cc4c02']];
+function floodStyle(){ if(!ready||!map.getLayer('api-flood')) return; const k=$('rShow').value, ramp=k==='r'?RISK:DEPTH;
+  map.setFilter('api-flood',k?['>=',['get',k],ramp[0][0]]:['==',1,0]);
+  if(k) map.setPaintProperty('api-flood','fill-color',['step',['get',k],ramp[0][1],...ramp.slice(1).flat()]);
+  const lab=(v,i)=>k==='r'?`≥ ${v}`:i?`≥ ${v} m`:'> 0 m';
+  $('rLegend').innerHTML=!A.cells.length||!k?'':(k==='r'?'Model risk (a ranking):':'EFAS water depth:')+ramp.map(([v,c],i)=>`<span class="swatch" style="background:${c}"></span>${lab(v,i)}`).join(''); }
+$('rShow').onchange=floodStyle;
+async function loadCells(url){ A.cells=[]; $('rAnim').disabled=true; map?.getSource('apiFlood')?.setData(empty()); const u=fileUrl(url); if(!u) return;
+  const g=await (await fetch(u)).json(); A.cells=g.features; $('rAnim').disabled=!A.cells.length; map?.getSource('apiFlood')?.setData(g); floodStyle(); }
+// the checked area's cells become the app's grid (same fields as data/grid.geojson), so Simulate plays its water rising
+$('rAnim').onclick=()=>{ if(!A.cells.length) return;
+  const grid={type:'FeatureCollection',features:A.cells.map(f=>{ const p=f.properties||{};
+    return {type:'Feature',geometry:f.geometry,properties:{depth_rp10:p.d10,depth_rp100:p.d100,depth_rp500:p.d500,pop:p.pop,elev:p.elev}}; })};
+  const r=ingest({grid}); if(!r.data){ toast(r.log.filter(l=>l.e).map(l=>l.m).join(' ')); return; }
+  load(r.data,false); $('dataBadge').textContent='LIVE AREA'; setTab('sim'); setPlaying(true);
+  const wet=r.data.cells.some(c=>D.rps.some(rp=>c.depth[rp]>0));
+  toast(wet?`Animating the checked area (${r.data.cells.length.toLocaleString()} cells)${r.data.cells.some(c=>c.pop>0)?'':': no population in the API output yet, people show 0'}`:'No EFAS water in this area: nothing to animate'); };
+$('rBack').onclick=()=>tryAutoLoad().then(ok=>{ if(!ok) load(ingest(makeDemo()).data,true); });
+// ray casting on the cell square (lon/lat ring)
+const inRing=(p,r)=>{ let a=false; for(let i=0,j=r.length-1;i<r.length;j=i++){ const [xi,yi]=r[i],[xj,yj]=r[j];
+  if((yi>p[1])!==(yj>p[1])&&p[0]<(xj-xi)*(p[1]-yi)/(yj-yi)+xi) a=!a; } return a; };
+
+/* ---------- Am I in danger? (/point + the loaded area check) ---------- */
+$('dPick').onclick=()=>startPick('danger','Click the place to check');
+const LEVEL={danger:'In danger',at_risk:'At risk',safe:'Not in the flood maps'};
+async function dangerAt(p){ pts.here=p; drawPts(); const out=$('dOut'); out.innerHTML='<p class="hint">Checking…</p>';
+  try{ const j=await api(`/point?lon=${r4(p[0])}&lat=${r4(p[1])}`);
+    const cell=A.cells.find(c=>inRing(p,c.geometry.coordinates[0])), inArea=A.area&&p[0]>=A.area[0]&&p[0]<=A.area[2]&&p[1]>=A.area[1]&&p[1]<=A.area[3];
+    let level=j.level, extra='';
+    if(cell&&cell.properties.r>=0.5){ if(level==='safe') level='at_risk'; extra=`Flood-prone terrain: model risk ${cell.properties.r.toFixed(2)} for this 100 m cell (≥ 0.5 = high; a ranking, not a probability).`; }
+    else if(cell) extra=`Model risk ${cell.properties.r.toFixed(2)} for this 100 m cell (below the 0.5 high-risk line).`;
+    else if(inArea&&A.cells.length) extra='Model risk below 0.2 for this cell.';
+    else extra='Run "Check area" (5) on an area around this place to add the model risk.';
+    out.innerHTML=`<div class="verdict ${level}">${LEVEL[level]} · ${r4(p[1])}, ${r4(p[0])}</div>`
+      +`<ul class="log">${j.by_scenario.map(s=>`<li><b>${esc(floodLabel(s.scenario))}:</b> ${esc(s.text)}${s.efas_depth_m?` (${s.efas_depth_m} m)`:''}</li>`).join('')}</ul>`
+      +`<p class="hint">${esc(extra)}</p><p class="hint">Limits: ${j.caveats.map(esc).join(' · ')}</p>`; }
+  catch(e){ out.innerHTML=`<p class="hint err">✗ ${esc(e.message)}</p>`; } }
+
+const flyLL=e=>{ const b=e.target.closest('[data-ll]'); if(b) map.flyTo({center:b.dataset.ll.split(',').map(Number),zoom:15,duration:1200}); };
+$('rOut').onclick=flyLL; $('fOut').onclick=flyLL;
+
+/* ---------- 5. Help a friend + shelters ---------- */
+const zone=()=>runName('zone');
+$('hZone').onclick=e=>run(e.target,$('hZoneOut'),async()=>{ needArea(); const j=await apiJob('/help/zones',{name:zone(),bbox:A.area},$('hZoneOut'));
+  $('hZoneOut').innerHTML=`<p class="hint">✓ Help zone ready: ${fmtFull(j.area_km2)} km² of roads loaded.</p>`; A.helper=null; A.req=null; });
+$('hShel').onclick=e=>run(e.target,$('hZoneOut'),async()=>{ needArea(); const j=await api(`/help/zones/${zone()}/shelters?scenario=${$('hScen').value}`);
+  pts.shelters=j.list||[]; drawPts();
+  $('hZoneOut').innerHTML=`<p class="hint">${j.shelters} shelters (green = dry, red = flooded at ${esc(j.scenario)}), ${j.dry} dry. Schools and sports halls are candidates, not official shelters.</p>`; });
+$('hHelpPick').onclick=()=>startPick('helper','Click where the helper is');
+$('hNeedPick').onclick=()=>startPick('person','Click where the person needing help is');
+$('hHelp').onclick=e=>run(e.target,$('hHelpOut'),async()=>{ if(!pts.helper) throw new Error('Click "Place on map" first.');
+  const j=await api('/helpers',{zone:zone(),lon:pts.helper[0],lat:pts.helper[1],mode:$('hMode').value}); A.helper=j.id;
+  $('hHelpOut').innerHTML=`<p class="hint">✓ Helper #${j.id} registered (${esc($('hMode').value)}). Now place someone who needs help.</p><button class="btn sm" data-del="helper">Delete this helper's data</button>`; });
+// data minimisation: helpers and requests can be removed at once (the API also deletes them after 72 h)
+$('hHelpOut').onclick=async e=>{ if(!e.target.closest('[data-del]')||!A.helper) return;
+  try{ const j=await api(`/helpers/${A.helper}`,null,'DELETE'); pts.helper=null; drawPts(); A.helper=null;
+    $('hHelpOut').innerHTML=`<p class="hint">Helper #${j.id} deleted${j.requests_reopened?`; ${j.requests_reopened} request(s) open again for other helpers`:''}.</p>`; }
+  catch(err){ $('hHelpOut').innerHTML=`<p class="hint err">✗ ${esc(err.message)}</p>`; } };
+$('hNeed').onclick=e=>run(e.target,$('hNeedOut'),async()=>{ if(!pts.person) throw new Error('Click "Place on map" first.');
+  const j=await api('/help-requests',{zone:zone(),lon:pts.person[0],lat:pts.person[1],need:$('hNeedKind').value,urgent:$('hUrgent').checked,scenario:$('hScen').value}); A.req=j.id; drawRoute(null);
+  $('hNeedOut').innerHTML=`<p class="hint">Request #${j.id}: ${esc(j.status)} · ${j.risk?.in_risk_zone?`in the flood zone (${j.risk.efas_depth_m} m at ${esc(j.risk.scenario)})`:'outside the flood zone'}</p>`
+    +(j.offers?.length?`<ol class="safe">${j.offers.map((o,i)=>`<li><button data-acc="${o.helper_id}"><span class="n">${i+1}</span><span>Helper #${o.helper_id} (${esc(o.mode)}) · ${mins(o.eta_s)} · ${fmtFull(o.distance_m)} m${o.flooded_m?` · <b class="err">${fmtFull(o.flooded_m)} m in water</b>`:''}<br><span class="hint">Click to accept and show the route</span></span></button></li>`).join('')}</ol>`
+      :`<p class="hint err">${esc(j.message||'No helper can reach this person.')}</p>`)
+    +`<div class="row" style="justify-content:flex-start;margin-top:8px"><button class="btn sm" data-act="shelter">Route to nearest dry shelter</button><button class="btn sm" data-act="close">Close request</button><button class="btn sm" data-act="delete">Delete request data</button></div><div id="hRoute"></div>`; });
+const routeHtml=r=>`<p class="hint">${mins(r.eta_s)} · ${fmtFull(r.distance_m)} m${r.flooded_m?` · <b class="err">${fmtFull(r.flooded_m)} m through water</b>`:''}</p><ol class="apiSteps">${(r.steps||[]).map(s=>`<li>${esc(s.instruction)}${s.distance_m?` <span class="hint">${fmtFull(s.distance_m)} m</span>`:''}</li>`).join('')}</ol>`;
+function showRoute(r){ drawRoute(r.geometry); const c=r.geometry?.coordinates; if(c?.length) map.fitBounds(bboxOf([c]),{padding:80,duration:1000}); }
+$('hNeedOut').onclick=async e=>{ const b=e.target.closest('[data-acc],[data-act]'); if(!b||!A.req) return; const out=$('hRoute');
+  try{ if(b.dataset.acc){ const j=await api(`/help-requests/${A.req}/accept`,{helper_id:+b.dataset.acc}); showRoute(j.route); out.innerHTML=`<h3>Helper #${j.helper_id} → person</h3>`+routeHtml(j.route); }
+    else if(b.dataset.act==='shelter'){ out.innerHTML='<p class="hint">Finding a route…</p>'; const j=await api(`/help-requests/${A.req}/shelter`); showRoute(j.route);
+      out.innerHTML=`<h3>→ ${esc(j.shelter.name||j.shelter.kind)} (${esc(j.mode)})</h3>`+routeHtml(j.route); }
+    else if(b.dataset.act==='delete'){ const j=await api(`/help-requests/${A.req}`,null,'DELETE'); drawRoute(null); pts.person=null; drawPts(); A.req=null;
+      $('hNeedOut').innerHTML=`<p class="hint">Request #${j.id} and its offers deleted.</p>`; }
+    else { const j=await api(`/help-requests/${A.req}/close`,{}); drawRoute(null); out.innerHTML=`<p class="hint">Request #${j.id} closed.</p>`; } }
+  catch(err){ out.innerHTML=`<p class="hint err">✗ ${esc(err.message)}</p>`; } };
+
+/* ---------- 6. building damage + model checks (read-only) ---------- */
+async function loadImpact(){ try{ const j=await api('/impact');
+  $('iOut').innerHTML=table(j.aois,[['activation','EMS'],['aoi','AOI'],['product','Map'],['flooded','Flooded bldgs'],['loss_m','Loss €M'],['displaced','Displaced']])
+    +'<p class="hint">From the July 2021 satellite maps (Copernicus EMS) × GHS-OBAT buildings. Money uses an assumed rebuild cost per m².</p>'; }
+  catch(e){ $('iOut').innerHTML=`<p class="hint err">✗ ${esc(e.message)}</p>`; } }
+async function loadModels(){ try{ const j=await api('/models');
+  $('mOut').innerHTML=table(j.models,[['name','Model'],['what','What it does'],['runs_on','Where']])+'<h3>How well they work (held-out checks)</h3>'+table(j.evaluation,[['check','Check'],['model','Model'],['metric','Metric'],['value','Value']]); }
+  catch(e){ $('mOut').innerHTML=`<p class="hint err">✗ ${esc(e.message)}</p>`; } }
+
+/* ---------- connection + area buttons ---------- */
+$('apiUrl').value=A.url;
+$('apiGo').onclick=()=>{ A.url=$('apiUrl').value.trim().replace(/\/+$/,''); try{localStorage.setItem('fse-api',A.url);}catch(e){} apiConnect(); };
+$('aStudy').onclick=()=>D&&setArea(D.bbox);
+$('aView').onclick=()=>{ const b=map.getBounds(); setArea([b.getWest(),b.getSouth(),b.getEast(),b.getNorth()]); };
+$('aDraw').onclick=()=>startPick('box','Click one corner of the area on the map');
+function apiInit(){ apiConnect(); policyInit(); if(map) (ready?apiLayers():map.once('load',apiLayers)); }
+
+</script>
+<script>
+// policy.js - "Live model" tab, section 9: policy advice. Sends the model results this page already got from the flood API
+// (A.res, filled by api.js) to the team's policy API (flood-policy-advisor), which answers which of the team's policies to take.
+// Answer by: Claude (key typed here, sent only to the policy API for that one request), the local model on the server, or rules only.
+// Policy API address: ?policy=http://host:port in the page URL, or the field (remembered in this browser).
+
+const POLICY_DEFAULT=/^valencia\b|^100\.108\.90\.108$/.test(location.hostname)?`http://${location.hostname}:8082`:'http://valencia.tail142ce3.ts.net:8082';
+// shared storage helper (also used by main, weather, forecast): keep=false → this tab only (used for the Claude key unless 'keep' is ticked)
+const store={get(k){try{return localStorage.getItem(k)??sessionStorage.getItem(k);}catch(e){return null;}},
+  set(k,v,keep=true){try{(keep?localStorage:sessionStorage).setItem(k,v);(keep?sessionStorage:localStorage).removeItem(k);}catch(e){}},
+  del(k){try{localStorage.removeItem(k);sessionStorage.removeItem(k);}catch(e){}}};
+const P={url:(new URLSearchParams(location.search).get('policy')||store.get('fse-policy')||POLICY_DEFAULT).replace(/\/+$/,''),health:null};
+const POLICY_INPUTS=[['flood','2 · Flood risk'],['evacuation','3 · Evacuation'],['timeline','4 · Timeline'],['region','5 · Area check'],['impact','7 · Damage 2021'],['models','8 · Model checks']];
+
+async function policyConnect(){ $('pState').textContent='Connecting…';
+  try{ const r=await fetch(P.url+'/health',{cache:'no-store'}); P.health=r.ok?await r.json():null; }catch(e){ P.health=null; }
+  const h=P.health, loc=$('pProv').querySelector('[value=local]');
+  if(!h){ $('pState').textContent=`Policy API not reachable at ${P.url} (team network / Tailscale needed).`; $('pState').classList.add('err'); return; }
+  $('pState').classList.remove('err');
+  loc.disabled=!h.providers?.local; loc.textContent=h.providers?.local?`Local model on the server (${h.providers.local}, slow: ~15 min)`:'Local model (not running on the server)';
+  $('pState').textContent=`Connected to ${P.url} · Claude key on server: ${h.providers?.claude?.server_key?'yes':'no'}`;
+  policyForm(); }
+
+function policyForm(){ const prov=$('pProv').value, h=P.health;
+  $('pKeyRow').hidden=prov!=='claude';
+  $('pKeyHint').textContent=h?.providers?.claude?.server_key?'Optional: the server has its own key. A key typed here is used instead.':'Needed: the server has no Claude key.';
+  $('pInputs').innerHTML='Uses: '+POLICY_INPUTS.map(([k,l])=>`<span class="tag${A.res?.[k]?' data':''}">${A.res?.[k]?'✓':'–'} ${esc(l)}</span>`).join(' ')
+    +(Object.keys(A.res||{}).some(k=>POLICY_INPUTS.some(p=>p[0]===k&&k!=='impact'&&k!=='models'))?'':'<br>Run 2, 3, 4 or 5 first for advice about this area.'); }
+
+async function policyAdvise(){
+  const models=Object.fromEntries(POLICY_INPUTS.map(([k])=>[k,A.res?.[k]]).filter(([,v])=>v));
+  if(!Object.keys(models).length) throw new Error('No model results yet: run at least one of sections 2–5 first.');
+  const prov=$('pProv').value, key=$('pKey').value.trim(), headers={'content-type':'application/json'};
+  if(prov==='claude'&&key){ headers['x-anthropic-key']=key; if($('pKeep').checked) store.set('fse-claude-key',key,true); else store.set('fse-claude-key',key,false); }
+  const body={area:A.area?A.area.join(', '):'',language:$('pLang').value,provider:prov,question:$('pQ').value.trim(),models};
+  const t0=Date.now(), out=$('pOut');
+  let r; try{ r=await fetch(P.url+'/advise?async=1',{method:'POST',headers,body:JSON.stringify(body)}); }
+  catch(e){ throw new Error('The policy API can\'t be reached at '+P.url+'.'); }
+  let j=await r.json().catch(()=>({error:'HTTP '+r.status}));
+  if(!r.ok&&r.status!==202) throw new Error(j.error||('HTTP '+r.status));
+  while(j.status==='running'&&j.job){
+    out.innerHTML=`<p class="hint">Thinking… ${Math.round((Date.now()-t0)/1000)} s${prov==='local'?' (the local model is slow: ~15 min)':''}</p>`;
+    await new Promise(res=>setTimeout(res,3000));
+    try{ r=await fetch(`${P.url}/jobs/${j.job}`,{cache:'no-store'}); }catch(e){ throw new Error('Lost the policy API while waiting; try again.'); }
+    j=await r.json().catch(()=>({error:'HTTP '+r.status}));
+    if(r.status===202) continue; if(!r.ok) throw new Error(j.error||('HTTP '+r.status)); }
+  policyShow(j); }
+
+function policyShow(j){
+  const who={claude:`Claude (${j.model})`,local:`local model (${(j.model||'').replace('local:','')})`,rules:'rules (no AI)'}[j.source]||j.source;
+  const pr={now:'crit',soon:'',later:''};
+  $('pOut').innerHTML=`<p style="margin:8px 0"><span class="tag data">${esc(who)}</span>${j.cached?' <span class="tag">cached</span>':''}</p>`
+    +(j.ai_rejected?`<p class="hint err">AI answer not used: ${esc(j.ai_rejected.reason)}${j.ai_rejected.problems?' ('+j.ai_rejected.problems.map(esc).join('; ')+')':''}. Showing the rule-based advice.</p>`:'')
+    +`<p style="font-size:14px">${esc(j.summary)}</p>`
+    +`<ol class="safe">${(j.recommendations||[]).map(r=>`<li><span class="n ${pr[r.priority]??''}">${r.rank}</span><span><b>${esc(r.title)}</b> <span class="tag">${esc(r.priority)}</span><br>${esc(r.why)}
+      <details><summary class="hint" style="cursor:pointer">What and why (2021)</summary><p class="hint">${esc(r.what)}</p><p class="hint">2021: ${esc(r.lesson_2021)}</p>
+      <p class="hint">Model facts: ${(r.evidence||[]).map(e=>`${esc(e.text)} = ${typeof e.value==='number'?fmtFull(e.value):esc(e.value)}`).join(' · ')||'–'}</p><p class="hint">Source: ${esc(r.source)}</p></details></span></li>`).join('')}</ol>`
+    +(j.unknowns?.length?`<h3>What the models don't tell</h3><ul>${j.unknowns.map(u=>`<li class="hint">${esc(u)}</li>`).join('')}</ul>`:'')
+    +`<p class="hint">${esc(j.disclaimer||'')}</p>`; }
+
+$('pUrl').value=P.url;
+$('pKey').value=store.get('fse-claude-key')||''; $('pKeep').checked=(()=>{try{return !!localStorage.getItem('fse-claude-key');}catch(e){return false;}})();
+$('pGo').onclick=()=>{ P.url=$('pUrl').value.trim().replace(/\/+$/,''); store.set('fse-policy',P.url,true); policyConnect(); };
+$('pProv').onchange=policyForm;
+$('pForget').onclick=()=>{ store.del('fse-claude-key'); $('pKey').value=''; $('pKeep').checked=false; };
+$('pRun').onclick=e=>run(e.target,$('pOut'),policyAdvise);
+// called from apiShow / after each model run so the "Uses:" line stays current
+function policyInit(){ policyConnect(); }
+
+</script>
+<script>
 // player.js - Video-style player: play/pause, restart, timeline, speed, loop.
 // Loaded as a classic script: top-level names are shared between files (order set in index.html).
 
 /* ---------- video player ---------- */
 let anim=null,last=0; const DUR=60000; // 1× speed: the whole event in 60 s
 function setPlaying(on){ S.playing=on; $('play').textContent=on?'❚❚':'▶'; $('play').setAttribute('aria-label',on?'Pause':'Play');
-  cancelAnimationFrame(anim); if(!on) return; if(S.T>=1) S.T=0; last=performance.now();
+  cancelAnimationFrame(anim); waterLive(on&&!reduce); if(!on) return; if(S.T>=1) S.T=0; last=performance.now();
   const step=t=>{const dt=t-last; last=t; S.T+=dt*S.speed/DUR; if(S.T>=1){ if($('loop').checked) S.T=0; else {S.T=1; render(); setPlaying(false); return;} } render(); anim=requestAnimationFrame(step);};
   anim=requestAnimationFrame(step);}
 $('play').onclick=()=>setPlaying(!S.playing);
@@ -2081,8 +2722,8 @@ $('size').oninput=e=>{S.sizeIdx=+e.target.value; drawSize(); render(); drawActor
 
 /* ---------- tabs ---------- */
 function setTab(t){ S.tab=t; document.querySelectorAll('.tabs [data-t]').forEach(b=>b.setAttribute('aria-selected',b.dataset.t===t));
-  ['sim','safety','coord','diag','policy','data'].forEach(k=>$('tab-'+k).hidden=k!==t);
-  $('stage').hidden=t!=='diag'; if(t==='diag') drawDiagram(); if(t==='coord') drawCoord(); if(t==='policy'){ drawCosts(); drawImpact(); } if(t==='data') drawData(); else $('dataStage').hidden=true; drawLegend(); applyLayers(); }
+  ['sim','safety','coord','fc','diag','api','policy','data'].forEach(k=>$('tab-'+k).hidden=k!==t);
+  $('stage').hidden=t!=='diag'; if(t==='diag') drawDiagram(); if(t==='coord') drawCoord(); if(t==='policy'){ drawCosts(); drawImpact(); } if(t==='fc') drawForecast(); if(t==='data') drawData(); else $('dataStage').hidden=true; drawLegend(); applyLayers(); apiShow(); }
 document.querySelector('.tabs').onclick=e=>{const b=e.target.closest('[data-t]'); if(b) setTab(b.dataset.t);};
 $('stageClose').onclick=()=>setTab('sim');
 
@@ -2870,7 +3511,7 @@ addEventListener('keydown',e=>{ if(e.key==='Escape'){ $('srcPop').hidden=true; }
 /* ---------- mayor's decision card: one printable page ---------- */
 function openCard(){ const r=rp(),pk=peak(r),c=floodCost(r),B=DR.best,R=DR.run,P=E.plan; if(!B||!R){ toast('Still computing the best plan…'); return; }
   const places=E.shelters.reduce((s,x,k)=>s+capOf(k),0),strip=s=>s.replace(/<span class="gain">(.*?)<\/span>/g,'<em>($1)</em>');
-  const w=open('','_blank'); if(!w){ toast('Allow pop-ups to open the card'); return; }
+  const w=docStage("Mayor's decision card");
   w.document.write(`<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Flood decision card</title><style>
     body{font:14px/1.45 system-ui,sans-serif;color:#1d2529;max-width:760px;margin:24px auto;padding:0 16px}h1{font-size:22px;margin:0}h2{font-size:15px;margin:18px 0 6px;text-transform:uppercase;letter-spacing:.04em}
     .k{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}.k div{border:1px solid #ccd;border-radius:6px;padding:8px}.k b{display:block;font-size:20px}
@@ -2943,6 +3584,11 @@ drawHowTo();
 // researcher needs to check and reuse it: the run's data files, a sensitivity table, the methods, and a comparison of runs.
 // The PDF is the browser's "Save as PDF" on a print-ready page (no extra library). Loaded as a classic script.
 
+// documents (report, decision card) open inside the app, not in a pop-up (browsers often block those silently)
+function docStage(title){ const st=$('docStage'),fr=$('docFrame'); $('docTitle').textContent=title; st.hidden=false; let html='';
+  fr.srcdoc='<p style="font:16px sans-serif;padding:24px">Preparing…</p>';
+  return {document:{open(){ html=''; },write(h){ html+=h; },close(){ fr.srcdoc=html; }}}; }
+$('docPrint').onclick=()=>$('docFrame').contentWindow?.print(); $('docClose').onclick=()=>{ $('docStage').hidden=true; };
 const RUNS=(()=>{ try{ return JSON.parse(localStorage.getItem('fse-runs')||'[]'); }catch(e){ return []; } })(); // finished runs, kept in this browser
 const saveRuns=()=>{ try{ localStorage.setItem('fse-runs',JSON.stringify(RUNS.slice(-12))); }catch(e){} };
 
@@ -2999,8 +3645,7 @@ async function snapMap(){ const cam={center:map.getCenter(),zoom:map.getZoom(),p
   Object.assign(S,keep); map.jumpTo(cam); applyLayers(); render(); return {url,pins,ratio:cv.clientHeight/cv.clientWidth}; }
 
 /* ---------- the report ---------- */
-async function openReport(){ const R=DR.run; if(!R){ toast('Run the simulation first'); return; } const w=open('','_blank'); if(!w){ toast('Allow pop-ups to open the report'); return; }
-  w.document.write('<p style="font:16px sans-serif;padding:24px">Preparing the report…</p>');
+async function openReport(){ const R=DR.run; if(!R){ toast('Run the simulation first'); return; } const w=docStage('Report of this run');
   const B=DR.best||bestPlan(),sn=await snapMap(),sens=sensitivity(),r=rp(),pk=peak(r),st=runSettings(),towns=townStats(R),cost=floodCost(r),g=agreePix?.(r);
   const used=R.sh.map((s,i)=>({...s,i,src:i<E.shelters.length?E.shelters[i].src:(E.cands||[]).find(c=>c.c===s.c)})).filter(s=>!s.extra||s.load>0);
   const crit=(D.places||[]).filter(p=>p.ci>=0&&(p.group==='critical'||p.group==='shelter')&&D.cells[p.ci].depth[r]>.01).map(p=>({p,d:D.cells[p.ci].depth[r]})).sort((a,b)=>b.d-a.d);
@@ -3261,13 +3906,18 @@ $('tools').innerHTML=TOOLS.map(([id,t,p])=>`<button data-for="${id}" title="${t}
 $('tools').onclick=e=>{ const b=e.target.closest('[data-for]'); if(!b) return; const c=$(b.dataset.for); c.checked=!c.checked; c.dispatchEvent(new Event('change',{bubbles:true})); };
 document.addEventListener('change',e=>{ const b=document.querySelector(`#tools [data-for="${e.target.id}"]`); if(b) b.setAttribute('aria-pressed',e.target.checked); });
 
+/* ---------- hide / show the interface: only the map and the play bar stay (button or key H) ---------- */
+function setUI(hide){ document.body.classList.toggle('hideui',hide); $('uiBtn').setAttribute('aria-pressed',hide); $('uiShow').hidden=!hide; setTimeout(()=>map?.resize(),50); }
+$('uiBtn').onclick=()=>setUI(true); $('uiShow').onclick=()=>setUI(false);
+document.addEventListener('keydown',e=>{ if((e.key==='h'||e.key==='H')&&!e.ctrlKey&&!e.metaKey&&!/INPUT|TEXTAREA|SELECT/.test(document.activeElement?.tagName)) setUI(!document.body.classList.contains('hideui')); });
+
 </script>
 <script>
 // main.js - Start-up: how-to-use guide, load demo data, auto-load team files from /data.
 // Loaded as a classic script: top-level names are shared between files (order set in index.html).
 
 /* ---------- guide ---------- */
-const store={get(k){try{return localStorage.getItem(k);}catch(e){return null;}},set(k,v){try{localStorage.setItem(k,v);}catch(e){}}};
+// store: see policy.js (loaded earlier)
 function showGuide(on){$('guide').hidden=!on; document.body.classList.toggle('explain',on); $('helpBtn').setAttribute('aria-expanded',on);} // also shows the explanations in the side panel
 $('helpBtn').onclick=()=>showGuide($('guide').hidden); $('guideOk').onclick=()=>{showGuide(false); store.set('fse-guide','1');};
 
@@ -3276,12 +3926,13 @@ function load(data,demo){
   $('dataBadge').textContent=demo?'DEMO DATA':'TEAM DATA'; $('dataBadge').classList.toggle('real',!demo);
   buildSources(); drawSize(); drawLegend(); drawZones(); drawActor(); drawAgree(); drawCmp(); drawDList();
   if(!map) initMap(); else if(ready){ refreshData(); applyLayers(); render(); map.fitBounds(D.bbox,{padding:50}); }
-  if(S.tab==='diag') drawDiagram(); if(typeof drawScenarioInfo==='function') drawScenarioInfo();
+  if(S.tab==='diag') drawDiagram(); if(S.tab==='fc') drawForecast(); if(typeof drawScenarioInfo==='function') drawScenarioInfo();
 }
 const mq=matchMedia('(prefers-color-scheme: dark)'); mq.addEventListener?.('change',recolor);
 new MutationObserver(recolor).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
 if(!window.maplibregl){ $('map').innerHTML='<p style="padding:24px">The map library did not load. Check your internet connection and reload.</p>'; }
-else { load(ingest(makeDemo()).data,true); if(!store.get('fse-guide')) showGuide(true); tryAutoLoad(); }
+else { // demo first so the map shows at once (the team files take seconds to download), then team data replaces it
+  load(ingest(makeDemo()).data,true); apiInit(); if(!store.get('fse-guide')) showGuide(true); tryAutoLoad(); }
 
 </script>
 </body>
