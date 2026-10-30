@@ -48,10 +48,10 @@ const CH={order:{plan:'each street → its shelter',tall:'places first for homes
 let played=false,endDone=false;
 FX.push(()=>{ if(S.playing) played=true; if(S.T<.99) endDone=false; if(S.T>=1&&!S.playing&&played&&!endDone&&DR.run){ endDone=true; played=false; runEnded(); } });
 function runEnded(){ const R=DR.run,s=runSettings();
-  RUNS.push({at:new Date().toLocaleString('en-GB'),...s,unsafe:Math.round(R.score),danger:Math.round(R.peak.danger),noplace:Math.round(R.peak.noplace),shel:Math.round(R.peak.shel),up:Math.round(R.peak.up),
+  RUNS.push({at:new Date().toLocaleString('en-GB'),...s,unsafe:Math.round(R.score),saved:Math.round(savedBy(R)),danger:Math.round(R.peak.danger),noplace:Math.round(R.peak.noplace),shel:Math.round(R.peak.shel),up:Math.round(R.peak.up),
     range:DR.range.map(Math.round),extra:R.sh.filter(x=>x.extra&&x.load>0).length}); saveRuns();
   const b=$('runEnd'); b.innerHTML=`<div class="ih">${SVGI('<path d="M14 3H6v18h12V7z"/><path d="M14 3v4h4M9 13h6M9 17h6"/>')}<b>Run finished</b></div>
-    <p><b>${fmt(R.score)}</b> people unsafe at the peak (range ${fmt(DR.range[0])}–${fmt(DR.range[1])}), ${fmt(R.peak.shel)} in shelters. Run ${RUNS.length} saved for comparison.</p>
+    <p><b>${savedTxt(R)}</b> compared with no evacuation order (${fmt(DR.none.score)} → ${fmt(R.score)} unsafe at the peak, range ${fmt(DR.range[0])}–${fmt(DR.range[1])}); ${fmt(R.peak.shel)} in shelters. Run ${RUNS.length} saved for comparison.</p>
     <div class="iopts row"><button class="btn sm primary" id="reOpen">PDF report</button><button class="btn sm" id="reData">Data files</button><button class="btn sm" id="reNo">Not now</button></div>`;
   b.hidden=false; $('reOpen').onclick=()=>{ b.hidden=true; openReport(); }; $('reData').onclick=downloadAll; $('reNo').onclick=()=>b.hidden=true; }
 $('reportBtn').onclick=()=>openReport();
@@ -86,7 +86,7 @@ async function openReport(){ const R=DR.run; if(!R){ toast('Run the simulation f
   <p class="lead"><b>First action for Anna:</b> ${first?plain(first[1]):'—'}</p>
   <div class="map"><img src="${sn.url}" alt="Flood at its peak with shelters">${sn.pins.filter(p=>p.x>0&&p.x<100&&p.y>0&&p.y<100).map(p=>`<span class="pin${p.full?' full':''}" style="left:${p.x}%;top:${p.y}%">${p.n}</span>`).join('')}</div>
   <div class="s">Water at the peak (blue, darker = deeper), buildings coloured where water reached them, shelters (numbered; red = full; + = next best site used). Scale: whole study area, ~25 × 10 km.</div>
-  <div class="k"><div><b>${fmt(pk.people)}</b>residents in flooded areas ${tag('data')}</div><div><b>${fmt(pk.bld)}</b>buildings in the water ${tag('data')}</div><div><b>${fmt(R.score)}</b>unsafe at the peak (${fmt(DR.range[0])}–${fmt(DR.range[1])}) ${tag('as')}</div><div><b>${eur(cost.damage)}</b>damage, buildings + roads (proxy) ${tag('ext')}</div></div>
+  <div class="k"><div><b>${fmt(pk.people)}</b>residents in flooded areas ${tag('data')}</div><div><b>${fmt(pk.bld)}</b>buildings in the water ${tag('data')}</div><div><b>${fmt(R.score)}</b>unsafe at the peak (${fmt(DR.range[0])}–${fmt(DR.range[1])}) ${tag('as')}</div><div><b>${fmt(Math.round(savedBy(R)))}</b>people saved vs no evacuation order (${fmt(DR.none.score)} unsafe; negative = the order makes it worse) ${tag('as')}</div><div><b>${eur(cost.damage)}</b>damage, buildings + roads (proxy) ${tag('ext')}</div></div>
 
   <h2>Q1 · What does the flood cover?</h2>
   <p>The ${esc(st.flood)} flood map (EFAS) puts <b>${fmt(pk.people)} residents</b> (GHS-POP) and <b>${fmt(pk.bld)} buildings</b> (GHS-OBAT) under water over ${pk.area.toFixed(1)} km². The July 2021 rain matched about a 1-in-100 rain in this valley (37 years of ERA5 rain, Gumbel fit).
@@ -108,7 +108,7 @@ async function openReport(){ const R=DR.run; if(!R){ toast('Run the simulation f
   <h2>Q4 · Where do we still stand exposed?</h2>
   ${top.length?`<table><thead><tr><th>Most exposed places</th><th class="n">Residents in water</th><th class="n">Unsafe at peak</th><th class="n">No place</th><th class="n">Shelter places in the place</th></tr></thead><tbody>${top.slice(0,8).map(t=>`<tr><td>${esc(t.name)}</td><td class="n">${fmtFull(t.res)}</td><td class="n">${fmtFull(t.unsafe)}</td><td class="n">${fmtFull(t.noplace)}</td><td class="n">${fmtFull(t.places)}</td></tr>`).join('')}</tbody></table>`:''}
   <h3>Best sequence of actions (${3*4*2*2} combinations tested)</h3>
-  <p>With these actions: <b>${fmt(B.run.score)}</b> unsafe (range ${fmt(B.range[0])}–${fmt(B.range[1])}) instead of ${fmt(R.score)} with the choices of this run.</p>
+  <p>With these actions: <b>${savedTxt(B.run)}</b>, <b>${fmt(B.run.score)}</b> unsafe (range ${fmt(B.range[0])}–${fmt(B.range[1])}) instead of ${fmt(R.score)} with the choices of this run.</p>
   <ol>${acts.map(([t,x])=>`<li><span class="t">${isFinite(t)?clockM(t):'Before'}</span>${plain(x)}</li>`).join('')}</ol>
 
   <h2 class="pb">Factors of this run</h2>
@@ -121,7 +121,7 @@ async function openReport(){ const R=DR.run; if(!R){ toast('Run the simulation f
   <table><thead><tr><th>Assumption</th><th>Down / up</th><th class="n">Down</th><th class="n">Up</th><th style="width:30%"></th></tr></thead><tbody>${sens.rows.map(x=>`<tr><td>${x.n}</td><td class="s">${x.v}</td><td class="n">${fmtFull(x.lo)}</td><td class="n">${fmtFull(x.hi)}</td>
     <td><div class="bar"><i style="left:${Math.min(x.lo,x.hi)/mx*100}%;width:${Math.max(1,Math.abs(x.hi-x.lo)/mx*100)}%"></i><u style="left:${sens.base/mx*100}%"></u></div></td></tr>`).join('')}</tbody></table>
 
-  ${RUNS.length>1?`<h2>Compare runs</h2><table><thead><tr><th>Run</th><th>Flood</th><th class="n">Rise h</th><th class="n">Warn min</th><th class="n">Follow</th><th>Order</th><th>Full</th><th class="n">Unsafe</th><th class="n">Sheltered</th></tr></thead><tbody>${RUNS.slice(-8).map((x,i)=>`<tr><td>${RUNS.length-Math.min(8,RUNS.length)+i+1} <span class="s">${esc(x.at)}</span></td><td>${esc(x.flood.replace(/ \(.*\)/,''))}</td><td class="n">${x.rise_h}</td><td class="n">${x.warning_min}</td><td class="n">${x.follow_pct}%</td><td>${esc(CH.order[x.order]||'')}</td><td>${esc(CH.full[x.when_full]||'')}</td><td class="n">${fmtFull(x.unsafe)}</td><td class="n">${fmtFull(x.shel)}</td></tr>`).join('')}</tbody></table>`:''}
+  ${RUNS.length>1?`<h2>Compare runs</h2><table><thead><tr><th>Run</th><th>Flood</th><th class="n">Rise h</th><th class="n">Warn min</th><th class="n">Follow</th><th>Order</th><th>Full</th><th class="n">Saved</th><th class="n">Unsafe</th><th class="n">Sheltered</th></tr></thead><tbody>${RUNS.slice(-8).map((x,i)=>`<tr><td>${RUNS.length-Math.min(8,RUNS.length)+i+1} <span class="s">${esc(x.at)}</span></td><td>${esc(x.flood.replace(/ \(.*\)/,''))}</td><td class="n">${x.rise_h}</td><td class="n">${x.warning_min}</td><td class="n">${x.follow_pct}%</td><td>${esc(CH.order[x.order]||'')}</td><td>${esc(CH.full[x.when_full]||'')}</td><td class="n">${x.saved==null?"–":fmtFull(x.saved)}</td><td class="n">${fmtFull(x.unsafe)}</td><td class="n">${fmtFull(x.shel)}</td></tr>`).join('')}</tbody></table>`:''}
 
   <h2 class="pb">Methods (to reproduce)</h2>
   <ol class="s">
@@ -150,7 +150,7 @@ function downloadAll(){ const R=DR.run; if(!R) return; const r=rp(),tag=`rp${r}`
     [`plan_${tag}.geojson`,JSON.stringify({type:'FeatureCollection',features:[...E.plan.routes.map(x=>({type:'Feature',geometry:{type:'LineString',coordinates:x.pts},properties:{kind:'route',people:Math.round(x.people),shelter:x.k+1,wave:x.wave,minutes:Math.round(x.min)}})),
       ...R.sh.map((s,i)=>({type:'Feature',geometry:{type:'Point',coordinates:s.c},properties:{kind:'shelter',name:s.name,places:Math.round(s.cap),people_in:Math.round(s.load),next_best_site:!!s.extra}})),
       ...E.plan.groups.map(g=>({type:'Feature',geometry:{type:'Point',coordinates:g.c},properties:{kind:'resident_group',people:Math.round(g.pop),wave:g.wave}}))]}),'application/geo+json'],
-    [`settings_${tag}.json`,JSON.stringify({...runSettings(),result:{unsafe:Math.round(R.score),range:DR.range.map(Math.round),peak:Object.fromEntries(Object.entries(R.peak).map(([k,v])=>[k,Math.round(v)]))},runs:RUNS},null,1),'application/json']];
+    [`settings_${tag}.json`,JSON.stringify({...runSettings(),result:{unsafe:Math.round(R.score),saved:Math.round(savedBy(R)),unsafe_no_order:Math.round(DR.none.score),range:DR.range.map(Math.round),peak:Object.fromEntries(Object.entries(R.peak).map(([k,v])=>[k,Math.round(v)]))},runs:RUNS},null,1),'application/json']];
   files.forEach(([n,t,ty],i)=>setTimeout(()=>dl(n,t,ty),i*350)); toast(`${files.length} files: timeline, shelters, shelter fill, towns, plan (GeoJSON), settings`); }
 
 /* ---------- Q2 notes (desk research), kept in this browser and printed in the report ---------- */
