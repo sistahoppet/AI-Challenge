@@ -3608,7 +3608,7 @@ let drT=null;
 // can be negative: sending everyone out when shelters are too small leaves people at full shelters ("no place")
 const savedBy=run=>(DR.none?.score??0)-(run?.score??0);
 const savedTxt=run=>{ const v=Math.round(savedBy(run)); return v>=0?`${fmt(v)} more people evacuated`:`${fmt(-v)} more people left in danger or without a place`; };
-function drillRun(){ if(!DR.prep){ DR.run=null; drawDrill(); return; } const o=drillOpts(); DR.run=simulate(o); DR.range=rangeOf(o); DR.none=simulate({...o,comply:0,door:false});
+function drillRun(){ if(!DR.prep){ DR.run=null; DR.none=null; drawDrill(); return; } const o=drillOpts(); DR.run=simulate(o); DR.range=rangeOf(o); DR.none=simulate({...o,comply:0,door:false});
   DR.base=simulate(drillOpts({},{comply:DR0.comply/100,capX:DR0.capX/100,rate:DR0.rescue,lead:DR0.lead,mob:DR0.mob,delay:DR0.delay,v:DR0.speed*1000/60}));
   clearTimeout(drT); drT=setTimeout(()=>{ DR.best=bestPlan(); drawDrill(); },250); drawDrill(); extraPins(); if(ready) render(); }
 // every combination of the choices; best = fewest people not evacuated at the peak, then fewest changes
