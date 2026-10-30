@@ -138,8 +138,17 @@ function floodStyle(){ if(!ready||!map.getLayer('api-flood')) return; const k=$(
   const lab=(v,i)=>k==='r'?`≥ ${v}`:i?`≥ ${v} m`:'> 0 m';
   $('rLegend').innerHTML=!A.cells.length||!k?'':(k==='r'?'Model risk (a ranking):':'EFAS water depth:')+ramp.map(([v,c],i)=>`<span class="swatch" style="background:${c}"></span>${lab(v,i)}`).join(''); }
 $('rShow').onchange=floodStyle;
-async function loadCells(url){ A.cells=[]; map?.getSource('apiFlood')?.setData(empty()); const u=fileUrl(url); if(!u) return;
-  const g=await (await fetch(u)).json(); A.cells=g.features; map?.getSource('apiFlood')?.setData(g); floodStyle(); }
+async function loadCells(url){ A.cells=[]; $('rAnim').disabled=true; map?.getSource('apiFlood')?.setData(empty()); const u=fileUrl(url); if(!u) return;
+  const g=await (await fetch(u)).json(); A.cells=g.features; $('rAnim').disabled=!A.cells.length; map?.getSource('apiFlood')?.setData(g); floodStyle(); }
+// the checked area's cells become the app's grid (same fields as data/grid.geojson), so Simulate plays its water rising
+$('rAnim').onclick=()=>{ if(!A.cells.length) return;
+  const grid={type:'FeatureCollection',features:A.cells.map(f=>{ const p=f.properties||{};
+    return {type:'Feature',geometry:f.geometry,properties:{depth_rp10:p.d10,depth_rp100:p.d100,depth_rp500:p.d500,pop:p.pop,elev:p.elev}}; })};
+  const r=ingest({grid}); if(!r.data){ toast(r.log.filter(l=>l.e).map(l=>l.m).join(' ')); return; }
+  load(r.data,false); $('dataBadge').textContent='LIVE AREA'; setTab('sim'); setPlaying(true);
+  const wet=r.data.cells.some(c=>D.rps.some(rp=>c.depth[rp]>0));
+  toast(wet?`Animating the checked area (${r.data.cells.length.toLocaleString()} cells)${r.data.cells.some(c=>c.pop>0)?'':': no population in the API output yet, people show 0'}`:'No EFAS water in this area: nothing to animate'); };
+$('rBack').onclick=()=>tryAutoLoad().then(ok=>{ if(!ok) load(ingest(makeDemo()).data,true); });
 // ray casting on the cell square (lon/lat ring)
 const inRing=(p,r)=>{ let a=false; for(let i=0,j=r.length-1;i<r.length;j=i++){ const [xi,yi]=r[i],[xj,yj]=r[j];
   if((yi>p[1])!==(yj>p[1])&&p[0]<(xj-xi)*(p[1]-yi)/(yj-yi)+xi) a=!a; } return a; };
