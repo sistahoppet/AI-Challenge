@@ -1,0 +1,9 @@
+[Unit]
+Description=Flood frontend: pull branch live every minute
+
+[Timer]
+OnBootSec=1min
+OnUnitActiveSec=1min
+
+[Install]
+WantedBy=timers.target
