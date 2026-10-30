@@ -59,7 +59,7 @@ function runEnded(){ const R=DR.run,s=runSettings();
   const b=$('runEnd'); b.innerHTML=`<div class="ih">${SVGI('<path d="M14 3H6v18h12V7z"/><path d="M14 3v4h4M9 13h6M9 17h6"/>')}<b>Run finished</b></div>
     <p><b>${savedTxt(R)}</b> than with no evacuation order (${fmt(DR.none.score)} → ${fmt(R.score)} not evacuated).</p>
     <p><b>${fmt(R.score)}</b> people not evacuated at the peak (range ${fmt(DR.range[0])}–${fmt(DR.range[1])}), ${fmt(R.peak.shel)} in shelters${R.peak.away?`, ${fmt(R.peak.away)} with family or friends`:''}. Run ${RUNS.length} saved for comparison.</p>
-    <div class="iopts row"><button class="btn sm primary" id="reOpen">Anna's report (PDF)</button><button class="btn sm" id="reData">Data files</button><button class="btn sm" id="reNo">Not now</button></div>`;
+    <div class="iopts row"><button class="btn sm primary" id="reOpen">Download the report</button><button class="btn sm" id="reData">Data files</button><button class="btn sm" id="reNo">Not now</button></div>`;
   b.hidden=false; $('reOpen').onclick=()=>{ b.hidden=true; openReport(); }; $('reData').onclick=downloadAll; $('reNo').onclick=()=>b.hidden=true; }
 $('reportBtn').onclick=()=>openReport();
 
@@ -106,6 +106,11 @@ async function openReport(){ const R=DR.run; if(!R){ toast('Run the simulation f
   const verdict=warnN&&(emerg.length||noPl>=1||R.score>=1)?'Partly':warnN?'Yes, for this scenario':'Not demonstrably';
   const mk=k=>`<sup class="m">${{data:'D',ext:'S',as:'A',est:'E'}[k]}</sup>`,hm=m=>`${Math.floor(Math.abs(m)/60)} h ${String(Math.round(Math.abs(m)%60)).padStart(2,'0')}`,whenTxt=t=>!isFinite(t)?'Before the flood season':t<0?`T − ${hm(t)}`:`T + ${hm(t)}`;
   const steps=acts.filter(([,x])=>!/At the peak/.test(x)),preS=[]; if(emerg.length) preS.push([-Infinity,`<b>Before the season</b>: Plan back-up locations for the emergency and public services that sit inside the flood area (${emerg.slice(0,4).map(({p,d})=>`${esc(p.name||kindName(p.kind))}, ${d.toFixed(1)} m`).join('; ')}${emerg.length>4?'…':''}): fire engines, police and the crisis cell must be moved out before the water arrives.`]);
+  const pr=DR.prep,G0=pr?.groups||[],cmp=+(st.follow_pct||80)/100,tName=g=>{ const i=D.G.at(g.c[0],g.c[1]); return ti&&i>=0?D.towns[ti[i]]?.name:''; };
+  const waves=[1,2,3].map(w=>{ const gs=G0.filter(g=>g.wave===w); if(!gs.length) return null; const pop=gs.reduce((a,g)=>a+g.pop,0),first=Math.min(...gs.map(g=>g.ts)),noFloor=gs.reduce((a,g)=>a+g.pop*(1-g.up),0);
+    const pl={},sk={}; gs.forEach(g=>{ const n=tName(g); if(n) pl[n]=(pl[n]||0)+g.pop; g.legs.forEach(L=>{ sk[L.k]=(sk[L.k]||0)+L.n; }); });
+    return {w,pop,first,order:first-SC.leadMin,noFloor,stay:pop*(1-cmp),places:Object.entries(pl).sort((a,b)=>b[1]-a[1]).slice(0,5).map(([n,v])=>`${esc(n)} (${fmtFull(Math.round(v))})`).join(', '),
+      shel:Object.entries(sk).sort((a,b)=>b[1]-a[1]).slice(0,4).map(([k])=>`${esc(E.shelters[k]?.name||'shelter '+(+k+1))} (#${+k+1})`).join(', ')}; }).filter(Boolean);
   const nowSteps=steps.filter(([t])=>isFinite(t)),prepSteps=[...preS,...steps.filter(([t])=>!isFinite(t))]; // during the flood first (the evacuation policy), preparation after
   w.document.open(); w.document.write(`<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Flood preparedness report – ${esc(STUDY.name)} – ${esc(st.flood)}</title><style>
   @page{size:A4;margin:16mm 14mm 16mm}
@@ -123,18 +128,20 @@ async function openReport(){ const R=DR.run; if(!R){ toast('Run the simulation f
   @media print{button{display:none} body{margin:0}}</style></head><body>
   <button onclick="print()" style="float:right;padding:6px 12px">Save as PDF / print</button>
   <div class="hdr"><span>Cross-border crisis coordination · Liège – Limburg – Aachen</span><span>Planning scenario – not a forecast · ${new Date().toLocaleDateString('en-GB')}</span></div>
-  <h1>Flood preparedness report: evacuation and exposure</h1>
-  <div class="sub">${esc(STUDY.name)} · Scenario: ${esc(st.flood)} flood · For the crisis coordinator, the mayors and the municipal emergency planning teams${isDemo?' · <b>TEST DATA</b>':''}</div>
-
-  <div class="box"><p class="ans"><b>Would we be better prepared if the flood returned tomorrow? ${verdict}.</b></p>
-   <p>${warnN?`Warning has improved: ${warnN} warning measures since 2021 (alerts by mobile phone, sirens, river monitoring)${mk('ext')}. `:''}Exposure has not changed: <b>${fmtFull(resIn)} residents</b> and <b>${fmtFull(bldIn)} buildings</b> lie in the flood area${mk('data')}.${emerg.length?` <b class="warn">${emerg.length} emergency or public-service sites</b> (fire station, police, town hall) are inside it${mk('data')}.`:''} ${noPl>=1?`<b class="warn">${fmtFull(noPl)} people</b> would find no shelter place${mk('est')}.`:`Local shelters can take everyone expected to need one (${fmtFull(spare)} places spare)${mk('est')}.`}</p></div>
+  <h1>Flood report – ${esc(STUDY.name)} – ${new Date().toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'})}</h1>
+  <div class="sub">Scenario: ${esc(st.flood)} flood (EFAS) · Report issued ${new Date().toLocaleString('en-GB')} · For the governor, the mayors and the municipal emergency planning teams${isDemo?' · <b>TEST DATA</b>':''}</div>
   <div class="k"><div><b>${fmtFull(Math.round(ps?resIn:toMove))}</b>residents to evacuate${mk('data')}</div><div><b>${fmtFull(Math.round(needPub))}</b>need a public shelter (${share}%)${mk('as')}</div><div><b>${fmtFull(Math.round(places+extraPl))}</b>shelter places (${E.shelters.length} sites + ${extraUsed.length} back-up)${mk('est')}</div><div><b>${fmtFull(Math.round(R.score))}</b>not yet evacuated at the peak${mk('est')}</div></div>
 
-  <h2>1. Evacuation plan: actions during the flood</h2>
-  <table><thead><tr><th style="width:22%">When</th><th>Action</th></tr></thead><tbody>${nowSteps.map(([t,x])=>`<tr><td>${whenTxt(t)}</td><td>${plain(x).replace(/^<b>Before the season<\/b>:\s*/,'')}</td></tr>`).join('')}</tbody></table>
+  <h2>1. Decision card: evacuation by wave</h2>
+  <table><thead><tr><th style="width:15%">When</th><th>Action</th></tr></thead><tbody>
+   <tr><td>On the warning</td><td><b>Activate the crisis cell</b> outside the flood area${emerg.length?`; move ${emerg.slice(0,3).map(({p})=>esc(p.name||kindName(p.kind))).join(', ')} out before the water`:''}. <b>Open and staff ${used.length} shelters</b> (${fmtFull(Math.round(places+extraPl))} places, Section 1.2). Close roads once water exceeds ${st.car_limit_m} m.</td></tr>
+   ${waves.map(v=>`<tr><td><b>Wave ${v.w}</b><br>order at ${whenTxt(v.order)}<br><span class="s">water at first homes ${whenTxt(v.first)}</span></td><td><b>Order ${fmtFull(Math.round(v.pop))} residents to leave</b>: ${v.places}.<br>About ${fmtFull(Math.round(v.pop*share/100))} need a public shelter: send them to ${v.shel}; when full, to the back-up sites (B).<br>First: ${fmtFull(Math.round(v.noFloor))} residents with no floor above the water and the riverbank streets. Door-to-door and loudspeakers for the ~${fmtFull(Math.round(v.stay))} expected not to leave on the first message. Departures over ${2*st.ready_min} min; all out before ${whenTxt(v.first)}.</td></tr>`).join('')}
+   ${nowSteps.filter(([,x])=>!/Order the evacuation/.test(x)).map(([t,x])=>`<tr><td>${whenTxt(t)}</td><td>${plain(x)}</td></tr>`).join('')}
+   <tr><td>At the peak</td><td><b>${fmtFull(Math.round(R.score))} residents still at home</b> (${fmtFull(Math.round(R.peak.up))} upstairs, ${fmtFull(Math.round(R.peak.danger))} in danger): rescue teams by boat, single-storey homes first, then upstairs residents (Section 2).</td></tr>
+  </tbody></table>
   <p class="s">T = start of the flood event (T − = before it, T + = after it). Order of evacuation: ${esc(CH.order[st.order]||'')}; when a shelter is full: ${esc(CH.full[st.when_full]||'')}.</p>
   ${prepSteps.length?`<h3>Before the next flood season</h3><table><tbody>${prepSteps.map(([,x])=>`<tr><td>${plain(x).replace(/^<b>Before the season<\/b>:\s*/,'').replace(/^(<b>)?([a-z])/,(m,t,c)=>(t||'')+c.toUpperCase())}</td></tr>`).join('')}</tbody></table>`:''}
-  <h3>Shelters to open</h3>
+  <h3>1.2 Shelters to open</h3>
   <table><thead><tr><th>#</th><th>Site</th><th>Type</th><th class="n">Places</th><th class="n">Expected arrivals</th><th>Full at</th><th>Site check</th></tr></thead><tbody>${used.map(s=>`<tr><td>${s.i<E.shelters.length?s.i+1:'B'}</td><td><a href="${osm(s.c)}">${esc(s.name)}</a></td><td>${s.src?esc(kindName(s.src.kind)):''}</td><td class="n">${fmtFull(s.cap)}</td><td class="n">${fmtFull(s.load)}</td><td>${s.full!=null?clockM(s.full):'—'}</td>
     <td class="s">${s.src?[s.src.margin!=null?`${Math.round(s.src.margin)} m above the water`:'',`${Math.round(s.src.dmin)} m from the water`,s.src.capSrc||''].filter(Boolean).join(' · '):''}</td></tr>`).join('')}</tbody></table>
   <p class="s">B = back-up site opened when the first shelters are full. Places = published capacity when known, otherwise floor area ÷ 3.5 m² per person (Sphere standard)${mk('ext')}: a maximum before beds, sanitation and staff. ${unk} further sites have no known capacity and are not counted: their capacity should be confirmed with the municipalities.</p>
@@ -159,6 +166,7 @@ async function openReport(){ const R=DR.run; if(!R){ toast('Run the simulation f
   <p class="s">${D.bankN?`${fmtFull(D.bankN)} buildings stand within ${Math.round(D.bankM)} m of the river, where the current can damage the structure: they evacuate early, whatever their depth class. `:''}Depth limits are set in the data parameters (dry flood-proofing up to ${dryM} m, wet flood-proofing up to ${wetM} m).</p>
 
   <h2>6. Measures taken since 2021</h2>
+  <p><b>Better prepared than in 2021? ${verdict}.</b> ${warnN?`Warning has improved (${warnN} warning measures)${mk('ext')}; `:''}the flood area still holds ${fmtFull(resIn)} residents and ${fmtFull(bldIn)} buildings${mk('data')}${emerg.length?`, including ${emerg.length} emergency or public-service sites`:''}.</p>
   ${q2?`<table><thead><tr><th>Area</th><th>Measure</th><th>Type</th><th>Date</th><th>Source</th></tr></thead><tbody>${q2.map(x=>`<tr><td>${esc(x.area||'')}</td><td>${esc(x.measure||'')}</td><td>${esc(x.type||'')}</td><td>${esc(x.date||'')}</td><td class="s">${srcLink(x)}${isVer(x)?' (official)':' (press)'}</td></tr>`).join('')}</tbody></table><p class="s">${q2.length} measures, ${q2Ver} from official sources${mk('ext')}.</p>`
    :notes?`<div class="s" style="white-space:pre-wrap">${esc(notes)}</div>`:'<p class="s">Not documented yet.</p>'}
 
