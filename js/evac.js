@@ -103,7 +103,12 @@ function stepWalkers(now){ const P=E.plan; if(!P||!(S.tab==='safety'||S.tab==='s
   for(const w of E.walkers){const r=P.routes[w.r]; if(!r.len) continue; f.push({type:'Feature',geometry:{type:'Point',coordinates:along(r,((w.s0+t*v/r.len)%1)*r.len)},properties:{wave:r.wave}});}
   map.getSource('walkers').setData({type:'FeatureCollection',features:f}); }
 FX.push(stepWalkers);
+// best-placed overnight sites when none has a known capacity (same ranking as the plan, 400 m apart): amber pins + list, not in the run
+const recSites=()=>E.shelters.length?[]:(E.cands||[]).filter(c=>c.stay==='overnight'&&c.access!==false&&c.near).sort((a,b)=>b.score-a.score).filter((c,i,a)=>a.slice(0,i).every(p=>mDist(p.c,c.c)>400)).slice(0,5);
 function drawShelters(){ markers.forEach(m=>m.remove()); markers=[]; if(!ready) return;
+  recSites().forEach((c,k)=>{const el=document.createElement('div'); el.className='pin unk'; el.innerHTML=`<span>${k+1}</span>`;
+    el.title=`${c.name||kindName(c.kind)}${nearTown(c.c)?' near '+nearTown(c.c):''}: recommended site, capacity to be checked`; el.onclick=e=>{ e.stopPropagation(); map.flyTo({center:c.c,zoom:16,duration:1000}); };
+    markers.push(new maplibregl.Marker({element:el,anchor:'bottom-left'}).setLngLat(c.c).addTo(map));});
   E.shelters.forEach((s,k)=>{const el=document.createElement('div'); el.className='pin'+(s.auto?'':' you'); el.innerHTML=`<span>${k+1}</span>`;
     el.title=`${s.name}: ${fmtFull(E.plan?.load[k]||0)} of ${fmtFull(capOf(k))} places used`; el.onclick=e=>{ e.stopPropagation(); selectShelter(k); flyTo(k); };
     markers.push(new maplibregl.Marker({element:el,anchor:'bottom-left'}).setLngLat(s.c).addTo(map));});
@@ -113,7 +118,7 @@ function drawShelters(){ markers.forEach(m=>m.remove()); markers=[]; if(!ready) 
 // closest town name (OpenStreetMap labels), to locate sites the data gives no name for
 const nearTown=p=>{ let b=null,bd=Infinity; for(const t of D.towns||[]){ const d=mDist(p,t.c); if(d<bd){bd=d; b=t;} } return bd<4000?b.name:''; };
 function drawShelterList(){ const ul=$('safeList'),P=E.plan;
-  const best=(E.cands||[]).filter(c=>c.stay==='overnight'&&c.access!==false&&c.near).sort((a,b)=>b.score-a.score).filter((c,i,a)=>a.slice(0,i).every(p=>mDist(p.c,c.c)>400)).slice(0,5);
+  const best=recSites();
   ul.innerHTML=!E.shelters.length?(best.length?`<li class="hint"><b>Recommended sites, capacity to be checked</b>: dry, outside every mapped flood, close to the people at risk. No published capacity or floor area for them, so they are not in the evacuation run: ask the commune for the places, or set "Places when size unknown" below.</li>`
       +best.map((c,k)=>`<li class="shel"><button data-cand="${E.cands.indexOf(c)}"><span class="n">${k+1}</span><span><b>${esc(c.name||kindName(c.kind))}</b> <span class="hint" style="margin:0">${c.name?kindName(c.kind)+' · ':''}${nearTown(c.c)?'near '+esc(nearTown(c.c))+' · ':''}capacity to be checked</span><br>${chips(c)}</span></button></li>`).join('')
     :'<li class="hint">No shelter found: no school, sports hall, community centre or shelter outside the mapped floods with a dry road. Add one on the map.</li>'):E.shelters.map((s,k)=>{const ld=P?.load[k]||0,full=ld>=capOf(k);

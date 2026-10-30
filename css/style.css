@@ -380,3 +380,4 @@ body.nopanel .panelbtn{width:auto;padding:0 8px;height:40px;font-size:13px}
 
 /* simpler screen (team choice): no Guided demo, Explain or Load team data buttons, no counter bar over the map (the numbers stay in the side panel) */
 #tourBtn,#helpBtn,#openData,#hud{display:none!important}
+.pin.unk{background:var(--unk)} /* recommended site, capacity to be checked */
