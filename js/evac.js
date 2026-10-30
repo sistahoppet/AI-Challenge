@@ -110,8 +110,13 @@ function drawShelters(){ markers.forEach(m=>m.remove()); markers=[]; if(!ready) 
   pinVis(); }
 
 /* ---------- panel ---------- */
+// closest town name (OpenStreetMap labels), to locate sites the data gives no name for
+const nearTown=p=>{ let b=null,bd=Infinity; for(const t of D.towns||[]){ const d=mDist(p,t.c); if(d<bd){bd=d; b=t;} } return bd<4000?b.name:''; };
 function drawShelterList(){ const ul=$('safeList'),P=E.plan;
-  ul.innerHTML=!E.shelters.length?'<li class="hint">No shelter in the plan: add one from the candidates below or on the map.</li>':E.shelters.map((s,k)=>{const ld=P?.load[k]||0,full=ld>=capOf(k);
+  const best=(E.cands||[]).filter(c=>c.stay==='overnight'&&c.access!==false&&c.near).sort((a,b)=>b.score-a.score).filter((c,i,a)=>a.slice(0,i).every(p=>mDist(p.c,c.c)>400)).slice(0,5);
+  ul.innerHTML=!E.shelters.length?(best.length?`<li class="hint"><b>Recommended sites, capacity to be checked</b>: dry, outside every mapped flood, close to the people at risk. No published capacity or floor area for them, so they are not in the evacuation run: ask the commune for the places, or set "Places when size unknown" below.</li>`
+      +best.map((c,k)=>`<li class="shel"><button data-cand="${E.cands.indexOf(c)}"><span class="n">${k+1}</span><span><b>${esc(c.name||kindName(c.kind))}</b> <span class="hint" style="margin:0">${c.name?kindName(c.kind)+' · ':''}${nearTown(c.c)?'near '+esc(nearTown(c.c))+' · ':''}capacity to be checked</span><br>${chips(c)}</span></button></li>`).join('')
+    :'<li class="hint">No shelter found: no school, sports hall, community centre or shelter outside the mapped floods with a dry road. Add one on the map.</li>'):E.shelters.map((s,k)=>{const ld=P?.load[k]||0,full=ld>=capOf(k);
     return `<li class="shel"><button data-k="${k}"><span class="n${s.auto?'':' you'}">${k+1}</span><span><b>${esc(s.name)}</b> <span class="hint" style="margin:0">${s.kind?`${kindName(s.kind)} · ${STAY[s.stay]||''}`:s.auto?'':'added by you'}</span>
       ${s.dmin!=null&&s.src?`<br>${chips(s)}`:s.desc?`<br><span class="hint" style="margin:0">${esc(s.desc)}</span>`:''}</span></button>
       <span class="capbox"><span class="mono">${fmtFull(capOf(k))} places</span><span class="mono">${fmtFull(ld)} planned${full?' · FULL':''}</span>
@@ -140,7 +145,8 @@ $('evAdd').onclick=()=>{E.adding=!E.adding; $('evAdd').setAttribute('aria-presse
 $('evResetS').onclick=()=>{evacReset(); toast('Shelters reset to the safest places');};
 $('safeList').onchange=e=>{const i=e.target.dataset.cap; if(i!=null){const v=+e.target.value; if(v>=0){E.shelters[+i].userCap=v; makePlan();}}};
 $('candList').onclick=e=>{const b=e.target.closest('[data-add]'); if(b){E.shelters.push(asShelter(E.cands[+b.dataset.add])); makePlan(); toast('Added to the plan');}};
-$('safeList').onclick=e=>{ if(e.target.closest('input')) return; const d=e.target.closest('[data-del]'); if(d){E.shelters.splice(+d.dataset.del,1); makePlan(); return;} const b=e.target.closest('[data-k]'); if(b) flyTo(+b.dataset.k);};
+$('safeList').onclick=e=>{ if(e.target.closest('input')) return; const d=e.target.closest('[data-del]'); if(d){E.shelters.splice(+d.dataset.del,1); makePlan(); return;} const b=e.target.closest('[data-k]'); if(b) flyTo(+b.dataset.k);
+  const c=e.target.closest('[data-cand]'); if(c) map.flyTo({center:E.cands[+c.dataset.cand].c,zoom:16,duration:1000});};
 $('evGroups').onclick=e=>{const b=e.target.closest('[data-r]'); if(!b) return; const r=E.plan.routes[+b.dataset.r]; map.fitBounds(bboxOf([r.pts]),{padding:80,duration:1000,pitch:map.getPitch(),bearing:map.getBearing()});};
 function onMapClick(e){ const p=[e.lngLat.lng,e.lngLat.lat]; if(apiPick(p)||abPick(p)) return;
   if(E.adding){ E.adding=false; $('evAdd').setAttribute('aria-pressed',false); map.getCanvas().style.cursor='';

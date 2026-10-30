@@ -46,7 +46,7 @@ $('critList').onclick=e=>{const b=e.target.closest('[data-c]'); if(b) map.flyTo(
    Floors = height ÷ 3.5 m (at least 1). Hard rules: dry in every flood size, not flooded in 2021, ≥ 150 m from flood water.
    Ranking: equal weights on 4 criteria (each as a rank among candidates): residents at risk within 1.5 km, capacity,
    height above the nearest flood water (DEM + EFAS 1-in-500), distance to flood water. No dry road at the biggest flood halves the score. */
-const STYPE={school:'overnight',sports_hall:'overnight',community_centre:'overnight',stadium:'assembly',park:'assembly'};
+const STYPE={school:'overnight',sports_hall:'overnight',community_centre:'overnight',stadium:'assembly',park:'assembly',shelter:'overnight',candidate_shelter:'overnight'};
 const STAY={overnight:'Overnight shelter',assembly:'Assembly point'};
 function floorArea(p){ if(p.area) return {a:p.area,h:p.h,src:'OSM footprint'}; let best=null;
   for(const b of D.blds) if(b.use===2&&b.area>(best?.area||0)&&mDist(p.c,b.c)<=60) best=b;

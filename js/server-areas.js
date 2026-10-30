@@ -75,7 +75,7 @@ async function aoiTowns(){ if(!map) return; await new Promise(r=>setTimeout(r,15
   const big=t[ct!=null&&n[ct]>0?ct:best(['city','town','village','suburb'])].name;
   STUDY.name=`${STUDY.info?.country||''} · ${big} area${STUDY.part?' (part)':''}`; STUDY.near=big;
   try{ const m=JSON.parse(localStorage.getItem('fse-aoi-names')||'{}'); m[STUDY.server]=big; localStorage.setItem('fse-aoi-names',JSON.stringify(m)); }catch(e){}
-  drawCities(); }
+  drawCities(); if(typeof drawShelterList==='function') drawShelterList(); }
 const aoiName=code=>{ try{ return JSON.parse(localStorage.getItem('fse-aoi-names')||'{}')[code]||''; }catch(e){ return ''; } };
 
 /* ---------- Data sources: where every layer and number of the loaded area comes from ---------- */
