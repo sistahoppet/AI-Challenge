@@ -40,7 +40,7 @@ function fwChart(k){ const r=rp(),dataSrc=isDemo?'DEMO DATA':'Data: EFAS, GHS-PO
       csv:[['group','available_min','clearance_min','people'],...rows.map(x=>[x.label,Math.round(x.a),Math.round(x.b),Math.round(x.people)])]}; }
   if(k==='fwG6'){ const rows=D.rps.map(rr=>{const P=planFor(rr),prot=P.moved-P.slow,v=Math.round(P.total?prot/P.total*100:0);
       return {label:`${sizeWord(rr)} (1-in-${rr})`,value:v,txt:`${v}% (${fmt(prot)} of ${fmt(P.total)})`,people:prot,total:P.total,color:css('--c-mod')};});
-    return {kind:'bar',title:'UNDRR G-6: share of at-risk residents protected by pre-emptive evacuation (%)',sub:'Protected = has a shelter place and clears before the time available runs out (same rule as the evacuation plan).',rows,src:dataSrc+' · estimate from the evacuation plan, not HEC-FIA',
+    return {kind:'bar',title:'Safe evacuation coverage, inspired by UNDRR G-6 (not the official indicator): at-risk residents with a place who clear in time (%)',sub:'Protected = has a shelter place and clears before the time available runs out (same rule as the evacuation plan).',rows,src:dataSrc+' · estimate from the evacuation plan, not HEC-FIA',
       csv:[['flood_size','protected','at_risk','G6_percent'],...rows.map(x=>[x.label,Math.round(x.people),Math.round(x.total),x.value])]}; }
   if(k==='fwAAL'){ const pts=D.rps.map(rr=>({r:rr,p:100/rr,n:peak(rr).people})).sort((a,b)=>b.p-a.p);
     return {kind:'line',title:'Risk curve: residents in flooded areas vs yearly chance',sub:`AAL logic (UNDRR) applied to people, as no € damage data is loaded: area under the curve ≈ ${fmt(expectedAnnual())} residents affected per year on average.`,
