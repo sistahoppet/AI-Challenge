@@ -99,6 +99,7 @@
         <button role="tab" aria-selected="true" data-t="sim">Simulate</button>
         <button role="tab" aria-selected="false" data-t="safety">Evacuate</button>
         <button role="tab" aria-selected="false" data-t="coord">Alert</button>
+        <button role="tab" aria-selected="false" data-t="fc">Forecast</button>
         <button role="tab" aria-selected="false" data-t="diag">Diagrams</button>
         <button role="tab" aria-selected="false" data-t="api">Live model</button>
         <button role="tab" aria-selected="false" data-t="policy">Policy</button>
@@ -258,6 +259,43 @@
         </div>
       </div>
 
+      <div class="tabbody" id="tab-fc" hidden>
+        <div>
+          <h2>Flood forecast model</h2>
+          <p class="hint" style="margin:0 0 8px">Rain and how wet the ground is → river flow → flood size → people and buildings in the water. Trained in your browser on 40 years of rain (ERA5) and river flow (GloFAS) for the river point of the loaded area: external data from Open-Meteo, not challenge data.</p>
+          <div class="row" style="justify-content:flex-start"><button class="btn sm primary" id="fcTrain">Train model</button></div>
+          <p class="hint" id="fcModel"></p>
+        </div>
+        <div>
+          <h2>1 · Sandbox: what if the conditions change?</h2>
+          <div class="form">
+            <label>Rain day 1: <b id="fcR1V"></b><input type="range" id="fcR1" min="0" max="150" value="20"></label>
+            <label>Rain day 2: <b id="fcR2V"></b><input type="range" id="fcR2" min="0" max="150" value="10"></label>
+            <label>Rain day 3: <b id="fcR3V"></b><input type="range" id="fcR3" min="0" max="150" value="0"></label>
+            <label>Rain in the 30 days before (how wet the ground is): <b id="fcPastV"></b><input type="range" id="fcPast" min="0" max="300" value="60"></label>
+            <label>Month<select class="btn" id="fcMonth"><option value="1">January</option><option value="2">February</option><option value="3">March</option><option value="4">April</option><option value="5">May</option><option value="6">June</option><option value="7" selected>July</option><option value="8">August</option><option value="9">September</option><option value="10">October</option><option value="11">November</option><option value="12">December</option></select></label>
+          </div>
+          <div class="row" style="justify-content:flex-start;margin-top:8px"><button class="btn sm" id="fc21">Use July 2021</button></div>
+          <div id="fcSOut" style="margin-top:8px"></div>
+        </div>
+        <div>
+          <h2>2 · Now: today's data</h2>
+          <p class="hint" style="margin:0 0 8px">Last 60 days of rain + the 16-day rain forecast through the model, next to the GloFAS river-flow forecast.</p>
+          <div class="row" style="justify-content:flex-start"><button class="btn sm primary" id="fcLive">Load today's forecast</button></div>
+          <div class="wxbox" style="margin-top:8px"><div id="fcChart"></div></div>
+          <div id="fcLOut"></div>
+        </div>
+        <div>
+          <div class="row" style="justify-content:flex-start"><button class="btn sm" id="fcShow">Show the last result on the map</button></div>
+          <ul class="limits" style="margin-top:8px">
+            <li>Predicts the GloFAS river flow (a model, ~5 km), not gauge readings. Rivers with an upstream area under ~500 km² and town drainage floods are not covered.</li>
+            <li>One river point for the whole area; rain is the plain mean of a few points around it.</li>
+            <li>Vesdre check (trained 1984–2014, tested 2015–2021): July 2021 flagged beyond the 1-in-500 flow, one day late; of 2 weeks above the 1-in-10 flow, 1 caught, with 2 false alarms.</li>
+            <li>Numbers use EFAS depths blended between the 1-in-10/100/500 maps; the map shows the rarest of those maps not beyond the predicted flood.</li>
+            <li>A planning aid, not a warning: official warnings come from the national services (e.g. SPW / IRM in Belgium, DWD in Germany).</li>
+          </ul>
+        </div>
+      </div>
       <div class="tabbody" id="tab-diag" hidden>
         <div>
           <h2>Pick a diagram</h2>
@@ -435,6 +473,7 @@
 <script src="js/respond.js"></script>
 <script src="js/places.js"></script>
 <script src="js/weather.js"></script>
+<script src="js/forecast.js"></script>
 <script src="js/impact.js"></script>
 <script src="js/response.js"></script>
 <script src="js/api.js"></script>
