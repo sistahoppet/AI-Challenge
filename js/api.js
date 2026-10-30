@@ -6,15 +6,17 @@
 // served from valencia (hosted copy) → the live API on the same host; elsewhere (laptop preview) → the :8081 test server
 const API_DEFAULT=/^valencia\b|^100\.108\.90\.108$/.test(location.hostname)?`http://${location.hostname}:8080`:'http://valencia.tail142ce3.ts.net:8081';
 const A={url:(new URLSearchParams(location.search).get('api')||(()=>{try{return localStorage.getItem('fse-api');}catch(e){return null;}})()||API_DEFAULT).replace(/\/+$/,''),
-  ok:false,area:null,pick:null,corner:null,helper:null,req:null,shelters:null,busy:0,cells:[]};
+  ok:false,area:null,pick:null,corner:null,helper:null,req:null,shelters:null,busy:0,cells:[],res:{}};
 
 /* ---------- calls ---------- */
 async function api(path,body,method){
   let r; try{ r=await fetch(A.url+path,{method:method||(body?'POST':'GET'),headers:body?{'content-type':'application/json'}:{},body:body?JSON.stringify(body):undefined}); }
   catch(e){ setApiOk(false); throw new Error('The API can\'t be reached at '+A.url+'. Check the address and that you are on the team network (Tailscale).'); }
   const j=await r.json().catch(()=>({error:'HTTP '+r.status}));
-  if(!r.ok) throw new Error(j.error||('HTTP '+r.status)); return j;
+  if(!r.ok) throw new Error(j.error||('HTTP '+r.status)); keepRes(path,j); return j;
 }
+// last result of each model run, sent to the policy API by policy.js
+function keepRes(path,j){ const k=path.split('?')[0].slice(1); if(['flood','evacuation','timeline','region','impact','models'].includes(k)&&j&&!j.job){ A.res[k]=j; if(typeof policyForm==='function') policyForm(); } }
 // slow runs (new areas, help zones): ?async=1 returns a job at once, then poll /jobs/{id} so the browser never waits minutes on one request
 async function apiJob(path,body,out){
   const t0=Date.now(); let j=await api(path+(path.includes('?')?'&':'?')+'async=1',body);
@@ -22,7 +24,7 @@ async function apiJob(path,body,out){
     await new Promise(r=>setTimeout(r,3000));
     let r; try{ r=await fetch(`${A.url}/jobs/${j.job}`,{cache:'no-store'}); }catch(e){ throw new Error('Lost the API while waiting; try again.'); }
     const k=await r.json().catch(()=>({error:'HTTP '+r.status}));
-    if(r.status===202) continue; if(!r.ok) throw new Error(k.error||('HTTP '+r.status)); return k; }
+    if(r.status===202) continue; if(!r.ok) throw new Error(k.error||('HTTP '+r.status)); keepRes(path,k); return k; }
   return j; }
 const fileUrl=u=>typeof u==='string'&&u.startsWith('/files/')?A.url+u:null;
 function setApiOk(ok){ A.ok=ok; const b=$('apiBadge'); b.textContent=ok?'API ONLINE':'API OFFLINE'; b.classList.toggle('real',ok);
@@ -221,4 +223,4 @@ $('apiGo').onclick=()=>{ A.url=$('apiUrl').value.trim().replace(/\/+$/,''); try{
 $('aStudy').onclick=()=>D&&setArea(D.bbox);
 $('aView').onclick=()=>{ const b=map.getBounds(); setArea([b.getWest(),b.getSouth(),b.getEast(),b.getNorth()]); };
 $('aDraw').onclick=()=>startPick('box','Click one corner of the area on the map');
-function apiInit(){ apiConnect(); if(map) (ready?apiLayers():map.once('load',apiLayers)); }
+function apiInit(){ apiConnect(); policyInit(); if(map) (ready?apiLayers():map.once('load',apiLayers)); }

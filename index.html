@@ -382,6 +382,26 @@
         <div>
           <details><summary style="cursor:pointer"><h2 style="display:inline">8 · The models and how well they work</h2></summary><div id="mOut"><p class="hint">Loading…</p></div></details>
         </div>
+        <div>
+          <h2>9 · Which policy should the mayor take?</h2>
+          <p class="hint" style="margin:0 0 8px">Sends the results of the runs above to the team's policy advisor. It picks from our policies (Policy Brief, Policies since the 2021 flood) and cites the model numbers it used.</p>
+          <div class="row" style="justify-content:flex-start"><input class="btn" id="pUrl" style="flex:1;min-width:0" aria-label="Policy API address"><button class="btn sm" id="pGo">Connect</button></div>
+          <p class="hint" id="pState">Connecting…</p>
+          <div class="form">
+            <label>Answer by<select class="btn" id="pProv"><option value="claude">Claude (Anthropic API key)</option><option value="local">Local model</option><option value="rules">Rules only (no AI, instant)</option></select></label>
+            <label>Language<select class="btn" id="pLang"><option>English</option><option>Français</option><option>Nederlands</option><option>Deutsch</option></select></label>
+            <label>Question <span class="tag">optional</span><input class="btn" id="pQ" placeholder="Which policies first, in which order?"></label>
+          </div>
+          <div id="pKeyRow" style="margin-top:8px">
+            <div class="row" style="justify-content:flex-start;align-items:center"><input class="btn" id="pKey" type="password" autocomplete="off" placeholder="sk-ant-…" style="flex:1;min-width:0" aria-label="Claude API key"><button class="btn sm" id="pForget">Forget</button></div>
+            <label style="font-size:14px"><input type="checkbox" id="pKeep"> remember on this device</label>
+            <p class="hint" id="pKeyHint" style="margin:4px 0 0"></p>
+            <p class="hint" style="margin:2px 0 0">The key goes only to the team policy API, for this one request; the server does not store or log it. Not remembered = gone when you close the tab.</p>
+          </div>
+          <p class="hint" id="pInputs"></p>
+          <div class="row" style="justify-content:flex-start;margin-top:8px"><button class="btn sm primary" id="pRun">Get policy advice</button></div>
+          <div id="pOut"></div>
+        </div>
       </div>
 
       <div class="tabbody" id="tab-policy" hidden>
@@ -477,6 +497,7 @@
 <script src="js/impact.js"></script>
 <script src="js/response.js"></script>
 <script src="js/api.js"></script>
+<script src="js/policy.js"></script>
 <script src="js/player.js"></script>
 <script src="js/camera.js"></script>
 <script src="js/panels.js"></script>
