@@ -127,7 +127,7 @@ async function openReport(){ const R=DR.run; if(!R){ toast('Run the simulation f
   ${towns.length?`<table><thead><tr><th>Town / village</th><th class="n">Residents in water</th><th class="n">Buildings in water</th><th class="n">Area, km²</th></tr></thead><tbody>${towns.slice(0,15).map(t=>`<tr><td>${esc(t.name)} <span class="s">${t.cls}</span></td><td class="n">${fmtFull(t.res)}</td><td class="n">${fmtFull(t.bld)}</td><td class="n">${(t.area/1e6).toFixed(2)}</td></tr>`).join('')}</tbody></table><div class="s">Each ${Math.round(D.G.m)} m cell counted in the closest named place (OpenStreetMap). ${towns.length>15?`${towns.length-15} more places in the data files.`:''}</div>`:''}
 
   <h2>What has changed since 2021</h2>
-  ${q2?`<table><thead><tr><th>Area</th><th>Measure</th><th>Type</th><th>Date</th><th>Source</th><th>Verified</th></tr></thead><tbody>${q2.map(x=>`<tr><td>${esc(x.area||'')}</td><td>${esc(x.measure||'')}</td><td>${esc(x.type||'')}</td><td>${esc(x.date||'')}</td><td class="s">${srcLink(x)}</td><td>${isVer(x)?'✓':'✗'}</td></tr>`).join('')}</tbody></table>`
+  ${q2?`<table><thead><tr><th>Area</th><th>Measure</th><th>Type</th><th>Date</th><th>Source</th><th>Official source</th></tr></thead><tbody>${q2.map(x=>`<tr><td>${esc(x.area||'')}</td><td>${esc(x.measure||'')}</td><td>${esc(x.type||'')}</td><td>${esc(x.date||'')}</td><td class="s">${srcLink(x)}</td><td>${isVer(x)?'✓':'✗'}</td></tr>`).join('')}</tbody></table>`
    :notes?`<div class="note">${esc(notes)}</div>`:'<p class="s">Desk research of the team: not documented yet.</p>'}
   <p class="s">The model maps are the same before and after 2021: new defences, rebuilt or abandoned buildings are not in the data, so the numbers above describe exposure without them.</p>
 
