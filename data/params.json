@@ -95,7 +95,11 @@
   "unit": "%",
   "status": "assumption",
   "source": "",
-  "note": "evidence: ~4.5% went to public centres in Limburg 2021 (Endendijk 2023); Verviers plan 600 beds for ~4,600 people (~13%); 25% keeps a large margin"
+  "note": "evidence: ~4.5% went to public centres in Limburg 2021 (Endendijk 2023); Verviers plan 600 beds for ~4,600 people (~13%); 25% keeps a large margin",
+  "range": [
+   5,
+   50
+  ]
  },
  "riverbankM": {
   "value": 50,
@@ -173,5 +177,30 @@
   "status": "placeholder",
   "source": "",
   "note": "Impact table: illustrative until data arrives"
+ },
+ "riseH": {
+  "value": null,
+  "range": [
+   3,
+   6
+  ],
+  "unit": "h",
+  "status": "sourced",
+  "source": "Walloon Parliament inquiry 2022 (Vesdre timeline): ~0–3 h between alerts and the water",
+  "note": "lower/higher rise times tested in the report's sensitivity table (Annex B)"
+ },
+ "dryProofMaxM": {
+  "value": 0.9,
+  "unit": "m",
+  "status": "sourced (to verify)",
+  "source": "FEMA P-312 Homeowner's Guide to Retrofitting (2014): dry flood-proofing generally limited to about 3 ft",
+  "note": "upper depth for 'keep the water out' measures in the report's building section"
+ },
+ "wetProofMaxM": {
+  "value": 2,
+  "unit": "m",
+  "status": "assumption",
+  "source": "",
+  "note": "above this depth the building alone cannot be protected: buy-out / relocation candidates"
  }
 }
