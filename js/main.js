@@ -7,7 +7,7 @@ function showGuide(on){$('guide').hidden=!on; document.body.classList.toggle('ex
 $('helpBtn').onclick=()=>showGuide($('guide').hidden); $('guideOk').onclick=()=>{showGuide(false); store.set('fse-guide','1');};
 
 function load(data,demo){
-  D=data; computeZones(D); isDemo=demo; peakCache={}; S.sizeIdx=Math.min(1,D.rps.length-1); S.T=0; setPlaying(false);
+  D=data; computeZones(D); riverbank(D); isDemo=demo; peakCache={}; S.sizeIdx=Math.min(1,D.rps.length-1); S.T=0; setPlaying(false);
   $('dataBadge').textContent=demo?'DEMO DATA':'TEAM DATA'; $('dataBadge').classList.toggle('real',!demo);
   buildSources(); drawSize(); drawLegend(); drawZones(); drawActor(); drawAgree(); drawCmp(); drawDList();
   if(!map) initMap(); else if(ready){ refreshData(); applyLayers(); render(); map.fitBounds(D.bbox,{padding:50}); }

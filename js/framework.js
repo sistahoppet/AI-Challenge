@@ -35,7 +35,7 @@ function fwChart(k){ const r=rp(),dataSrc=isDemo?'DEMO DATA':'Data: EFAS, GHS-PO
       ['8 · Economic evaluation','NPV and BCR (European Commission)','◐ Single-intervention BCR with hypothetical €']]};
   if(k==='fwClear'){ const P=E.plan; if(!P) return {kind:'empty',title:'Evacuation clearance time',sub:'The evacuation plan is not ready yet.',src:dataSrc,csv:[['note'],['no plan']]};
     const rows=P.routes.filter(x=>isFinite(x.avail)).map(x=>({label:`Wave ${x.wave} · ${fmtFull(x.people)} people → shelter ${x.k+1}`,a:x.avail,b:x.clear,people:x.people})).sort((a,b)=>(a.a-a.b)-(b.a-b.b)).slice(0,14),late=rows.filter(x=>x.b>x.a).length;
-    return {kind:'dumbbell',title:'Can people leave before the water arrives?',sub:`T clearance = ${FW.mob} min to get ready + walking time (real route) + ${FW.delay} min delay. T available = warning lead time (${SC.leadMin} min) or less if the water arrives sooner. ${late} of these ${rows.length} are too late.`,
+    return {kind:'dumbbell',title:'Can people leave before the water arrives?',sub:`T clearance = ${FW.mob} min to get ready + driving time (real route) + ${FW.delay} min delay. T available = warning lead time (${SC.leadMin} min) or less if the water arrives sooner. ${late} of these ${rows.length} are too late.`,
       rows,aName:'Time available',bName:'Clearance time',xTitle:'minutes',src:dataSrc+' · same rule as the evacuation plan; mobilisation, delay and lead time are assumptions (Evacuate tab)',
       csv:[['group','available_min','clearance_min','people'],...rows.map(x=>[x.label,Math.round(x.a),Math.round(x.b),Math.round(x.people)])]}; }
   if(k==='fwG6'){ const rows=D.rps.map(rr=>{const P=planFor(rr),prot=P.moved-P.slow,v=Math.round(P.total?prot/P.total*100:0);

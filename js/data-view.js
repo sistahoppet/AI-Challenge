@@ -48,9 +48,17 @@ const DSETS=[
     rows:()=>[['date','rain_mm','rain_48h_mm'],...(WX.data?.replayRain||[]).map(r=>[r.t,r.mm.toFixed(1),r.mm48.toFixed(1)])]}];
 const allSets=()=>[...DSETS,...DV.user];
 
+/* ---------- assumptions and sources: the parameter registry (data/params.json) ---------- */
+const PTAG={sourced:'<span class="tag data">sourced</span>',assumption:'<span class="tag">assumption</span>',placeholder:'<span class="tag">placeholder</span>'};
+function paramsCard(){ const P=PARAMS||{},n=k=>Object.values(P).filter(x=>x.status===k).length;
+  return `<div class="dcard"><div class="dhead"><b>Assumptions and sources</b><span class="tag">data/params.json</span></div>
+    <div class="hint" style="margin:2px 0">Every number the model uses: ${n('sourced')} sourced, ${n('assumption')} team assumptions, ${n('placeholder')} placeholders until data arrives. Edit the file to change them.</div>
+    <details class="cands"><summary>Show all ${Object.keys(P).length}</summary><table class="tbl"><thead><tr><th>Name</th><th>Value</th><th>Status</th><th>Source / note</th></tr></thead><tbody>${
+    Object.entries(P).map(([k,x])=>`<tr><td class="mono">${esc(k)}</td><td class="mono">${esc(x.value)} ${esc(x.unit||'')}</td><td>${PTAG[x.status]||esc(x.status||'')}</td><td class="hint">${esc([x.source,x.note].filter(Boolean).join(' · ')||'—')}</td></tr>`).join('')}</tbody></table></details></div>`; }
+
 /* ---------- cards ---------- */
 function drawData(){ if(!D) return;
-  $('dataCards').innerHTML=allSets().map(d=>`<div class="dcard"><div class="dhead"><b>${esc(d.name)}</b><span class="tag ${d.kind==='challenge'?'data':''}">${d.kind==='challenge'?'challenge data':d.kind==='user'?'your file':'external source'}</span></div>
+  $('dataCards').innerHTML=paramsCard()+allSets().map(d=>`<div class="dcard"><div class="dhead"><b>${esc(d.name)}</b><span class="tag ${d.kind==='challenge'?'data':''}">${d.kind==='challenge'?'challenge data':d.kind==='user'?'your file':'external source'}</span></div>
     <div class="hint" style="margin:2px 0">${esc(d.src)}</div><div class="mono dfile">${esc(d.file)}</div>
     <div style="font-size:13px;margin:4px 0">${esc(d.count())}<br><span class="hint" style="margin:0">Fields: ${esc(d.fields())}</span></div>
     <div class="row" style="justify-content:flex-start">${d.layer?`<button class="btn sm" data-show="${d.id}" aria-pressed="${DV.on.has(d.id)}">${DV.on.has(d.id)?'Hide on map':'Show on map'}</button>`:''}<button class="btn sm" data-table="${d.id}">Table</button>${d.kind==='user'?`<button class="btn sm" data-zoom="${d.id}">Zoom to</button><button class="btn sm" data-del="${d.id}">Remove</button>`:''}</div></div>`).join('');
@@ -62,7 +70,7 @@ $('dataCards').onclick=e=>{ const b=e.target.closest('button'); if(!b) return; c
   if(b.dataset.del){ DV.on.delete(id); if(map.getLayer('raw-'+id)) map.removeLayer('raw-'+id); if(map.getSource(id)) map.removeSource(id); DV.user=DV.user.filter(x=>x!==d); drawData(); } };
 
 /* ---------- raw layers only in the Data tab (simulation layers hidden there) ---------- */
-const SIMLAYERS=['water-img','water-3d','bld-2d','bld-hit','bld-3d','people','cars','roads-cut','roads-dmg','zones','zones-tex','obs-fill','obs-line','places','places-lab','places-name','ab-safe','ab-normal'];
+const SIMLAYERS=['water-img','water-3d','bld-2d','bld-hit','bld-3d','bld-rb','people','cars','roads-cut','roads-dmg','zones','zones-tex','obs-fill','obs-line','places','places-lab','places-name','ab-safe','ab-normal'];
 const _alData=applyLayers; applyLayers=function(){ _alData(); if(!ready) return; const inData=S.tab==='data';
   if(inData) SIMLAYERS.forEach(id=>map.getLayer(id)&&map.setLayoutProperty(id,'visibility','none'));
   allSets().forEach(d=>{ const l='raw-'+d.id; if(map.getLayer(l)) map.setLayoutProperty(l,'visibility',inData&&DV.on.has(d.id)?'visible':'none'); });

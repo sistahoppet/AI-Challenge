@@ -37,24 +37,24 @@ function report(){ const r=rp(),pk=peak(r),P=E.plan,cc=pk.cc,km=cutKm(r,false),l
 
 ## Evacuation plan
 - People to move: ${fmtFull(P.total)} (${E.who==='red'?'red-zone residents':'everyone in the water'})
-- Reach a shelter in time on foot: ${fmtFull(P.moved-P.slow)}
+- Reach a shelter in time by car: ${fmtFull(P.moved-P.slow)}
 - Too far for the warning time: ${fmtFull(P.slow)} · No shelter place left: ${fmtFull(P.over)}
 - Routes follow ${P.kind==='streets'?'OpenStreetMap streets, avoiding deep water':'open ground (streets not loaded)'}
 
 | Shelter | Location (lat, lon) | People assigned | Capacity |
 |---|---|---|---|
-${E.shelters.map((s,k)=>`| ${k+1}. ${s.name} | ${ll(s.c)} | ${fmtFull(P.load[k]||0)} | ${fmtFull(capOf(k))}${s.cap?'':' (default)'} |`).join('\n')}
+${E.shelters.map((s,k)=>`| ${k+1}. ${s.name} | ${ll(s.c)} | ${fmtFull(P.load[k]||0)} | ${fmtFull(capOf(k))}${s.cap?'':s.userCap!=null?' (set by hand)':E.cap?' (your assumption)':' (unknown, not counted)'} |`).join('\n')}
 
-## Critical sites in the water (evacuate or protect first)
-${(D.places||[]).filter(p=>p.group==='critical'&&p.ci>=0&&D.cells[p.ci].depth[r]>.01).map(p=>`- ${kindName(p.kind)}: ${p.name||'(no name)'} (${ll(p.c)}), ${D.cells[p.ci].depth[r].toFixed(2)} m`).join('\n')||'- none found'}
+## Critical sites and schools in the water (evacuate or protect first)
+${(D.places||[]).filter(p=>(p.group==='critical'||p.kind==='school')&&p.ci>=0&&D.cells[p.ci].depth[r]>.01).map(p=>`- ${kindName(p.kind)}: ${p.name||'(no name)'} (${ll(p.c)}), ${D.cells[p.ci].depth[r].toFixed(2)} m`).join('\n')||'- none found'}
 
 ## Routes (wave 1 = water arrives first)
-| Wave | People | To shelter | Distance | On foot | In time? |
+| Wave | People | To shelter | Distance | By car | In time? |
 |---|---|---|---|---|---|
 ${P.routes.map(x=>`| ${x.wave} | ${fmtFull(x.people)} | ${x.k+1} | ${(x.len/1000).toFixed(1)} km | ${Math.round(x.min)} min | ${x.ok?'yes':'no'} |`).join('\n')}
 
 ## Assumptions (team choices, not data)
-- Shelter capacity: floor area ÷ ${SPHERE_M2} m² per person (Sphere standard) when the building size is known, else ${E.cap} people · walking speed ${E.speed} km/h · warning lead time ${SC.leadMin} min, ${FW.mob} min to get ready, ${FW.delay} min delay
+- Shelter capacity: floor area ÷ ${SPHERE_M2} m² per person (Sphere standard) when the building size is known, else ${E.cap} people · driving speed ${E.speed} km/h · warning lead time ${SC.leadMin} min, ${FW.mob} min to get ready, ${FW.delay} min delay
 - Streets under ${CAR_DEPTH} m of water or more count as closed to cars
 - Waves follow the order water arrives in the model (lowest ground first), not real timing
 
@@ -68,9 +68,9 @@ Sources: EFAS flood hazard maps, GHS-POP, GHS-OBAT, Copernicus EMS (2021 outline
 function planGeo(){ const P=E.plan,r=rp(),F=(g,p)=>({type:'Feature',geometry:g,properties:p});
   return JSON.stringify({type:'FeatureCollection',name:`evacuation_plan_rp${r}`,features:[
     ...E.shelters.map((s,k)=>F({type:'Point',coordinates:s.c},{kind:'shelter',id:k+1,name:s.name,assigned:P.load[k]||0,capacity:capOf(k)})),
-    ...(D.places||[]).filter(p=>p.group==='critical'&&p.ci>=0&&D.cells[p.ci].depth[r]>.01).map(p=>F({type:'Point',coordinates:p.c},{kind:'critical_in_water',type:p.kind,name:p.name,depth_m:D.cells[p.ci].depth[r]})),
+    ...(D.places||[]).filter(p=>(p.group==='critical'||p.kind==='school')&&p.ci>=0&&D.cells[p.ci].depth[r]>.01).map(p=>F({type:'Point',coordinates:p.c},{kind:p.kind==='school'?'school_in_water':'critical_in_water',type:p.kind,name:p.name,depth_m:D.cells[p.ci].depth[r]})),
     ...P.groups.map(g=>F({type:'Point',coordinates:g.c},{kind:'group',people:g.pop,wave:g.wave,no_place:g.left||0})),
-    ...P.routes.map(x=>F({type:'LineString',coordinates:x.pts},{kind:'route',wave:x.wave,people:x.people,shelter:x.k+1,km:+(x.len/1000).toFixed(2),minutes_on_foot:Math.round(x.min),in_time:x.ok})),
+    ...P.routes.map(x=>F({type:'LineString',coordinates:x.pts},{kind:'route',wave:x.wave,people:x.people,shelter:x.k+1,km:+(x.len/1000).toFixed(2),minutes_by_car:Math.round(x.min),in_time:x.ok})),
     ...cutPieces.filter(s=>(s.dep[r]||0)>CAR_DEPTH).map(s=>F({type:'LineString',coordinates:[s.a,s.b]},{kind:'closed_street',depth_m:+s.dep[r].toFixed(2)}))]}); }
 // convex hull of the people to move: the alert area
 function hull(ps){ ps=[...ps].sort((a,b)=>a[0]-b[0]||a[1]-b[1]); if(ps.length<3) return ps; const cr=(o,a,b)=>(a[0]-o[0])*(b[1]-o[1])-(a[1]-o[1])*(b[0]-o[0]),lo=[],up=[];

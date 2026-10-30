@@ -10,7 +10,7 @@
   --osm-urban:#e9e6e1; --osm-grass:#d9e8c8; --osm-wood:#b9d6a3; --osm-wood3:#7fae6a; --osm-river:#5aa9df; --osm-river-ink:#1d5f93;
   --osm-road:#ffffff; --osm-major:#f6cf7a; --osm-case:#b9bfc2; --osm-bld:#d6d0c8; --osm-label:#4a5a60; --osm-halo:#ffffff;
   --people:#3b4a52; --people-risk:#d4612b; --car:#2f6fd6; --cut:#e0213a; --walk:#ffffff;
-  --bt0:#d6cfc3; --bt1:#aab4bd; --bt2:#8e6bbf; --bt3:#4f9a72; --roof:#6d5a52; --roof-flat:#8a9399; --wave1:#d63b2f; --wave2:#ee8a1c; --wave3:#c9a400; --crit:#7b3fb5; --shel:#1f8f5a; --dmg:#6b3d1e; --unit:#1d4ed8;
+  --bt0:#d6cfc3; --bt1:#aab4bd; --bt2:#8e6bbf; --bt3:#4f9a72; --roof:#6d5a52; --roof-flat:#8a9399; --wave1:#d63b2f; --wave2:#ee8a1c; --wave3:#c9a400; --crit:#7b3fb5; --unk:#c98a00; --shel:#1f8f5a; --dmg:#6b3d1e; --unit:#1d4ed8; --clog:#d0198b;
   --f-display:"Barlow Condensed","Arial Narrow",Arial,sans-serif;
   --f-body:"Source Sans 3","Segoe UI",system-ui,sans-serif;
   --f-mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
@@ -21,14 +21,14 @@
   --c-both:#2a66a6; --c-mod:#4f9bd2; --c-obs:#c4851f;
   --osm-urban:#222f35; --osm-grass:#1f3226; --osm-wood:#24402c; --osm-wood3:#2f5a3a; --osm-river:#2b6e9c; --osm-river-ink:#9fd0f2;
   --osm-road:#3a4a51; --osm-major:#6b5a32; --osm-case:#2a373d; --osm-bld:#34434a; --osm-label:#b5c6cc; --osm-halo:#0f181c;
-  --bt0:#5d6670; --bt1:#47525c; --bt2:#9a7fd0; --bt3:#3f8f66; --roof:#3a3634; --roof-flat:#6b737a; --people:#c9d6db; --people-risk:#ff8a4c; --car:#6aa3ff; --cut:#ff4d63; --walk:#ffffff; --dmg:#c08a5a; --unit:#7aa7ff; --zr:#e5535d; --zy:#a8812a; --zg:#2aa595; color-scheme:dark}}
+  --bt0:#5d6670; --bt1:#47525c; --bt2:#9a7fd0; --bt3:#3f8f66; --roof:#3a3634; --roof-flat:#6b737a; --people:#c9d6db; --people-risk:#ff8a4c; --car:#6aa3ff; --cut:#ff4d63; --walk:#ffffff; --dmg:#c08a5a; --unit:#7aa7ff; --clog:#ff5fb6; --zr:#e5535d; --zy:#a8812a; --zg:#2aa595; --unk:#e0a93a; color-scheme:dark}}
 :root[data-theme="dark"]{
   --bg:#0f181c; --surface:#16232a; --ink:#e3edf0; --muted:#97abb2; --line:#2a3b42; --land:#1b272c;
   --accent:#4fb6d6; --accent-ink:#06222c; --bld:#66747a; --demo:#3b3014; --demo-ink:#f3d58a; --err:#ff8a7a;
   --c-both:#2a66a6; --c-mod:#4f9bd2; --c-obs:#c4851f;
   --osm-urban:#222f35; --osm-grass:#1f3226; --osm-wood:#24402c; --osm-wood3:#2f5a3a; --osm-river:#2b6e9c; --osm-river-ink:#9fd0f2;
   --osm-road:#3a4a51; --osm-major:#6b5a32; --osm-case:#2a373d; --osm-bld:#34434a; --osm-label:#b5c6cc; --osm-halo:#0f181c;
-  --bt0:#5d6670; --bt1:#47525c; --bt2:#9a7fd0; --bt3:#3f8f66; --roof:#3a3634; --roof-flat:#6b737a; --people:#c9d6db; --people-risk:#ff8a4c; --car:#6aa3ff; --cut:#ff4d63; --walk:#ffffff; --dmg:#c08a5a; --unit:#7aa7ff; --zr:#e5535d; --zy:#a8812a; --zg:#2aa595; color-scheme:dark}
+  --bt0:#5d6670; --bt1:#47525c; --bt2:#9a7fd0; --bt3:#3f8f66; --roof:#3a3634; --roof-flat:#6b737a; --people:#c9d6db; --people-risk:#ff8a4c; --car:#6aa3ff; --cut:#ff4d63; --walk:#ffffff; --dmg:#c08a5a; --unit:#7aa7ff; --clog:#ff5fb6; --zr:#e5535d; --zy:#a8812a; --zg:#2aa595; --unk:#e0a93a; color-scheme:dark}
 html,body{height:100%} body{margin:0} [hidden]{display:none!important}
 body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.45}
 *{box-sizing:border-box}

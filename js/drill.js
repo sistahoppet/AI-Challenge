@@ -1,6 +1,6 @@
 // drill.js - Evacuation over the event clock: people leave by car, shelters fill up, the next best shelter is searched automatically,
 // streets close as the water rises, people are caught at home. Choices are made before pressing play; "Best actions" tests every
-// combination and shows the sequence that leaves the fewest people unsafe. Deterministic: same inputs give the same result.
+// combination and shows the sequence that leaves the fewest people not evacuated. Deterministic: same inputs give the same result.
 // Loaded as a classic script: top-level names are shared between files (order set in index.html).
 //
 // Model (a scenario built on assumptions, not a prediction):
@@ -12,9 +12,9 @@
 //  - people still home when the water arrives: upstairs if their building (GHS-OBAT height) is ≥ water + one floor (3 m), else trapped
 //  - rescue teams take people out of danger at a fixed rate (people per hour) once mobilised (30 min after the first person is in danger)
 
-const DR={comply:80,capX:100,rescue:60,dec:{order:'plan',full:'redirect',help:'local'},run:null,prep:null,best:null,sel:null,mk:[]};
-const STOREY=3,NC=6,RESCUE_MOB=30,SUPPORT_X=3,EXTRA_LEAD=[0,60,120];
-const DR0={comply:80,capX:100,rescue:60,lead:180,mob:60,delay:15,speed:30}; // starting point for the scoreboard (defaults of the app)
+const DR={comply:80,capX:100,rescue:60,share:25,dec:{order:'plan',full:'redirect',help:'local'},run:null,prep:null,best:null,sel:null,mk:[]};
+let STOREY=3,NC=6,RESCUE_MOB=30,SUPPORT_X=3,EXTRA_LEAD=[0,60,120],SQUEEZE=.3,DOOR_BOOST=0; // values from data/params.json (applyParams)
+const DR0={comply:80,capX:100,rescue:60,lead:180,mob:60,delay:15,speed:20}; // starting point for the scoreboard (defaults of the app)
 const clockM=m=>m<0?`${clock(-m/SC.mins)} before start`:clock(m/SC.mins);
 
 /* ---------- inputs that depend on the plan and the water (rebuilt when either changes) ---------- */
@@ -25,7 +25,7 @@ function drillPrep(){ const P=E.plan; if(!P?.groups.length||!E.shelters.length) 
   const cellsOf=l=>{ if(l.cells) return l.cells; const out=[],seen=new Set(); for(let s=0;s<=l.len;s+=15){const p=along(l,s),i=G.at(p[0],p[1]),q=pixAt(p); if(seen.has(q+':'+i)) continue; seen.add(q+':'+i);
     const t=Math.min(i<0?Infinity:cutT(D.cells[i]),pixCut(q,r,F,M)); if(isFinite(t)) out.push([s,t]);} return l.cells=out; };
   const key=c=>Math.floor(c.gx/B)+':'+Math.floor(c.gy/B),up=new Map(); // share of residents whose building keeps a floor above the water (GHS-OBAT height)
-  for(const b of D.blds){ if(b.ci<0) continue; const c=D.cells[b.ci],d=c.depth[r]; if(!(d>.01)) continue; const k=key(c),w=b.pop||1,u=up.get(k)||up.set(k,{a:0,n:0}).get(k); u.n+=w; if(b.h>=d+STOREY) u.a+=w; }
+  for(const b of D.blds){ if(b.ci<0) continue; const c=D.cells[b.ci],d=c.depth[r]; if(!(d>.01)) continue; const k=key(c),w=b.pop||1,u=up.get(k)||up.set(k,{a:0,n:0}).get(k); u.n+=w; if(b.h>=d+STOREY&&!b.bank) u.a+=w; } // riverbank homes: upstairs unreliable, they must leave
   // when the water reaches the homes of a group: the residents' median moment (the group's first wet cell is often the riverbed)
   const tw=new Map(); for(const c of D.cells){ if(!c.pop||!(c.depth[r]>.01)) continue; (tw.get(key(c))||tw.set(key(c),[]).get(key(c))).push([floodStart(c,r),c.pop]); }
   const midT=k=>{ const a=(tw.get(k)||[]).sort((x,y)=>x[0]-y[0]),h=a.reduce((s,x)=>s+x[1],0)/2; let s=0; for(const [t,p] of a){ s+=p; if(s>=h) return t; } return null; };
@@ -39,7 +39,7 @@ function drillPrep(){ const P=E.plan; if(!P?.groups.length||!E.shelters.length) 
   return {groups,first:Math.min(...groups.map(g=>g.ts)),M,catchFC,rt:new Map(),rb:new Map()}; }
 
 // next best shelters after the chosen ones: all ranked candidates for an overnight stay with dry road access (places from floor area)
-function extraShelters(){ const inPlan=new Set(E.shelters.map(s=>s.src)); return (E.cands||[]).filter(c=>!inPlan.has(c)&&c.stay==='overnight'&&c.access!==false)
+function extraShelters(){ const inPlan=new Set(E.shelters.map(s=>s.src)); return (E.cands||[]).filter(c=>!inPlan.has(c)&&c.stay==='overnight'&&c.access!==false&&(c.cap>0||E.cap>0))
   .map(c=>({c:c.c,cap:c.cap||E.cap,name:c.name||kindName(c.kind),kind:c.kind,score:c.score})); }
 // road route between two shelters (one Dijkstra per full shelter, kept for the whole plan)
 function roadBetween(a,b){ const pk=a.join()+'>'+b.join(); if(DR.prep.rb.has(pk)) return DR.prep.rb.get(pk); const l=roadPath(a,b); DR.prep.rb.set(pk,l); return l; }
@@ -48,26 +48,27 @@ function roadPath(a,b){ const P=E.plan,g=P?.g; if(!g) return prepLine([a,b]); co
   const pts=[]; for(let u=j;u>=0;u=t.prev[u]) pts.push(g.pts[u]); return prepLine([a,...pts.reverse(),b]); }
 
 /* ---------- choices → model options ---------- */
-function drillOpts(dec=DR.dec,a={}){ const o={lead:SC.leadMin,comply:DR.comply/100,capX:DR.capX/100,mob:FW.mob,delay:FW.delay,v:E.speed*1000/60,rate:DR.rescue,...a};
+function drillOpts(dec=DR.dec,a={}){ const o={lead:SC.leadMin,comply:DR.comply/100,capX:DR.capX/100,mob:FW.mob,delay:FW.delay,v:E.speed*1000/60,rate:DR.rescue,share:DR.share/100,...a};
   return {...o,guide:dec.order==='near'?'near':'plan',door:dec.order==='door',tall:dec.order==='tall',lead:o.lead+(dec.early||0),full:dec.full||'redirect',support:dec.help==='nat'}; }
 
 /* ---------- one run: cohorts of people with a timeline of states ---------- */
-function simulate(o){ const pr=DR.prep; if(!pr) return null; const M=pr.M,W=pr.first-o.lead,comply=Math.min(1,o.comply+(o.door?.1:0));
+function simulate(o){ const pr=DR.prep; if(!pr) return null; const M=pr.M,W=pr.first-o.lead,comply=Math.min(1,o.comply+(o.door?DOOR_BOOST:0)),S0=Math.max(0,Math.min(1,o.share??1)); // S0: share of evacuees who need a public shelter, the others go to family/friends
   const sh=[...E.shelters.map((s,k)=>({c:s.c,name:s.name,cap:capOf(k)*o.capX})),...extraShelters().map(x=>({...x,cap:x.cap*o.capX,extra:true}))].map(s=>({...s,load:0,full:null,tl:[]}));
   // "tall": shelter places go first to people without a safe upper floor; the share f of the others that still fits leaves too, the rest stays upstairs
-  const C=sh.reduce((a,x)=>a+x.cap,0),need=pr.groups.reduce((a,g)=>a+g.pop*comply*(1-g.up),0),upN=pr.groups.reduce((a,g)=>a+g.pop*comply*g.up,0),f=o.tall?Math.max(0,Math.min(1,(C-need)/(upN||1))):1;
-  const capAt=s=>s.cap*(o.full==='pack'?1.3:1),co=[],arr=[],danger=[];
+  const C=sh.reduce((a,x)=>a+x.cap,0),need=pr.groups.reduce((a,g)=>a+g.pop*comply*(1-g.up)*S0,0),upN=pr.groups.reduce((a,g)=>a+g.pop*comply*g.up*S0,0),f=o.tall?Math.max(0,Math.min(1,(C-need)/(upN||1))):1;
+  const capAt=s=>s.cap*(o.full==='pack'?1+SQUEEZE:1),co=[],arr=[],danger=[];
   const wet=(c,t)=>{c.segs.push([t,'wet']); danger.push([t,c.n*(1-(c.up??c.g.up))]);};
   for(const g of pr.groups){
     if(comply<1){ const c={n:g.pop*(1-comply),g,segs:[[-Infinity,'home']]}; wet(c,g.ts); co.push(c); } // did not follow the order
     if(o.tall&&g.up*(1-f)>0){ const c={n:g.pop*comply*g.up*(1-f),g,up:1,segs:[[-Infinity,'home']]}; wet(c,g.ts); co.push(c); } // told to stay upstairs
     const go=1-g.up*(1-f);
-    for(const L of o.guide==='near'?g.near:g.legs) for(let j=0;j<NC;j++){ const n=L.n*comply*go/NC,dep=W+o.mob*2*(j+.5)/NC,c={n,g,segs:[[-Infinity,'home']]}; co.push(c);
+    for(const L of o.guide==='near'?g.near:g.legs) for(let j=0;j<NC;j++) for(const [part,away] of [[S0,false],[1-S0,true]]){ if(part<=0) continue;
+      const n=L.n*comply*go/NC*part,dep=W+o.mob*2*(j+.5)/NC,c={n,g,segs:[[-Infinity,'home']]}; co.push(c);
       if(dep>=g.ts){ c.segs.push([g.ts,'stuck',g.c]); danger.push([g.ts,n]); continue; } // water already at the door when they try to leave
-      const v=L.l.len/Math.max(1,L.l.len/o.v+o.delay); let stuck=null;
+      const v=L.l.len/Math.max(1,L.l.len/o.v+o.delay+(L.l.qd||0)); /* qd = queue minutes at clog points on this route (congestion.js, pessimistic) */ let stuck=null;
       for(const [s,t] of L.l.cells) if(dep+s/v>=t){ stuck=[dep+s/v,s]; break; }
       c.segs.push([dep,'walk',L.l,dep,v]);
-      if(stuck){ c.segs.push([stuck[0],'stuck',along(L.l,stuck[1])]); danger.push([stuck[0],n]); } else arr.push({t:dep+L.l.len/v,c,k:L.k}); }
+      if(stuck){ c.segs.push([stuck[0],'stuck',along(L.l,stuck[1])]); danger.push([stuck[0],n]); } else if(away) c.segs.push([dep+L.l.len/v,'away']); else arr.push({t:dep+L.l.len/v,c,k:L.k}); } // away: reaches family/friends outside the flood (same road, same risk)
   }
   arr.sort((a,b)=>a.t-b.t);
   while(arr.length){ const a=arr.shift(),s=sh[a.k],inN=Math.min(Math.max(0,capAt(s)-s.load),a.c.n),rest=a.c.n-inN;
@@ -85,9 +86,9 @@ function simulate(o){ const pr=DR.prep; if(!pr) return null; const M=pr.M,W=pr.f
   let A=0,i=0,q=0; const tStart=Math.min(0,W); for(let t=tStart;t<=M;t+=step){ while(i<danger.length&&danger[i][0]<=t) A+=danger[i++][1];
     const rate=t<t0?0:o.rate*(o.support?SUPPORT_X:1); q=Math.min(A,q+rate*step/60); R.push(q); }
   const run={o,W,f,comply,sh,co,R,tStart,step,M,firstDanger:danger[0]?.[0]??null,peakT:.6*M,firstFull:Math.min(...sh.map(s=>s.full??Infinity))};
-  run.peak=countAt(run,run.peakT); run.score=run.peak.danger+run.peak.noplace; return run; }
+  run.peak=countAt(run,run.peakT); run.score=run.peak.danger+run.peak.noplace+run.peak.up; return run; } // not evacuated at the peak: upstairs at home is a last resort, not safe
 const segAt=(c,t)=>{let s=c.segs[0]; for(const x of c.segs){ if(x[0]>t) break; s=x; } return s;};
-function countAt(run,t){ const k={home:0,walk:0,shel:0,up:0,trap:0,stuck:0,noplace:0};
+function countAt(run,t){ const k={home:0,walk:0,shel:0,away:0,up:0,trap:0,stuck:0,noplace:0};
   for(const c of run.co){ const s=segAt(c,t); if(s[1]==='wet'){ const u=c.up??c.g.up; k.up+=c.n*u; k.trap+=c.n*(1-u); } else k[s[1]==='shel'?'shel':s[1]]+=c.n; }
   const resc=run.R[Math.max(0,Math.min(run.R.length-1,Math.floor((t-run.tStart)/run.step)))]||0,dg=k.trap+k.stuck,f=dg>0?Math.max(0,1-resc/dg):1;
   k.resc=Math.min(dg,resc); k.trap*=f; k.stuck*=f; k.danger=k.trap+k.stuck; return k; }
@@ -100,7 +101,7 @@ let drT=null;
 function drillRun(){ if(!DR.prep){ DR.run=null; drawDrill(); return; } const o=drillOpts(); DR.run=simulate(o); DR.range=rangeOf(o);
   DR.base=simulate(drillOpts({},{comply:DR0.comply/100,capX:DR0.capX/100,rate:DR0.rescue,lead:DR0.lead,mob:DR0.mob,delay:DR0.delay,v:DR0.speed*1000/60}));
   clearTimeout(drT); drT=setTimeout(()=>{ DR.best=bestPlan(); drawDrill(); },250); drawDrill(); extraPins(); if(ready) render(); }
-// every combination of the choices; best = fewest people unsafe at the peak, then fewest changes
+// every combination of the choices; best = fewest people not evacuated at the peak, then fewest changes
 function bestPlan(){ if(!DR.prep) return null; let best=null;
   for(const early of EXTRA_LEAD) for(const order of ['plan','door','tall','near']) for(const full of ['redirect','pack']) for(const help of ['local','nat']){
     const dec={early,order,full,help},run=simulate(drillOpts(dec)),n=(early>0)+(order!=='plan')+(full!=='redirect')+(help==='nat');
@@ -110,27 +111,29 @@ function bestPlan(){ if(!DR.prep) return null; let best=null;
   best.range=rangeOf(drillOpts(best.dec)); return best; }
 
 /* ---------- action sequence for "Best actions" and the decision card ---------- */
-function actionPlan(b=DR.best){ if(!b) return []; const R=b.run,d=b.dec,g=k=>b.gain[k]>.5?` <span class="gain">−${fmt(b.gain[k])} unsafe</span>`:'',out=[],pr=DR.prep;
+function actionPlan(b=DR.best){ if(!b) return []; const R=b.run,d=b.dec,g=k=>b.gain[k]>.5?` <span class="gain">−${fmt(b.gain[k])} not evacuated</span>`:'',out=[],pr=DR.prep;
   const f=d.order==='tall'?R.f:1,stay=pr.groups.reduce((s,x)=>s+x.pop*R.comply*x.up*(1-f),0),used=R.sh.filter(s=>s.extra&&s.load>0);
+  out.push([-Infinity,`<b>Before the season</b>: <b>agree cross-border sheltering</b> with Dutch Limburg (Veiligheidsregio Zuid-Limburg) and Region Aachen through EMRIC: no agreement for sheltering evacuees across the border was found; this app covers the Belgian Vesdre only so far.`]);
+  if(D.bankN) out.push([-Infinity,`<b>Before the season</b>: tell the ${fmt(D.bankN)} riverbank buildings (≤ ${Math.round(D.bankM)} m from the river) that going upstairs is unreliable there: they <b>evacuate early</b>, at the first warning.`]);
   if(used.length) out.push([-Infinity,`<b>Before the season</b>: agree with the next best sites (${used.slice(0,4).map(x=>esc(x.name)).join(', ')}${used.length>4?'…':''}) that they open when the first shelters are full (+${fmt(used.reduce((s,x)=>s+x.cap,0))} places).`]);
   if(d.early) out.push([R.W,`<b>Be ready to warn ${d.early/60} h earlier</b> (${SC.leadMin+d.early} min before the water): forecast watch + a pre-agreed trigger (EFAS / IRM-KMI warnings).${g('early')}`]);
   const toGo=pr.groups.reduce((s,x)=>s+x.pop*(1-x.up*(1-f)),0);
-  if(d.order==='tall') out.push([R.W,`<b>Tell about ${fmt(stay)} residents whose building has a floor above the water to go upstairs and stay</b>: shelter places go first to people without a safe floor.${g('order')}`]);
+  if(d.order==='tall') out.push([R.W,`<b>Last resort: tell about ${fmt(stay)} residents who cannot get a shelter place and whose building has a floor above the water to go upstairs</b>: shelter places go first to people without a safe floor. Not a first choice: evacuating before the water is the goal.${g('order')}`]);
   out.push([R.W,`<b>Order the evacuation</b> of ${fmt(toGo)} residents, wave 1 (low ground, upstream) first, each street told <b>which shelter</b> to drive to (SMS, BE-Alert, loudspeakers)${d.order==='door'?' and <b>door-to-door</b> teams for people who do not react':''}.${d.order==='tall'?'':g('order')}`]);
   if(isFinite(R.firstFull)) out.push([R.firstFull,d.full==='pack'?`<b>When a shelter is full</b>: open corridors and halls (+30% emergency places).${g('full')}`:`<b>When a shelter is full</b>: send cars on to the next shelter with room (staff at the door with the live count).`]);
   if(R.firstDanger!=null) out.push([R.firstDanger,`<b>Rescue teams</b> to people trapped in flooded homes or streets, single-storey homes first${d.help==='nat'?'; <b>ask for national support</b> (civil protection, army)':''}.${g('help')}`]);
-  out.push([R.peakT,`<b>At the peak</b>: ${fmt(R.peak.shel)} in shelters, ${fmt(R.peak.up)} upstairs at home (check on them), ${fmt(R.score)} still unsafe.`]);
+  out.push([R.peakT,`<b>At the peak</b>: ${fmt(R.peak.shel)} in shelters, ${fmt(R.peak.up)} upstairs at home (last resort, check on them), ${fmt(R.peak.danger+R.peak.noplace)} in danger or without a place: ${fmt(R.score)} not evacuated.`]);
   return out.sort((a,b)=>a[0]-b[0]); }
 
 /* ---------- on screen: live counts, shelter fill, cars ---------- */
 const SVGI=p=>`<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
-const HUDI={home:'<path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/>',walk:'<path d="M5 16l1.5-5h11L19 16"/><rect x="3" y="16" width="18" height="4" rx="1"/><circle cx="7" cy="20" r="1.4"/><circle cx="17" cy="20" r="1.4"/>',
+const HUDI={away:'<path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/><path d="M10 14l2 2 4-4"/>',home:'<path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/>',walk:'<path d="M5 16l1.5-5h11L19 16"/><rect x="3" y="16" width="18" height="4" rx="1"/><circle cx="7" cy="20" r="1.4"/><circle cx="17" cy="20" r="1.4"/>',
   shel:'<path d="M12 3l9 5v13H3V8z"/><path d="M12 10v6M9 13h6"/>',up:'<path d="M4 20h4v-4h4v-4h4V8h4"/>',danger:'<path d="M12 3l10 18H2z"/><path d="M12 10v5M12 18v.5"/>',
   noplace:'<circle cx="12" cy="12" r="9"/><path d="M7 7l10 10"/>',resc:'<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/><path d="M5.6 5.6l3.6 3.6M18.4 5.6l-3.6 3.6M5.6 18.4l3.6-3.6M18.4 18.4l-3.6-3.6"/>'};
-const HUDT={home:'At home, water not there yet',walk:'Driving to a shelter',shel:'In a shelter / places available',up:'Water at home, building has a floor above it',danger:'Trapped without a safe floor, or stuck in a flooded street',noplace:'Reached a full shelter, no room in the area',resc:'Taken out by rescue teams'};
+const HUDT={away:'Left to family or friends outside the flood (no shelter place needed)',home:'At home, water not there yet',walk:'Driving to a shelter',shel:'In a shelter / places available',up:'Water at home, building has a floor above it',danger:'Trapped without a safe floor, or stuck in a flooded street',noplace:'Reached a full shelter, no room in the area',resc:'Taken out by rescue teams'};
 function drillTick(){ syncDock(); drawHud(); drawPins(); }
 function drawHud(){ const h=$('hud'),R=DR.run; if(!R){ h.hidden=true; return; } const t=S.T*R.M,k=countAt(R,t),room=R.sh.filter(x=>!x.extra||x.load>0).reduce((s,x)=>s+x.cap,0);
-  h.innerHTML=[['home','home',k.home],['walk','driving',k.walk],['shel',`sheltered /${fmt(room)}`,k.shel],['up','upstairs',k.up],['danger','danger',k.danger],['noplace','no place',k.noplace],['resc','rescued',k.resc]]
+  h.innerHTML=[['home','home',k.home],['walk','driving',k.walk],['shel',`sheltered /${fmt(room)}`,k.shel],['away','with family',k.away],['up','upstairs',k.up],['danger','danger',k.danger],['noplace','no place',k.noplace],['resc','rescued',k.resc]]
     .map(([c,t,v])=>`<span title="${HUDT[c]}" class="hi ${c}${v>=1&&(c==='danger'||c==='noplace')?' bad':''}">${SVGI(HUDI[c])}<b data-src="drill">${fmt(v)}</b><i>${t}</i></span>`).join(''); h.hidden=false; }
 const loadAt=(s,t)=>{ let ld=0; for(const [tt,l] of s.tl){ if(tt>t) break; ld=l; } return ld; };
 function drawPins(){ const R=DR.run; if(!R) return; const t=S.T*R.M,n=E.shelters.length;
@@ -175,20 +178,20 @@ function drawDrill(){ const box=$('drillOut'); if(!box) return; const R=DR.run,B
   if(!R){ box.innerHTML='<p class="hint">No evacuation plan yet.</p>'; return; }
   const row=(t,f,src)=>`<tr><td>${t}</td>${[b0,R,B?.run].map(x=>`<td class="mono" data-src="${src}">${x?fmt(f(x)):'…'}</td>`).join('')}</tr>`;
   box.innerHTML=`<table class="tbl score"><thead><tr><th></th><th>Start</th><th>Yours</th><th>Best</th></tr></thead><tbody>
-    ${row('<b>Unsafe at the peak</b>',x=>x.score,'drill')}${row('in danger',x=>x.peak.danger,'drill')}${row('no shelter place',x=>x.peak.noplace,'drill')}${row('in shelters',x=>x.peak.shel,'drill')}${row('upstairs at home',x=>x.peak.up,'obat')}${row('rescued',x=>x.peak.resc,'rescue')}
+    ${row('<b>Not evacuated at the peak</b>',x=>x.score,'drill')}${row('in danger',x=>x.peak.danger,'drill')}${row('no shelter place',x=>x.peak.noplace,'drill')}${row('in shelters',x=>x.peak.shel,'drill')}${row('left to family/friends',x=>x.peak.away,'drill')}${row('upstairs at home (last resort)',x=>x.peak.up,'obat')}${row('rescued',x=>x.peak.resc,'rescue')}
     <tr><td class="hint">likely range</td><td></td><td class="mono hint">${fmt(DR.range[0])}–${fmt(DR.range[1])}</td><td class="mono hint">${B?`${fmt(B.range[0])}–${fmt(B.range[1])}`:''}</td></tr></tbody></table>
-    <p class="hint">At the peak = clock ${clockM(R.peakT)}. Range: people react faster/slower (follow rate, driving speed ±20%, getting ready ×0.75–1.5).</p>
+    <p class="hint">Not evacuated = in danger + no shelter place + upstairs at home. Upstairs at home is a last resort: in July 2021 fast water damaged houses in the Vesdre valley. Evacuating before the water is the goal. Riverbank homes (≤ ${Math.round(D.bankM||0)} m from the river, ${D.bankSrc||''}) never count as having a safe floor. Public shelter = share of evacuees who need a public place (${DR.share}%); the others go to family or friends. Evidence: ~4.5% (Limburg 2021), ~13% planned in Verviers; default 25% keeps a margin. At the peak = clock ${clockM(R.peakT)}. Range: people react faster/slower (follow rate, driving speed ±20%, getting ready ×0.75–1.5).</p>
     <div class="row" style="justify-content:flex-start"><button class="btn primary sm" id="drDebrief">Best actions</button><button class="btn sm" id="drBest" ${B?'':'disabled'}>Use best choices</button></div>`;
   $('drDebrief').onclick=showDebrief; $('drBest').onclick=useBest; }
 function useBest(){ const B=DR.best; if(!B) return; DR.dec={order:B.dec.order,full:B.dec.full,help:B.dec.help}; if(B.dec.early){ SC.leadMin+=B.dec.early; $('sc-leadMin').value=SC.leadMin; makePlan(); }
   drawChoices(); drillRun(); restart0(); toast('Best choices set: press ▶'); }
 function showDebrief(){ const B=DR.best,R=DR.run,st=$('drillStage'); if(!B||!R){ toast('Still computing the best plan…'); return; } setPlaying(false);
-  $('drillBody').innerHTML=`<div class="stats"><div class="stat${R.score>B.run.score+.5?' warn':''}"><b data-src="drill">${fmt(R.score)}</b><span>unsafe at the peak with your choices (${fmt(DR.range[0])}–${fmt(DR.range[1])})</span></div>
+  $('drillBody').innerHTML=`<div class="stats"><div class="stat${R.score>B.run.score+.5?' warn':''}"><b data-src="drill">${fmt(R.score)}</b><span>not evacuated at the peak with your choices (${fmt(DR.range[0])}–${fmt(DR.range[1])})</span></div>
     <div class="stat"><b data-src="drill">${fmt(B.run.score)}</b><span>with the best actions (${fmt(B.range[0])}–${fmt(B.range[1])})</span></div>
-    <div class="stat"><b>${fmt(Math.max(0,R.score-B.run.score))}</b><span>more people safe</span></div></div>
+    <div class="stat"><b>${fmt(Math.max(0,R.score-B.run.score))}</b><span>more people evacuated</span></div></div>
     <ol class="steps">${actionPlan(B).map(([t,x])=>`<li><span class="mono">${isFinite(t)?clockM(t):'Before'}</span><span>${x}</span></li>`).join('')}</ol>
     <div class="row" style="justify-content:flex-start"><button class="btn primary sm" id="dbUse">Use these choices and play</button></div>
-    <p class="hint">"Unsafe" = trapped without a floor above the water, stuck in a flooded street, or without a shelter place, when the water is highest. ${3*4*2*2} combinations tested on the same flood. "Upstairs" is not risk-free: people must be checked on. A planning aid with assumptions, not a prediction of deaths.</p>`;
+    <p class="hint">"Not evacuated" = in danger (trapped without a floor above the water, or stuck in a flooded street), without a shelter place, or upstairs at home, when the water is highest. Upstairs at home is a last resort: in July 2021 fast water damaged houses in the Vesdre valley. Evacuating before the water is the goal. ${3*4*2*2} combinations tested on the same flood. "Upstairs" is not risk-free: people must be checked on. A planning aid with assumptions, not a prediction of deaths.</p>`;
   st.hidden=false; $('dbUse').onclick=()=>{ st.hidden=true; useBest(); setPlaying(true); }; $('drillClose').focus(); }
 
 /* ---------- controls under the map: sliders + the choices, set before pressing play ---------- */
@@ -200,6 +203,7 @@ const DOCK=[['size','Flood',0,2,1,()=>S.sizeIdx,v=>{$('size').value=v; $('size')
   ['rise','Water rises in',2,24,1,()=>Math.round(SC.mins*.45/60),v=>{SC.mins=Math.round(v*60/.45); $('sc-mins').value=SC.mins; alerted=warned=null; makePlan();},v=>v+' h'],
   ['comply','Follow',30,100,5,()=>DR.comply,v=>{DR.comply=v; drillRun();},v=>v+'%'],
   ['cap','Places',50,300,10,()=>DR.capX,v=>{DR.capX=v; drillRun();},v=>v+'%'],
+  ['share','Public shelter',5,100,5,()=>DR.share,v=>{DR.share=v; drillRun();},v=>v+'%'],
   ['walk','Speed',10,60,5,()=>E.speed,v=>{E.speed=v; $('evSpeedMs').value=v; makePlan();},v=>v+' km/h'],
   ['resc','Rescue',0,500,10,()=>DR.rescue,v=>{DR.rescue=v; drillRun();},v=>v+'/h']];
 const CHOICES=[['order','Order',[['plan','Each street → its shelter'],['tall','Places first: no upper floor'],['door','+ door-to-door'],['near','People choose']]],

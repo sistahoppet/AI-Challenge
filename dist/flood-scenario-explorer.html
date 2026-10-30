@@ -20,7 +20,7 @@
   --osm-urban:#e9e6e1; --osm-grass:#d9e8c8; --osm-wood:#b9d6a3; --osm-wood3:#7fae6a; --osm-river:#5aa9df; --osm-river-ink:#1d5f93;
   --osm-road:#ffffff; --osm-major:#f6cf7a; --osm-case:#b9bfc2; --osm-bld:#d6d0c8; --osm-label:#4a5a60; --osm-halo:#ffffff;
   --people:#3b4a52; --people-risk:#d4612b; --car:#2f6fd6; --cut:#e0213a; --walk:#ffffff;
-  --bt0:#d6cfc3; --bt1:#aab4bd; --bt2:#8e6bbf; --bt3:#4f9a72; --roof:#6d5a52; --roof-flat:#8a9399; --wave1:#d63b2f; --wave2:#ee8a1c; --wave3:#c9a400; --crit:#7b3fb5; --shel:#1f8f5a; --dmg:#6b3d1e; --unit:#1d4ed8;
+  --bt0:#d6cfc3; --bt1:#aab4bd; --bt2:#8e6bbf; --bt3:#4f9a72; --roof:#6d5a52; --roof-flat:#8a9399; --wave1:#d63b2f; --wave2:#ee8a1c; --wave3:#c9a400; --crit:#7b3fb5; --unk:#c98a00; --shel:#1f8f5a; --dmg:#6b3d1e; --unit:#1d4ed8; --clog:#d0198b;
   --f-display:"Barlow Condensed","Arial Narrow",Arial,sans-serif;
   --f-body:"Source Sans 3","Segoe UI",system-ui,sans-serif;
   --f-mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
@@ -31,14 +31,14 @@
   --c-both:#2a66a6; --c-mod:#4f9bd2; --c-obs:#c4851f;
   --osm-urban:#222f35; --osm-grass:#1f3226; --osm-wood:#24402c; --osm-wood3:#2f5a3a; --osm-river:#2b6e9c; --osm-river-ink:#9fd0f2;
   --osm-road:#3a4a51; --osm-major:#6b5a32; --osm-case:#2a373d; --osm-bld:#34434a; --osm-label:#b5c6cc; --osm-halo:#0f181c;
-  --bt0:#5d6670; --bt1:#47525c; --bt2:#9a7fd0; --bt3:#3f8f66; --roof:#3a3634; --roof-flat:#6b737a; --people:#c9d6db; --people-risk:#ff8a4c; --car:#6aa3ff; --cut:#ff4d63; --walk:#ffffff; --dmg:#c08a5a; --unit:#7aa7ff; --zr:#e5535d; --zy:#a8812a; --zg:#2aa595; color-scheme:dark}}
+  --bt0:#5d6670; --bt1:#47525c; --bt2:#9a7fd0; --bt3:#3f8f66; --roof:#3a3634; --roof-flat:#6b737a; --people:#c9d6db; --people-risk:#ff8a4c; --car:#6aa3ff; --cut:#ff4d63; --walk:#ffffff; --dmg:#c08a5a; --unit:#7aa7ff; --clog:#ff5fb6; --zr:#e5535d; --zy:#a8812a; --zg:#2aa595; --unk:#e0a93a; color-scheme:dark}}
 :root[data-theme="dark"]{
   --bg:#0f181c; --surface:#16232a; --ink:#e3edf0; --muted:#97abb2; --line:#2a3b42; --land:#1b272c;
   --accent:#4fb6d6; --accent-ink:#06222c; --bld:#66747a; --demo:#3b3014; --demo-ink:#f3d58a; --err:#ff8a7a;
   --c-both:#2a66a6; --c-mod:#4f9bd2; --c-obs:#c4851f;
   --osm-urban:#222f35; --osm-grass:#1f3226; --osm-wood:#24402c; --osm-wood3:#2f5a3a; --osm-river:#2b6e9c; --osm-river-ink:#9fd0f2;
   --osm-road:#3a4a51; --osm-major:#6b5a32; --osm-case:#2a373d; --osm-bld:#34434a; --osm-label:#b5c6cc; --osm-halo:#0f181c;
-  --bt0:#5d6670; --bt1:#47525c; --bt2:#9a7fd0; --bt3:#3f8f66; --roof:#3a3634; --roof-flat:#6b737a; --people:#c9d6db; --people-risk:#ff8a4c; --car:#6aa3ff; --cut:#ff4d63; --walk:#ffffff; --dmg:#c08a5a; --unit:#7aa7ff; --zr:#e5535d; --zy:#a8812a; --zg:#2aa595; color-scheme:dark}
+  --bt0:#5d6670; --bt1:#47525c; --bt2:#9a7fd0; --bt3:#3f8f66; --roof:#3a3634; --roof-flat:#6b737a; --people:#c9d6db; --people-risk:#ff8a4c; --car:#6aa3ff; --cut:#ff4d63; --walk:#ffffff; --dmg:#c08a5a; --unit:#7aa7ff; --clog:#ff5fb6; --zr:#e5535d; --zy:#a8812a; --zg:#2aa595; --unk:#e0a93a; color-scheme:dark}
 html,body{height:100%} body{margin:0} [hidden]{display:none!important}
 body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.45}
 *{box-sizing:border-box}
@@ -372,8 +372,7 @@ body:not(.explain) .tabbody details.info, body:not(.explain) .tabbody p.hint:not
           <ol>
             <li>Set the flood and the scenario in the bar under the map.</li>
             <li>Press <b>▶</b>. Pause (space) and click the map to check a place.</li>
-            <li><b>Training mode</b>: the run stops when you must decide.</li>
-            <li><b>Debrief</b>: the best sequence of actions.</li>
+            <li><b>Best actions</b> (under the map): the best sequence of actions.</li>
             <li><b>Policy</b> tab: the mayor's decision card.</li>
           </ol>
           <h4>Counters on the map</h4>
@@ -565,7 +564,7 @@ body:not(.explain) .tabbody details.info, body:not(.explain) .tabbody p.hint:not
         </div>
         <div>
           <h2>Critical sites in the water</h2>
-          <p class="hint" style="margin:0 0 8px">Hospitals, clinics, fire stations, police, town halls flooded in this flood size: evacuate or protect them first.</p>
+          <p class="hint" style="margin:0 0 8px">Hospitals, care homes, fire stations, police, town halls and schools flooded in this flood size: evacuate or protect them first.</p>
           <ul class="safe" id="critList"></ul>
         </div>
         <div>
@@ -589,8 +588,8 @@ body:not(.explain) .tabbody details.info, body:not(.explain) .tabbody p.hint:not
             <label>Time to get ready before leaving, min <span class="tag">your assumption</span><input class="btn" type="number" id="fw-mob" min="0" step="5" value="60"></label>
             <label>Delay on the way (traffic, closures), min <span class="tag">your assumption</span><input class="btn" type="number" id="fw-delay" min="0" step="5" value="15"></label>
             <label>Who leaves<select class="btn" id="evWho"><option value="water">Everyone in the water at this flood size</option><option value="red">Red-zone residents only</option></select></label>
-            <label>Places when size unknown <span class="tag">your assumption</span><input class="btn" type="number" id="evCap" min="10" step="10" value="500"></label>
-            <label>Driving speed, km/h <span class="tag">your assumption</span><input class="btn" type="number" id="evSpeedMs" min="5" max="90" step="5" value="30"></label>
+            <label>Places when size unknown (0 = not counted) <span class="tag">your assumption</span><input class="btn" type="number" id="evCap" min="0" step="10" value="0"></label>
+            <label>Driving speed, km/h <span class="tag">your assumption</span><input class="btn" type="number" id="evSpeedMs" min="5" max="90" step="5" value="20"></label>
           </div>
           <div class="stats" id="evStats" style="margin-top:12px"></div>
           <ol class="safe groups" id="evGroups" style="margin-top:10px"></ol>
@@ -598,7 +597,7 @@ body:not(.explain) .tabbody details.info, body:not(.explain) .tabbody p.hint:not
         </div>
         <div>
           <h2>Drill: people, shelters, best actions</h2>
-          <p class="hint" style="margin:0 0 8px">How people really move over the event: some stay home, shelters fill up, streets flood. Press <b>Training mode</b> under the map to take the decisions yourself; the controls under the map change the scenario.</p>
+          <p class="hint" style="margin:0 0 8px">How people really move over the event: some stay home, shelters fill up, streets flood. Set the choices under the map before pressing ▶; the controls under the map change the scenario.</p>
           <div id="drillOut"></div>
         </div>
       </div>
@@ -831,6 +830,22 @@ function makeDemo(){
 // data-loader.js - Reads + validates the 3 GeoJSON files (grid, observed_2021, buildings) and the "Load team data" window.
 // Loaded as a classic script: top-level names are shared between files (order set in index.html).
 
+/* ---------- parameter registry: every number the model uses, with status and source (data/params.json overrides these) ---------- */
+const DEFAULT_PARAMS={"comply": {"value": 80, "unit": "%", "status": "sourced", "source": "Endendijk et al. 2023, Journal of Coastal and Riverine Flood Risk: 75.7% of advised residents left (Limburg 2021)", "note": "range 70–80%"}, "doorBoost": {"value": 0, "unit": "percentage points", "status": "placeholder", "source": "", "note": "set to 0 until sourced (pessimistic). no study isolates door-to-door. Personal advice raised evacuation from 18.9% to 75.7% (Endendijk 2023); 'no single channel is likely to reach all people' (Pescaroli & Magni 2015)"}, "mob": {"value": 60, "unit": "min", "status": "sourced (proxy)", "source": "KLD Evacuation Time Estimate, Lee Nuclear Station (NRC ML073510574), Table 5-5: 62% ready by 30 min, 82% by 1 h, 97% by 2 h", "note": "US nuclear-plant study, not a European flood: replace when a local curve exists"}, "delay": {"value": 15, "unit": "min", "status": "assumption", "source": "", "note": "delay on the way (traffic, closures)"}, "speedCar": {"value": 20, "unit": "km/h", "status": "sourced (proxy)", "source": "FLOODsite Evacuation Calculator (c.2009): 'usually an average velocity of 20 km/hour is used' in flood evacuation models; legal limits 50 km/h built-up, 90 km/h outside built-up areas in Wallonia (police.be 2024)", "note": "average speed in evacuation traffic, below legal limits"}, "carDepth": {"value": 0.3, "unit": "m", "status": "sourced", "source": "AIDR Guideline 7-3 Flood Hazard, 2017 (class H1: ≤0.3 m and ≤2 m/s)", "note": ""}, "footDepth": {"value": 0.15, "unit": "m", "status": "sourced", "source": "AIDR Guideline 7-3, 2017 (≤0.3 m generally safe; 0.15 m kept as a conservative limit)", "note": ""}, "leadMin": {"value": 180, "unit": "min", "status": "assumption", "source": "", "note": "July 2021 Vesdre: ~0–3 h between alerts and the water (Walloon Parliament inquiry 2022)"}, "sphere": {"value": 3.5, "unit": "m² per person", "status": "sourced", "source": "Sphere Handbook 2018 (minimum covered living space)", "note": "humanitarian standard, not a Belgian norm; set in js/places.js"}, "squeeze": {"value": 30, "unit": "%", "status": "assumption", "source": "", "note": "extra emergency places when a shelter is full"}, "rescueRate": {"value": 60, "unit": "people/h", "status": "placeholder", "source": "", "note": "no published rate for the Vesdre. 2021 context: fire zone Vesdre-Hoëgne & Plateau ~3,300 missions in 72 h (~46/h, L'Avenir 2022); 9 helicopters rescued 21 people in 42 flight hours (L'Avenir 2021). Ask the rescue zone."}, "rescueMob": {"value": 30, "unit": "min", "status": "placeholder", "source": "", "note": "rescue starts this long after the first person is in danger"}, "nationalX": {"value": 3, "unit": "×", "status": "placeholder", "source": "", "note": "no source. 2021: Civil Protection ~30 agents and 6 boats at first, then max ~60 staff per day (L'Avenir 2021); ~300 foreign rescuers, 50 boats"}, "shelterShare": {"value": 25, "unit": "%", "status": "assumption", "source": "", "note": "evidence: ~4.5% went to public centres in Limburg 2021 (Endendijk 2023); Verviers plan 600 beds for ~4,600 people (~13%); 25% keeps a large margin"}, "riverbankM": {"value": 50, "unit": "m", "status": "assumption", "source": "", "note": "homes this close to the river: upstairs unreliable, evacuate early (houses collapsed along the Vesdre in Pepinster, July 2021)"}, "storey": {"value": 3, "unit": "m", "status": "assumption", "source": "", "note": "a building has a safe floor if it is at least this much taller than the water"}, "R0": {"value": 60, "unit": "%", "status": "placeholder", "source": "", "note": "Impact table: illustrative until data arrives"}, "Q0": {"value": 70, "unit": "%", "status": "placeholder", "source": "", "note": "Impact table: illustrative until data arrives"}, "R1": {"value": 90, "unit": "%", "status": "placeholder", "source": "", "note": "Impact table: illustrative until data arrives"}, "Q1": {"value": 80, "unit": "%", "status": "placeholder", "source": "", "note": "Impact table: illustrative until data arrives"}, "T0": {"value": 6, "unit": "h", "status": "placeholder", "source": "", "note": "Impact table: illustrative until data arrives"}, "T1": {"value": 2, "unit": "h", "status": "placeholder", "source": "", "note": "Impact table: illustrative until data arrives"}, "C": {"value": 2, "unit": "€M", "status": "placeholder", "source": "", "note": "Impact table: illustrative until data arrives"}, "D0": {"value": 30, "unit": "€M", "status": "placeholder", "source": "", "note": "Impact table: illustrative until data arrives"}, "D1": {"value": 18, "unit": "€M", "status": "placeholder", "source": "", "note": "Impact table: illustrative until data arrives"}};
+let PARAMS=DEFAULT_PARAMS;
+// push the registry into the model variables (they live in later files; this runs after start-up)
+function applyParams(P){ PARAMS={...DEFAULT_PARAMS,...P}; const set=(k,f)=>{ const v=PARAMS[k]?.value; if(v!=null&&isFinite(+v)) f(+v); };
+  set('comply',x=>DR.comply=x); set('doorBoost',x=>DOOR_BOOST=x/100); set('mob',x=>FW.mob=x); set('delay',x=>FW.delay=x); set('speedCar',x=>E.speed=x);
+  set('carDepth',x=>CAR_DEPTH=x); set('footDepth',x=>FOOT_DEPTH=x); set('leadMin',x=>SC.leadMin=x); set('squeeze',x=>SQUEEZE=x/100); set('rescueRate',x=>DR.rescue=x);
+  set('rescueMob',x=>RESCUE_MOB=x); set('nationalX',x=>SUPPORT_X=x); set('shelterShare',x=>DR.share=x); set('storey',x=>STOREY=x);
+  ['R0','Q0','R1','Q1','T0','T1','C','D0','D1'].forEach(k=>set(k,x=>IM[k]=x));
+  Object.assign(DR0,{comply:DR.comply,rescue:DR.rescue,lead:SC.leadMin,mob:FW.mob,delay:FW.delay,speed:E.speed});
+  const inp={'sc-leadMin':SC.leadMin,'fw-mob':FW.mob,'fw-delay':FW.delay,'evSpeedMs':E.speed,'sf-car':CAR_DEPTH,'sf-foot':FOOT_DEPTH}; for(const id in inp) if($(id)) $(id).value=inp[id];
+  document.querySelectorAll('#impIn [data-im]').forEach(i=>i.value=IM[i.dataset.im]); }
+// CSV with a header row → objects (keys lower-case)
+function csvObjects(text){ const rows=parseCsv(text); if(rows.length<2) return []; const h=rows[0].map(x=>x.trim().toLowerCase()); return rows.slice(1).map(r=>Object.fromEntries(h.map((k,i)=>[k,(r[i]??'').trim()]))); }
+const lonOf=o=>+(o.lon??o.lng??o.longitude??o.x),latOf=o=>+(o.lat??o.latitude??o.y);
+
 /* ---------- ingest (validates team files) ---------- */
 function ingest(files){
   const log=[],err=m=>log.push({e:1,m}),ok=m=>log.push({e:0,m}); const g=files.grid;
@@ -860,11 +875,19 @@ function ingest(files){
   // OpenStreetMap places (hospitals, schools…) and roads: optional, from scripts/export_tiles.py or export_osm.py
   const places=[]; for(const f of (files.places?.features||[])){const c=f.geometry?.type==='Point'&&f.geometry.coordinates; if(!c) continue;
     let ci=-1; for(const i of idx.query(c[0],c[1])) if(pipPoly(c[0],c[1],cells[i].poly)){ci=i;break;}
-    const p=f.properties||{}; places.push({c,ci,kind:p.kind,group:p.group,name:p.name||'',area:+p.area_m2||0,h:+p.height_m||0});}
+    const p=f.properties||{}; places.push({c,ci,kind:p.kind,group:p.group,name:p.name||'',area:+p.area_m2||0,h:+p.height_m||0,obs:obsPolys.length?inObs(c[0],c[1]):false});}
   if(places.length) ok(`Places: ${places.length} (hospitals, schools, sports halls…).`);
   const roads=(files.roads?.features||[]).filter(f=>f.geometry?.type==='LineString');
   if(roads.length) ok(`Roads: ${roads.length.toLocaleString()} from OpenStreetMap.`);
-  return {log,data:{cells,rps,blds,places,roads,observed:files.observed||null,hasObs:obsPolys.length>0,hasFp:blds.filter(b=>b.fp).length>blds.length/2,towns:(files.towns?.features||[]).map(f=>({name:f.properties.name,cls:f.properties.class,c:f.geometry.coordinates})),bbox:bboxOf(cells.map(c=>c.ring))}};
+  // optional files of the data pipeline (data/README.md)
+  const rivers=[]; for(const f of (files.rivers?.features||[])){ const g=f.geometry; if(g?.type==='LineString') rivers.push(g.coordinates); else if(g?.type==='MultiLineString') rivers.push(...g.coordinates); }
+  if(rivers.length) ok(`Rivers: ${rivers.length.toLocaleString()} lines (riverbank homes).`);
+  const shelterCap=(files.shelterCap||[]).map(o=>({name:o.name||'',c:[lonOf(o),latOf(o)],cap:+o.capacity,source:o.source||''})).filter(x=>isFinite(x.c[0])&&isFinite(x.c[1])&&x.cap>0);
+  if(shelterCap.length) ok(`Shelter capacities: ${shelterCap.length} sites with an official or checked capacity.`);
+  const q2=Array.isArray(files.q2)?files.q2:[]; if(q2.length) ok(`Measures since 2021: ${q2.length}.`);
+  const prm=(files.prm||[]).map(o=>({name:o.name||'',c:[lonOf(o),latOf(o)],r65:+o.residents_65plus||0,r80:+o.residents_80plus||0,source:o.source||''})).filter(x=>isFinite(x.c[0]));
+  const munis=(files.munis?.features||[]).filter(f=>polysOf(f.geometry).length).map(f=>({name:f.properties?.name||'',polys:polysOf(f.geometry)}));
+  return {log,data:{cells,rps,blds,places,roads,rivers,shelterCap,q2,prm,munis,observed:files.observed||null,hasObs:obsPolys.length>0,hasFp:blds.filter(b=>b.fp).length>blds.length/2,towns:(files.towns?.features||[]).map(f=>({name:f.properties.name,cls:f.properties.class,c:f.geometry.coordinates})),bbox:bboxOf(cells.map(c=>c.ring))}};
 }
 
 /* ---------- data loading modal ---------- */
@@ -888,8 +911,12 @@ $('useDemo').onclick=()=>{load(ingest(makeDemo()).data,true); $('modal').hidden=
 async function tryAutoLoad(){
   if(!/^https?:$/.test(location.protocol)) return;
   const get=async n=>{ try{ const r=await fetch('data/'+n,{cache:'no-store'}); return r.ok?await r.json():null; }catch(e){ return null; } };
+  const getT=async n=>{ try{ const r=await fetch('data/'+n,{cache:'no-store'}); return r.ok?await r.text():null; }catch(e){ return null; } };
+  const params=await get('params.json'); if(params) applyParams(params); // parameter registry: values, status and sources
   const grid=await get('grid.geojson'); if(!grid) return;
-  const r=ingest({grid,observed:await get('observed_2021.geojson'),buildings:await get('buildings_fp.geojson')||await get('buildings.geojson'),places:await get('places.geojson'),roads:await get('roads.geojson'),towns:await get('towns.geojson')});
+  const csvF=async n=>{ const t=await getT(n); return t?csvObjects(t):null; };
+  const r=ingest({grid,observed:await get('observed_2021.geojson'),buildings:await get('buildings_fp.geojson')||await get('buildings.geojson'),places:await get('places.geojson'),roads:await get('roads.geojson'),towns:await get('towns.geojson'),
+    rivers:await get('rivers.geojson'),shelterCap:await csvF('shelter_capacity.csv'),q2:await get('q2_measures.json'),prm:await csvF('prm.csv'),munis:await get('municipalities.geojson')});
   if(r.data){ load(r.data,false); toast('Team data loaded from the data folder'); }
   else toast('data/grid.geojson has a problem: '+r.log.filter(l=>l.e).map(l=>l.m).join(' '));
 }
@@ -954,6 +981,18 @@ function computeZones(D){
   D.zoneTot=[1,2,3].map(z=>({people:D.cells.filter(c=>c.z===z).reduce((s,c)=>s+c.pop,0),bld:D.blds.filter(b=>b.ci>=0&&D.cells[b.ci].z===z).length}));
 }
 
+/* ---------- riverbank homes: upstairs is unreliable there (houses collapsed along the Vesdre in July 2021) → evacuate early ----------
+   Distance to the river line (data/rivers.geojson, OpenStreetMap) ≤ riverbankM (assumption, data/params.json);
+   without that file: distance to the river channel cells (deepest water nearby in the most frequent flood), + half a cell. */
+function riverbank(D){ const m=+(PARAMS.riverbankM?.value??50),pts=[];
+  if(D.rivers?.length){ for(const l of D.rivers) for(let j=1;j<l.length;j++){ const a=l[j-1],b=l[j],n=Math.max(1,Math.ceil(mDist(a,b)/10)); for(let i=0;i<=n;i++) pts.push([a[0]+(b[0]-a[0])*i/n,a[1]+(b[1]-a[1])*i/n]); } D.bankSrc='rivers'; }
+  else { const r=(D.base||D.rps)[0]; D.cells.forEach(c=>{ if(c.depth[r]>0&&c.depth[r]>=.9*c.L[r]) pts.push(c.c); }); D.bankSrc='channel proxy'; }
+  const lim=D.bankSrc==='rivers'?m:m+D.G.m/2,kx=KX(D.bbox[1]),key=(x,y)=>Math.floor(x*kx/lim)+':'+Math.floor(y*110540/lim),bk=new Map();
+  pts.forEach(p=>{ const k=key(p[0],p[1]); (bk.get(k)||bk.set(k,[]).get(k)).push(p); }); D.bankM=lim; D.bankN=0;
+  for(const b of D.blds){ b.bank=false; const gx=Math.floor(b.c[0]*kx/lim),gy=Math.floor(b.c[1]*110540/lim);
+    for(let dx=-1;dx<=1&&!b.bank;dx++) for(let dy=-1;dy<=1&&!b.bank;dy++) for(const p of bk.get((gx+dx)+':'+(gy+dy))||[]) if(mDist(b.c,p)<=lim){ b.bank=true; break; }
+    if(b.bank) D.bankN++; } }
+
 /* ---------- state ---------- */
 let D=null,isDemo=true;
 const S={sizeIdx:1,T:0.5,playing:false,speed:2,exag:1,mode:'2d',l3d:false,lift:0,tab:'sim',diag:'size',metric:'people',basemap:'detail',cmp:'both'};
@@ -988,7 +1027,7 @@ function squareAround([x,y],m=6){const dx=m/(111320*Math.cos(y*Math.PI/180)),dy=
 function depthProps(c){const o={lag:c?c.lag:0}; D.rps.forEach(r=>{o['r'+r]=c?c.depth[r]:0; o['L'+r]=c?c.L[r]:0;}); return o;}
 function buildSources(){
   cellFC={type:'FeatureCollection',features:D.cells.map((c,i)=>({type:'Feature',geometry:{type:'Polygon',coordinates:c.poly},properties:Object.assign({i,z:c.z,pop:+c.pop.toFixed(1),elev:c.elev??-1},depthProps(c))}))};
-  bldFC={type:'FeatureCollection',features:D.blds.map(b=>({type:'Feature',geometry:b.geom.type==='Point'?squareAround(b.c,Math.max(3,Math.sqrt(b.area||36)/2)):b.geom,properties:Object.assign({bt:btOf(b),h:b.h,use:b.use??-1,area:b.area||0,bpop:+(b.pop||0).toFixed(2)},depthProps(b.ci>=0?D.cells[b.ci]:null))}))};
+  bldFC={type:'FeatureCollection',features:D.blds.map(b=>({type:'Feature',geometry:b.geom.type==='Point'?squareAround(b.c,Math.max(3,Math.sqrt(b.area||36)/2)):b.geom,properties:Object.assign({bt:btOf(b),h:b.h,use:b.use??-1,area:b.area||0,bpop:+(b.pop||0).toFixed(2),rb:b.bank?1:0},depthProps(b.ci>=0?D.cells[b.ci]:null))}))};
 }
 // water depth now, per feature: depth − (1 − rise) × L, rise = level(T − lag) (same formula as nowDepth in analysis.js)
 // keep=true: highest level reached so far (stays at 1 after the peak) → "water reached here", i.e. likely damage
@@ -1034,6 +1073,8 @@ function initMap(){
     map.addLayer({id:'bld-roof',type:'fill-extrusion',source:'bld',layout:{visibility:'none'},paint:{'fill-extrusion-color':roofColor(),'fill-extrusion-height':0,'fill-extrusion-base':0,'fill-extrusion-opacity':0.95}});
     // 3D: the water around each flooded building, up to today's level; a building lower than the water disappears under it
     map.addLayer({id:'bld-water',type:'fill-extrusion',source:'bld',layout:{visibility:'none'},filter:['==',1,0],paint:{'fill-extrusion-color':css('--w2'),'fill-extrusion-height':0,'fill-extrusion-opacity':.8}});
+    // riverbank homes: dashed outline = upstairs unreliable, evacuate early
+    map.addLayer({id:'bld-rb',type:'line',source:'bld',minzoom:13,filter:['==',['get','rb'],1],paint:{'line-color':css('--cut'),'line-width':1.5,'line-dasharray':[2,1.5]}});
     map.addLayer({id:'bld-line',type:'line',source:'bld',minzoom:15,paint:{'line-color':css('--ink'),'line-opacity':.25,'line-width':.5}});
     addLiveLayers(); addEvacLayers(); addPlaceLayers(); addResponseLayers();
     map.addLayer({id:'obs-fill',type:'fill',source:'obs',paint:{'fill-color':css('--obs'),'fill-opacity':.45}});
@@ -1066,7 +1107,7 @@ function applyLayers(){
   const model=S.cmp!=='obs',obs=S.cmp!=='model'&&D.hasObs&&!zones;
   map.setLayoutProperty('water-img','visibility',vis(!zones&&model)); map.setLayoutProperty('water-3d','visibility',vis(three&&!zones&&$('tCols').checked));
   map.setLayoutProperty('zones','visibility',vis(zones||$('tZones').checked)); map.setPaintProperty('zones','fill-opacity',zones?.55:.3);
-  map.setLayoutProperty('bld-2d','visibility',vis(!three&&$('tBld').checked)); map.setLayoutProperty('bld-hit','visibility',vis(!three&&$('tBld').checked&&!zones)); map.setLayoutProperty('bld-3d','visibility',vis(three&&$('tBld').checked)); map.setLayoutProperty('bld-roof','visibility',vis(three&&$('tBld').checked)); map.setLayoutProperty('bld-water','visibility',vis(three&&$('tBld').checked)); map.setLayoutProperty('bld-line','visibility',vis(!three&&$('tBld').checked));
+  map.setLayoutProperty('bld-2d','visibility',vis(!three&&$('tBld').checked)); map.setLayoutProperty('bld-hit','visibility',vis(!three&&$('tBld').checked&&!zones)); map.setLayoutProperty('bld-3d','visibility',vis(three&&$('tBld').checked)); map.setLayoutProperty('bld-roof','visibility',vis(three&&$('tBld').checked)); map.setLayoutProperty('bld-water','visibility',vis(three&&$('tBld').checked)); map.setLayoutProperty('bld-line','visibility',vis(!three&&$('tBld').checked)); map.setLayoutProperty('bld-rb','visibility',vis($('tBld').checked));
   map.setLayerZoomRange('bld-hit',0,14.5); // up close the real footprints show the water; the dots only help when zoomed out
   map.setLayoutProperty('obs-line','visibility',vis(obs)); map.setLayoutProperty('obs-fill','visibility',vis(obs));
   map.setPaintProperty('bld-3d','fill-extrusion-height',['*',['get','h'],S.lift,1.02]); // real GHS-OBAT height, just above the OSM footprint it sits in
@@ -1097,7 +1138,7 @@ function paintDynamic(force){ if(!ready) return; const cols=S.l3d&&$('tCols').ch
 }
 function recolor(){ if(!ready) return;
   map.setPaintProperty('bg','background-color',css('--land'));
-  map.setPaintProperty('zones','fill-color',zoneColor()); map.setPaintProperty('obs-line','line-color',css('--obs')); map.setPaintProperty('obs-fill','fill-color',css('--obs'));
+  map.setPaintProperty('zones','fill-color',zoneColor()); map.setPaintProperty('obs-line','line-color',css('--obs')); map.setPaintProperty('bld-rb','line-color',css('--cut')); map.setPaintProperty('obs-fill','fill-color',css('--obs'));
   recolorDetails(); recolorEvac(); recolorPlaces(); if(WV) WV.lut=waterLut(); setBasemap(S.basemap); drawLegend(); if(S.tab==='diag') drawDiagram();
 }
 // while playing, numbers and building/road colours refresh 10×/s (the water image keeps its own 30 fps loop); paused or scrubbing: next frame
@@ -1125,10 +1166,11 @@ function drawLegend(){
   L.innerHTML=`<div class="t">Water depth</div><div class="grad"></div><div class="gradlab"><span>0</span><span>0.5</span><span>1.5</span><span>2.5+ m</span></div>
    ${D?.hasObs&&S.cmp!=='model'?`<div class="li"><span class="sw" style="border:2px dashed var(--obs);background:color-mix(in srgb,var(--obs) 45%,transparent)"></span>Water seen by satellite, July 2021</div>`:''}<div class="t" style="margin-top:6px">Buildings (real shape)</div>${[['--bt0','Home'],['--bt1','Shop, office, industry'],['--bt3','School, sports hall'],['--bt2','Hospital, fire, police, town hall']].map(([v,t])=>`<div class="li"><span class="sw" style="background:var(${v})"></span>${t}</div>`).join('')}<div class="t" style="margin-top:6px">Water reached buildings</div>${CLASSES.map((c,k)=>`<div class="li"><span class="sw dot" style="background:var(--hit${k+1})"></span>${['under 0.5 m','0.5–1.5 m','over 1.5 m: likely serious damage'][k]}</div>`).join('')}
    <div class="li"><span class="sw dot" style="background:var(--hit2);box-shadow:0 0 0 2px var(--w3)"></span>Blue ring: under water now</div>
-   <div class="li"><span class="sw" style="background:var(--cut);height:4px"></span>Street under water (≥ ${CAR_DEPTH} m): closed</div><div class="li"><span class="sw" style="background:repeating-linear-gradient(90deg,var(--dmg) 0 4px,transparent 4px 7px);height:4px"></span>Was flooded: check before use</div>
+   ${D?.bankN?`<div class="li"><span class="sw" style="background:transparent;border:2px dashed var(--cut)"></span>Riverbank home: upstairs unreliable, evacuate early (≤ ${Math.round(D.bankM)} m from the river, assumption)</div>`:''}
+   <div class="li"><span class="sw" style="background:repeating-linear-gradient(90deg,var(--clog) 0 5px,transparent 5px 8px);height:5px"></span>Clog point: more evacuation cars than the road can carry</div><div class="li"><span class="sw" style="background:var(--cut);height:4px"></span>Street under water (≥ ${CAR_DEPTH} m): closed</div><div class="li"><span class="sw" style="background:repeating-linear-gradient(90deg,var(--dmg) 0 4px,transparent 4px 7px);height:4px"></span>Was flooded: check before use</div>
    ${$('tPeople').checked?dot('--people',`1 dot ≈ ${fmt(perDot)} resident${perDot>1?'s':''}`)+dot('--people-risk','Residents in water'):''}
    ${$('tCars').checked?dot('--car','Cars: illustration only'):''}
-   ${D?.places?.length&&$('tPlaces').checked?dot('--crit','Hospital, fire, police, town hall')+dot('--shel','School, sports hall (possible shelter)')+'<div class="li"><span class="sw dot" style="border:3px solid var(--cut)"></span>Site in the water</div>':''}`;
+   ${D?.places?.length&&$('tPlaces').checked?dot('--crit','Hospital, fire, police, town hall')+dot('--shel','School, sports hall (possible shelter)')+(typeof placesLegend==='function'?placesLegend():'')+'<div class="li"><span class="sw dot" style="border:3px solid var(--cut)"></span>Site in the water</div>':''}`;
 }
 function onHover(ev){
   const layer=S.tab==='safety'?'zones':'water-2d',f=ready&&map.queryRenderedFeatures(ev.point,{layers:[layer]})[0],tip=$('tip');
@@ -1347,14 +1389,14 @@ FX.push(stepCars);
 // Loaded as a classic script: top-level names are shared between files (order set in index.html).
 
 /* ---------- choices (shelter capacity, speed and warning time are user assumptions, not data) ---------- */
-const E={shelters:[],who:'water',cap:500,speed:4,lead:3,adding:false,plan:null,walkers:[]};
+const E={shelters:[],who:'water',cap:0,speed:4,lead:3,adding:false,plan:null,walkers:[]};
 // start from real buildings (schools, sports halls…) when the places file is loaded, else from the safest grid spots
 function evacReset(){ RS.out=null; RS.cmp=null; for(const k in tsCache) delete tsCache[k]; const sc=shelterCandidates(); E.cands=sc.list; E.out=sc.out; const real=pickShelters(sc.list);
   E.shelters=real.length?real.map(asShelter)
-    :D.safe.map((s,k)=>({c:s.c,auto:true,name:`Safe place ${k+1}`,cap:null,stay:'overnight',desc:`${s.b} buildings · ${Math.round(s.dmin)} m from flood water`}));
-  makePlan(); }
+    :D.safe.map((s,k)=>({c:s.c,auto:true,name:`Safe place ${k+1}`,cap:null,demo:true,stay:'overnight',desc:`${s.b} buildings · ${Math.round(s.dmin)} m from flood water`}));
+  placesData(); makePlan(); } // map colours: sites with capacity to be checked
 const asShelter=p=>({...p,auto:true,src:p,name:p.name||kindName(p.kind),cap:p.cap||null,capSrc:p.capSrc});
-const capOf=k=>E.shelters[k].userCap??E.shelters[k].cap??(E.shelters[k].stay==='assembly'?0:E.cap); // set by hand > floor area > team default (assembly points: 0 until set)
+const capOf=k=>{const s=E.shelters[k]; return s.userCap??s.cap??(s.demo?(E.cap||500):s.stay==='assembly'?0:E.cap);}; // set by hand > floor area > 'places when size unknown' (default 0 = not counted; demo data only: 500)
 
 /* ---------- route network: OpenStreetMap streets when loaded, otherwise grid cells (open ground) ---------- */
 // mode: 'foot' | 'car'. limit: water depth above which a segment is closed (Infinity = open, deeper costs more unless plain).
@@ -1460,22 +1502,23 @@ function drawShelterList(){ const ul=$('safeList'),P=E.plan;
     return `<li class="shel"><button data-k="${k}"><span class="n${s.auto?'':' you'}">${k+1}</span><span><b>${esc(s.name)}</b> <span class="hint" style="margin:0">${s.kind?`${kindName(s.kind)} · ${STAY[s.stay]||''}`:s.auto?'':'added by you'}</span>
       ${s.dmin!=null&&s.src?`<br>${chips(s)}`:s.desc?`<br><span class="hint" style="margin:0">${esc(s.desc)}</span>`:''}</span></button>
       <span class="capbox"><span class="mono">${fmtFull(capOf(k))} places</span><span class="mono">${fmtFull(ld)} planned${full?' · FULL':''}</span>
-      <span class="hint" style="margin:0">${s.cap?'from floor area':'default'}</span></span></li>`;}).join('');
+      <span class="hint" style="margin:0">${s.capSrc&&/places \(/.test(s.capSrc)?'published capacity':s.cap?'from floor area':s.userCap!=null?'set by hand':s.demo?'default (demo)':E.cap?'your assumption':'capacity to be checked – not counted'}</span></span></li>`;}).join('');
   const inPlan=new Set(E.shelters.map(s=>s.src)),rest=(E.cands||[]).filter(c=>!inPlan.has(c));
-  $('candList').innerHTML=`<summary>Next best shelters (${rest.length}), used when the first ones are full · excluded: ${E.out?.zone||0} in a flood zone, ${E.out?.near||0} closer than 150 m to water</summary>`
-    +rest.slice(0,25).map(c=>`<div class="cand"><span><b>${esc(c.name||kindName(c.kind))}</b> <span class="hint" style="margin:0">${kindName(c.kind)} · ${STAY[c.stay]} · ${c.cap?fmtFull(c.cap)+' places':'capacity unknown'} · score ${Math.round(c.score*100)}</span><br>${chips(c)}</span>
+  $('candList').innerHTML=`<summary>Next best shelters (${rest.length}), used when the first ones are full · excluded: ${E.out?.zone||0} in a flood zone, ${E.out?.near||0} closer than 150 m to water, ${E.out?.y2021||0} flooded in July 2021 · ${(E.cands||[]).filter(c=>c.stay==='overnight'&&!c.cap).length} sites with capacity to be checked (amber on the map): ${E.cap?`counted as ${E.cap} places (your assumption)`:'not counted'}</summary>`
+    +rest.slice(0,25).map(c=>`<div class="cand"><span><b>${esc(c.name||kindName(c.kind))}</b> <span class="hint" style="margin:0">${kindName(c.kind)} · ${STAY[c.stay]} · ${c.cap?fmtFull(c.cap)+' places':'<span style="color:var(--unk)">capacity to be checked – not counted</span>'} · score ${Math.round(c.score*100)}</span><br>${chips(c)}</span>
       </div>`).join(''); }
 function drawEvacPanel(){ const P=E.plan,r=rp(),pct=n=>P.total?Math.round(n/P.total*100)+'%':'–';
   $('evScen').textContent=`For the ${sizeWord(r).toLowerCase()} flood (1-in-${r} years) picked in Simulate.`;
-  $('evStats').innerHTML=[[P.total,'people to move'],[P.moved-P.slow,`reach a shelter in time on foot (${pct(P.moved-P.slow)})`],[P.slow+P.over,'need help: too far or no place left']]
-    .map(([n,t],i)=>`<div class="stat${i===2&&n>0?' warn':''}"><b>${fmt(n)}</b><span>${t}</span></div>`).join('');
-  $('evGroups').innerHTML=P.routes.slice(0,14).map((x,i)=>`<li><button data-r="${i}"><span class="wv" style="background:var(--wave${x.wave})">${x.wave}</span><span>${fmtFull(x.people)} people → shelter ${x.k+1}<br><span class="mono">${(x.len/1000).toFixed(1)} km · ${Math.round(x.min)} min on foot ${x.ok?'✓':'⚠ too slow'}</span></span></button></li>`).join('')
+  $('evStats').innerHTML=[[P.total,'people to move'],[P.moved-P.slow,`reach a shelter in time by car (${pct(P.moved-P.slow)})`],[P.slow+P.over,'need help: too far or no place left']]
+    .map(([n,t],i)=>`<div class="stat${i===2&&n>0?' warn':''}"><b>${fmt(n)}</b><span>${t}</span></div>`).join('')
+    +(typeof DR!=='undefined'&&DR.share!=null?`<p class="hint" style="margin:6px 0 0;grid-column:1/-1">Need a public shelter: <b>${fmt(P.total*DR.share/100)}</b> of ${fmt(P.total)} (${DR.share}%, the others go to family or friends)</p>`:'');
+  $('evGroups').innerHTML=P.routes.slice(0,14).map((x,i)=>`<li><button data-r="${i}"><span class="wv" style="background:var(--wave${x.wave})">${x.wave}</span><span>${fmtFull(x.people)} people → shelter ${x.k+1}<br><span class="mono">${(x.len/1000).toFixed(1)} km · ${Math.round(x.min)} min by car ${x.ok?'✓':'⚠ too slow'}</span></span></button></li>`).join('')
     +(P.routes.length>14?`<li class="hint">+ ${P.routes.length-14} more routes (in the downloads, Alert tab)</li>`:'')
     +(P.over?`<li class="hint" style="color:var(--err)">${fmtFull(P.over)} people have no shelter place: add a shelter or raise the capacity.</li>`:'');
   $('evNote').textContent=(P.kind==='streets'?'Routes follow OpenStreetMap streets and avoid deep water. ':P.kind==='ground'?'Routes go over open ground (streets not loaded yet: zoom in on the area). ':'')
     +'Waves: wave 1 is where water arrives first in the video (low ground, upstream sections first). This is an order, not real timing. Capacity, speed and warning time are your assumptions.'; }
 const num=(id,k)=>$(id).onchange=e=>{const v=+e.target.value; if(v>0){E[k]=v; makePlan();}};
-num('evCap','cap'); E.speed=30; // km/h, OpenStreetMap streets in a town (CAR_KMH in places.js)
+$('evCap').onchange=e=>{const v=+e.target.value; if(v>=0){E.cap=v; evacReset();}}; E.speed=20; // km/h, OpenStreetMap streets in a town (CAR_KMH in places.js)
 $('evSpeedMs').onchange=e=>{const v=+e.target.value; if(v>0){E.speed=v; makePlan();}}; // km/h
 $('sf-foot').onchange=e=>{const v=+e.target.value; if(v>0){FOOT_DEPTH=v; graphCache={}; if(AB.a) abRoute(false);}};
 $('sf-car').onchange=e=>{const v=+e.target.value; if(v>0){CAR_DEPTH=v; roadsReset(); render(); drawLegend();}};
@@ -1533,24 +1576,24 @@ function report(){ const r=rp(),pk=peak(r),P=E.plan,cc=pk.cc,km=cutKm(r,false),l
 
 ## Evacuation plan
 - People to move: ${fmtFull(P.total)} (${E.who==='red'?'red-zone residents':'everyone in the water'})
-- Reach a shelter in time on foot: ${fmtFull(P.moved-P.slow)}
+- Reach a shelter in time by car: ${fmtFull(P.moved-P.slow)}
 - Too far for the warning time: ${fmtFull(P.slow)} · No shelter place left: ${fmtFull(P.over)}
 - Routes follow ${P.kind==='streets'?'OpenStreetMap streets, avoiding deep water':'open ground (streets not loaded)'}
 
 | Shelter | Location (lat, lon) | People assigned | Capacity |
 |---|---|---|---|
-${E.shelters.map((s,k)=>`| ${k+1}. ${s.name} | ${ll(s.c)} | ${fmtFull(P.load[k]||0)} | ${fmtFull(capOf(k))}${s.cap?'':' (default)'} |`).join('\n')}
+${E.shelters.map((s,k)=>`| ${k+1}. ${s.name} | ${ll(s.c)} | ${fmtFull(P.load[k]||0)} | ${fmtFull(capOf(k))}${s.cap?'':s.userCap!=null?' (set by hand)':E.cap?' (your assumption)':' (unknown, not counted)'} |`).join('\n')}
 
-## Critical sites in the water (evacuate or protect first)
-${(D.places||[]).filter(p=>p.group==='critical'&&p.ci>=0&&D.cells[p.ci].depth[r]>.01).map(p=>`- ${kindName(p.kind)}: ${p.name||'(no name)'} (${ll(p.c)}), ${D.cells[p.ci].depth[r].toFixed(2)} m`).join('\n')||'- none found'}
+## Critical sites and schools in the water (evacuate or protect first)
+${(D.places||[]).filter(p=>(p.group==='critical'||p.kind==='school')&&p.ci>=0&&D.cells[p.ci].depth[r]>.01).map(p=>`- ${kindName(p.kind)}: ${p.name||'(no name)'} (${ll(p.c)}), ${D.cells[p.ci].depth[r].toFixed(2)} m`).join('\n')||'- none found'}
 
 ## Routes (wave 1 = water arrives first)
-| Wave | People | To shelter | Distance | On foot | In time? |
+| Wave | People | To shelter | Distance | By car | In time? |
 |---|---|---|---|---|---|
 ${P.routes.map(x=>`| ${x.wave} | ${fmtFull(x.people)} | ${x.k+1} | ${(x.len/1000).toFixed(1)} km | ${Math.round(x.min)} min | ${x.ok?'yes':'no'} |`).join('\n')}
 
 ## Assumptions (team choices, not data)
-- Shelter capacity: floor area ÷ ${SPHERE_M2} m² per person (Sphere standard) when the building size is known, else ${E.cap} people · walking speed ${E.speed} km/h · warning lead time ${SC.leadMin} min, ${FW.mob} min to get ready, ${FW.delay} min delay
+- Shelter capacity: floor area ÷ ${SPHERE_M2} m² per person (Sphere standard) when the building size is known, else ${E.cap} people · driving speed ${E.speed} km/h · warning lead time ${SC.leadMin} min, ${FW.mob} min to get ready, ${FW.delay} min delay
 - Streets under ${CAR_DEPTH} m of water or more count as closed to cars
 - Waves follow the order water arrives in the model (lowest ground first), not real timing
 
@@ -1564,9 +1607,9 @@ Sources: EFAS flood hazard maps, GHS-POP, GHS-OBAT, Copernicus EMS (2021 outline
 function planGeo(){ const P=E.plan,r=rp(),F=(g,p)=>({type:'Feature',geometry:g,properties:p});
   return JSON.stringify({type:'FeatureCollection',name:`evacuation_plan_rp${r}`,features:[
     ...E.shelters.map((s,k)=>F({type:'Point',coordinates:s.c},{kind:'shelter',id:k+1,name:s.name,assigned:P.load[k]||0,capacity:capOf(k)})),
-    ...(D.places||[]).filter(p=>p.group==='critical'&&p.ci>=0&&D.cells[p.ci].depth[r]>.01).map(p=>F({type:'Point',coordinates:p.c},{kind:'critical_in_water',type:p.kind,name:p.name,depth_m:D.cells[p.ci].depth[r]})),
+    ...(D.places||[]).filter(p=>(p.group==='critical'||p.kind==='school')&&p.ci>=0&&D.cells[p.ci].depth[r]>.01).map(p=>F({type:'Point',coordinates:p.c},{kind:p.kind==='school'?'school_in_water':'critical_in_water',type:p.kind,name:p.name,depth_m:D.cells[p.ci].depth[r]})),
     ...P.groups.map(g=>F({type:'Point',coordinates:g.c},{kind:'group',people:g.pop,wave:g.wave,no_place:g.left||0})),
-    ...P.routes.map(x=>F({type:'LineString',coordinates:x.pts},{kind:'route',wave:x.wave,people:x.people,shelter:x.k+1,km:+(x.len/1000).toFixed(2),minutes_on_foot:Math.round(x.min),in_time:x.ok})),
+    ...P.routes.map(x=>F({type:'LineString',coordinates:x.pts},{kind:'route',wave:x.wave,people:x.people,shelter:x.k+1,km:+(x.len/1000).toFixed(2),minutes_by_car:Math.round(x.min),in_time:x.ok})),
     ...cutPieces.filter(s=>(s.dep[r]||0)>CAR_DEPTH).map(s=>F({type:'LineString',coordinates:[s.a,s.b]},{kind:'closed_street',depth_m:+s.dep[r].toFixed(2)}))]}); }
 // convex hull of the people to move: the alert area
 function hull(ps){ ps=[...ps].sort((a,b)=>a[0]-b[0]||a[1]-b[1]); if(ps.length<3) return ps; const cr=(o,a,b)=>(a[0]-o[0])*(b[1]-o[1])-(a[1]-o[1])*(b[0]-o[0]),lo=[],up=[];
@@ -1635,7 +1678,7 @@ const kindName=k=>KINDS[k]?.[1]||k;
 /* ---------- map layer ---------- */
 function addPlaceLayers(){
   map.addLayer({id:'places',type:'circle',source:'places',paint:{'circle-radius':['interpolate',['linear'],['zoom'],11,['match',['get','group'],'critical',5,'assembly',3,4],16,['match',['get','group'],'critical',11,'assembly',6,9]],
-    'circle-color':['match',['get','group'],'critical',css('--crit'),'shelter',css('--shel'),css('--osm-wood3')],'circle-stroke-color':'#fff','circle-stroke-width':1.5}});
+    'circle-color':['case',['==',['get','unk'],1],css('--unk'),['match',['get','group'],'critical',css('--crit'),'shelter',css('--shel'),css('--osm-wood3')]],'circle-stroke-color':'#fff','circle-stroke-width':1.5}});
   map.addLayer({id:'places-lab',type:'symbol',source:'places',minzoom:12,layout:{'text-field':['get','abbr'],'text-font':['Noto Sans Bold'],'text-size':['interpolate',['linear'],['zoom'],12,8,16,12],'text-allow-overlap':true},paint:{'text-color':'#fff'}});
   map.addLayer({id:'places-name',type:'symbol',source:'places',minzoom:14.5,filter:['!=',['get','group'],'assembly'],layout:{'text-field':['get','name'],'text-font':['Noto Sans Regular'],'text-size':11,'text-offset':[0,1.3],'text-anchor':'top','text-optional':true},paint:{'text-color':css('--ink'),...halo()}});
   map.addLayer({id:'ab-normal',type:'line',source:'ab',filter:['==',['get','k'],'normal'],layout:{'line-cap':'round'},paint:{'line-color':css('--cut'),'line-width':3,'line-dasharray':[1.5,1.5],'line-opacity':.8}});
@@ -1643,22 +1686,22 @@ function addPlaceLayers(){
 }
 function placesData(){ if(!ready) return;
   map.getSource('places').setData({type:'FeatureCollection',features:(D.places||[]).map(p=>({type:'Feature',geometry:{type:'Point',coordinates:p.c},
-    properties:Object.assign({group:p.group,abbr:KINDS[p.kind]?.[0]||'',name:p.name},depthProps(p.ci>=0?D.cells[p.ci]:null))}))}); }
+    properties:Object.assign({group:p.group,abbr:KINDS[p.kind]?.[0]||'',name:p.name,unk:p.capUnknown?1:0},depthProps(p.ci>=0?D.cells[p.ci]:null))}))}); }
 function placesVisibility(){ const on=$('tPlaces').checked&&!!D.places?.length; ['places','places-lab','places-name'].forEach(id=>map.setLayoutProperty(id,'visibility',on?'visible':'none'));
   ['ab-normal','ab-safe'].forEach(id=>map.setLayoutProperty(id,'visibility',S.tab!=='diag'?'visible':'none')); }
 function paintPlaces(){ // red ring when the place is in the water right now
   map.setPaintProperty('places','circle-stroke-color',['case',['>',over(),.01],css('--cut'),'#fff']);
   map.setPaintProperty('places','circle-stroke-width',['case',['>',over(),.01],3.5,1.5]); }
-function recolorPlaces(){ map.setPaintProperty('places','circle-color',['match',['get','group'],'critical',css('--crit'),'shelter',css('--shel'),css('--osm-wood3')]);
+function recolorPlaces(){ map.setPaintProperty('places','circle-color',['case',['==',['get','unk'],1],css('--unk'),['match',['get','group'],'critical',css('--crit'),'shelter',css('--shel'),css('--osm-wood3')]]);
   map.setPaintProperty('places-name','text-color',css('--ink')); map.setPaintProperty('places-name','text-halo-color',css('--osm-halo'));
   map.setPaintProperty('ab-safe','line-color',css('--zg')); map.setPaintProperty('ab-normal','line-color',css('--cut')); }
 
 /* ---------- critical sites in the water at this flood size: evacuate or protect first ---------- */
 function drawCritical(){ const ul=$('critList'),r=rp(); if(!D.places?.length){ul.innerHTML='<li class="hint">No places file loaded (data/places.geojson).</li>'; return;}
-  const hit=D.places.filter(p=>p.group==='critical'&&p.ci>=0&&D.cells[p.ci].depth[r]>.01).map(p=>({p,d:D.cells[p.ci].depth[r]})).sort((a,b)=>b.d-a.d);
-  const tot=D.places.filter(p=>p.group==='critical').length;
-  ul.innerHTML=hit.length?hit.map(({p,d},i)=>`<li><button data-c="${D.places.indexOf(p)}"><span class="n crit">${KINDS[p.kind][0]}</span><span>${esc(p.name||kindName(p.kind))}<br><span class="mono">${kindName(p.kind)} · ${d.toFixed(2)} m of water</span></span></button></li>`).join('')
-    :`<li class="hint">None of the ${tot} critical sites found is in the water in this flood size.</li>`; }
+  const isC=p=>p.group==='critical'||p.kind==='school',hit=D.places.filter(p=>isC(p)&&p.ci>=0&&D.cells[p.ci].depth[r]>.01).map(p=>({p,d:D.cells[p.ci].depth[r]})).sort((a,b)=>(a.p.kind==='school')-(b.p.kind==='school')||b.d-a.d);
+  const tot=D.places.filter(isC).length;
+  ul.innerHTML=hit.length?hit.map(({p,d},i)=>`<li><button data-c="${D.places.indexOf(p)}"><span class="n${p.kind==='school'?'':' crit'}">${KINDS[p.kind][0]}</span><span>${esc(p.name||kindName(p.kind))}<br><span class="mono">${p.kind==='school'?'School in the water':kindName(p.kind)} · ${d.toFixed(2)} m of water</span></span></button></li>`).join('')
+    :`<li class="hint">None of the ${tot} critical sites and schools found is in the water in this flood size.</li>`; }
 $('critList').onclick=e=>{const b=e.target.closest('[data-c]'); if(b) map.flyTo({center:D.places[+b.dataset.c].c,zoom:16.5,duration:1200});};
 
 /* ---------- shelters: type, capacity, safety criteria ----------
@@ -1673,22 +1716,30 @@ const STAY={overnight:'Overnight shelter',assembly:'Assembly point'};
 function floorArea(p){ if(p.area) return {a:p.area,h:p.h,src:'OSM footprint'}; let best=null;
   for(const b of D.blds) if(b.use===2&&b.area>(best?.area||0)&&mDist(p.c,b.c)<=60) best=b;
   return best?{a:best.area,h:best.h,src:'GHS-OBAT building'}:{a:0,h:0,src:''}; }
+// published capacity (data/shelter_capacity.*, loaded as D.shelterCap): same site within 75 m, or same name within 300 m
+const normName=t=>String(t||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,' ').trim();
+function knownCap(p){ const L=D.shelterCap; if(!Array.isArray(L)||!L.length) return null; const n=normName(p.name); let best=null,bd=Infinity;
+  for(const x of L){ if(!x?.c||!(+x.cap>0)) continue; const d=mDist(p.c,x.c); if((d<=75||(n&&normName(x.name)===n&&d<=300))&&d<bd){bd=d; best=x;} }
+  return best?{cap:+best.cap,source:best.source||'published capacity'}:null; }
+const placesLegend=()=>'<div class="li"><span class="sw dot" style="background:var(--unk)"></span>Possible shelter: capacity to be checked</div>';
 function shelterCandidates(){ if(!D.places?.length) return {list:[],out:{}};
-  const top=D.rps[D.rps.length-1],wet=D.cells.filter(c=>c.z>1),red=wet.filter(c=>c.z===3),flood=D.cells.filter(c=>c.depth[top]>0),out={zone:0,near:0};
+  const top=D.rps[D.rps.length-1],wet=D.cells.filter(c=>c.z>1),red=wet.filter(c=>c.z===3),flood=D.cells.filter(c=>c.depth[top]>0),out={zone:0,near:0,y2021:0};
   const g=roadGraph(top,'car',CAR_DEPTH),cs=g&&compSizes(g),big=cs?Math.max(...cs):0;
   const list=D.places.filter(p=>STYPE[p.kind]&&p.ci>=0).map(p=>{ const c=D.cells[p.ci];
+    if(p.obs||c.obs){out.y2021++; return null;} // inside the July 2021 satellite flood outline (Copernicus EMS)
     if(c.z!==1||c.depth[top]>.01){out.zone++; return null;} // not in any mapped flood, extreme one included
     let dmin=Infinity,nw=null; for(const w of wet){const d=mDist(p.c,w.c); if(d<dmin){dmin=d;}} for(const w of flood){const d=mDist(p.c,w.c); if(!nw||d<nw.d) nw={w,d};}
     if(dmin<150){out.near++; return null;}
     let near=0; for(const w of red) if(mDist(p.c,w.c)<=1500) near+=w.pop;
-    const stay=STYPE[p.kind],fa=floorArea(p),floors=fa.h>=7?Math.round(fa.h/3.5):1,cap=stay==='overnight'&&fa.a?Math.floor(fa.a*floors/SPHERE_M2):0;
+    const stay=STYPE[p.kind],known=knownCap(p),fa=floorArea(p),floors=fa.h>=7?Math.round(fa.h/3.5):1,cap=known?known.cap:stay==='overnight'&&fa.a?Math.floor(fa.a*floors/SPHERE_M2):0;
+    p.capUnknown=stay==='overnight'&&!cap; // no published capacity and no floor area: flagged on the map, never given a made-up number
     const margin=c.elev!=null&&nw?.w.elev!=null?c.elev-(nw.w.elev+nw.w.depth[top]):null,access=g?cs[nearest(g,p.c)]>=big/2:null;
-    return {...p,stay,dmin,near,floors,cap,area:fa.a,capSrc:cap?`${fmtFull(fa.a)} m² × ${floors} floor${floors>1?'s':''} (${fa.src}) ÷ ${SPHERE_M2} m²`:'',margin,access}; }).filter(Boolean);
+    return {...p,stay,dmin,near,floors,cap,area:fa.a,capSrc:known?`${fmtFull(known.cap)} places (${known.source})`:cap?`${fmtFull(fa.a)} m² × ${floors} floor${floors>1?'s':''} (${fa.src}) ÷ ${SPHERE_M2} m²`:'',capUnknown:p.capUnknown,margin,access}; }).filter(Boolean);
   const rank=(k)=>{const v=list.map(x=>x[k]??-Infinity).sort((a,b)=>a-b); list.forEach(x=>x['r_'+k]=v.length>1?v.indexOf(x[k]??-Infinity)/(v.length-1):1);};
   ['near','cap','margin','dmin'].forEach(rank);
   list.forEach(x=>x.score=(x.r_near+x.r_cap+x.r_margin+x.r_dmin)/4*(x.access===false?.5:1));
   return {list:list.sort((a,b)=>b.score-a.score),out}; }
-function pickShelters(cands,n=8){ const pick=[]; for(const c of cands){ if(c.stay!=='overnight'||c.access===false||!c.near) continue; if(pick.every(p=>mDist(p.c,c.c)>400)) pick.push(c); if(pick.length===n) break; } return pick; }
+function pickShelters(cands,n=8){ const pick=[]; for(const c of cands){ if(c.stay!=='overnight'||c.access===false||!c.near||(!c.cap&&!E.cap)) continue; /* unknown capacity: not picked unless the team sets 'places when size unknown' */ if(pick.every(p=>mDist(p.c,c.c)>400)) pick.push(c); if(pick.length===n) break; } return pick; }
 const chips=s=>[s.margin!=null?`${s.margin>=0?'+':''}${Math.round(s.margin)} m above flood water`:'',`${Math.round(s.dmin)} m from water`,
   s.access==null?'':s.access?'dry road access':'⚠ no dry road at the biggest flood',`${fmt(s.near)} at-risk residents within 1.5 km`].filter(Boolean).map(t=>`<span class="chip">${t}</span>`).join('');
 
@@ -1860,11 +1911,11 @@ function drawImpact(){ if(!D||!E.plan) return; const P=E.plan,r=rp(),N=P.total,K
     ${row('Extra people evacuated',`+${fmtFull(a-b)}`,'mix')}
     <tr><th colspan="3">3 · Institutions</th></tr>
     ${row(`Decision time ${IM.T0} h → ${IM.T1} h`,IM.T0?`−${Math.round(gain/IM.T0*100)}%`:'–','assumption')}
-    ${row(`Reach a shelter in time on foot: warning ${SC.leadMin} → ${SC.leadMin+gain*60} min`,`${fmtFull(inTime(pb))} → ${fmtFull(inTime(pa))} (+${fmtFull(inTime(pa)-inTime(pb))})`,'mix')}
+    ${row(`Reach a shelter in time by car: warning ${SC.leadMin} → ${SC.leadMin+gain*60} min`,`${fmtFull(inTime(pb))} → ${fmtFull(inTime(pa))} (+${fmtFull(inTime(pa)-inTime(pb))})`,'mix')}
   </tbody></table>
   <p style="font-size:14px;margin:8px 0 0"><b>For the mayor:</b> ${N?`at a ${sizeWord(r).toLowerCase()} flood ${fmtFull(N)} residents must leave, but the shelters in the plan hold ${fmtFull(K)} (${Math.round(K/N*100)}%). `:''}
    ${N&&a-b<1&&K<N*IM.R1/100*IM.Q1/100?`Better alerts add nobody while the shelters are full: <b>shelter capacity is the bottleneck</b>. `:''}
-   ${gain?`Deciding ${gain} h faster lets about ${fmtFull(inTime(pa)-inTime(pb))} more people reach a shelter on foot before the water. `:''}
+   ${gain?`Deciding ${gain} h faster lets about ${fmtFull(inTime(pa)-inTime(pb))} more people reach a shelter by car before the water. `:''}
    ${thr!=null?`With the cost and damage figures entered, acting is worth it when the flood chance is above ${thr.toFixed(0)}% (this map's yearly chance: ${pf<1?pf.toFixed(1):Math.round(pf)}%).`:''}</p>
   <p class="hint">Data: EFAS flood maps, GHS-POP/OBAT, OpenStreetMap shelters and roads, your plan in Evacuate. Assumptions: alert reach and compliance, decision times, costs and damages are illustrative (the framework's example values): replace them with sourced figures before quoting. Euros are hypothetical: no depth–damage data is loaded.</p>`; }
 const IMF=[['R0','Alert reach today, %'],['Q0','People who follow, today, %'],['R1','Alert reach with tool, %'],['Q1','People who follow, with tool, %'],
@@ -2096,15 +2147,15 @@ function flyTo(k){ setOrbit(false); if(S.tab!=='safety'&&S.tab!=='coord') setTab
 
 /* ---------- policy ---------- */
 function drawActor(){
-  const r=rp(),pk=peak(r),deep=pk.cc[2],lo=peak(D.rps[0]),hi=peak(D.rps[D.rps.length-1]),o=D.hasObs?peak('obs'):null,sc=`${sizeWord(r).toLowerCase()} (1-in-${r}-year) flood`,a=$('actorSel').value;
+  const r=rp(),pk=peak(r),deep=pk.cc[2],lo=peak(D.rps[0]),hi=peak(D.rps[D.rps.length-1]),o=D.hasObs?peak('obs'):null,sc=`${sizeWord(r).toLowerCase()} (1-in-${r}-year) flood`,a=$('actorSel').value,inW=p=>p.ci>=0&&D.cells[p.ci].depth[r]>.01,critN=(D.places||[]).filter(p=>p.group==='critical'&&inW(p)).length,schN=(D.places||[]).filter(p=>p.kind==='school'&&inW(p)).length;
   const T={
     muni:[`${fmt(deep.bld)} buildings sit where water goes over 1.5 m in a ${sc}. Which of them got rebuilding permits after 2021?`,
-      `Check whether schools, care homes and the town hall are among the ${fmt(pk.bld)} buildings in the water (needs a building-use layer).`,
+      `${critN} hospitals, care homes, emergency sites or town halls and ${schN} schools are in the water at this flood size (OpenStreetMap; listed in the Evacuate tab).`,
       `Show residents their own street at each flood size in a public meeting.`],
     region:[`People in flooded areas grow from ${fmt(lo.people)} (frequent flood) to ${fmt(hi.people)} (extreme flood). Where the jump is biggest, zoning rules matter most.`,
       `Reconstruction money: start with the ${fmt(deep.people)} residents where water goes over 1.5 m.`,`Compare towns: which municipality carries most of the risk?`],
     cp:[`${fmt(pk.people)} people live in areas that flood in a ${sc}; ${fmt(deep.people)} of them where water goes over head height.`,
-      `Use the video to plan the evacuation order: low ground floods first.`,`Place shelters at the green "safest places" (Safety tab), outside every flood size.`],
+      `Use the video to plan the evacuation order: low ground floods first.`,`Place shelters at the green "safest places" (Evacuate tab), outside every flood size.`],
     eu:[o?`The real 2021 flood covered areas where ${fmt(o.people)} people live. Compare with each flood size to see how rare 2021 looks on the hazard maps.`:`Load the 2021 flood file to compare the event with the hazard maps.`,
       `The same method works in Belgium, Germany and the Netherlands: comparable cross-border figures.`,`Where satellite and model disagree, hazard maps or mapping practice may need review.`]};
   $('actorText').innerHTML=(isDemo?['<i>Demo numbers: replace with your team data before quoting.</i>']:[]).concat(T[a]).map(t=>`<li>${t}</li>`).join('');
@@ -2382,7 +2433,7 @@ function fwChart(k){ const r=rp(),dataSrc=isDemo?'DEMO DATA':'Data: EFAS, GHS-PO
       ['8 · Economic evaluation','NPV and BCR (European Commission)','◐ Single-intervention BCR with hypothetical €']]};
   if(k==='fwClear'){ const P=E.plan; if(!P) return {kind:'empty',title:'Evacuation clearance time',sub:'The evacuation plan is not ready yet.',src:dataSrc,csv:[['note'],['no plan']]};
     const rows=P.routes.filter(x=>isFinite(x.avail)).map(x=>({label:`Wave ${x.wave} · ${fmtFull(x.people)} people → shelter ${x.k+1}`,a:x.avail,b:x.clear,people:x.people})).sort((a,b)=>(a.a-a.b)-(b.a-b.b)).slice(0,14),late=rows.filter(x=>x.b>x.a).length;
-    return {kind:'dumbbell',title:'Can people leave before the water arrives?',sub:`T clearance = ${FW.mob} min to get ready + walking time (real route) + ${FW.delay} min delay. T available = warning lead time (${SC.leadMin} min) or less if the water arrives sooner. ${late} of these ${rows.length} are too late.`,
+    return {kind:'dumbbell',title:'Can people leave before the water arrives?',sub:`T clearance = ${FW.mob} min to get ready + driving time (real route) + ${FW.delay} min delay. T available = warning lead time (${SC.leadMin} min) or less if the water arrives sooner. ${late} of these ${rows.length} are too late.`,
       rows,aName:'Time available',bName:'Clearance time',xTitle:'minutes',src:dataSrc+' · same rule as the evacuation plan; mobilisation, delay and lead time are assumptions (Evacuate tab)',
       csv:[['group','available_min','clearance_min','people'],...rows.map(x=>[x.label,Math.round(x.a),Math.round(x.b),Math.round(x.people)])]}; }
   if(k==='fwG6'){ const rows=D.rps.map(rr=>{const P=planFor(rr),prot=P.moved-P.slow,v=Math.round(P.total?prot/P.total*100:0);
@@ -2555,9 +2606,17 @@ const DSETS=[
     rows:()=>[['date','rain_mm','rain_48h_mm'],...(WX.data?.replayRain||[]).map(r=>[r.t,r.mm.toFixed(1),r.mm48.toFixed(1)])]}];
 const allSets=()=>[...DSETS,...DV.user];
 
+/* ---------- assumptions and sources: the parameter registry (data/params.json) ---------- */
+const PTAG={sourced:'<span class="tag data">sourced</span>',assumption:'<span class="tag">assumption</span>',placeholder:'<span class="tag">placeholder</span>'};
+function paramsCard(){ const P=PARAMS||{},n=k=>Object.values(P).filter(x=>x.status===k).length;
+  return `<div class="dcard"><div class="dhead"><b>Assumptions and sources</b><span class="tag">data/params.json</span></div>
+    <div class="hint" style="margin:2px 0">Every number the model uses: ${n('sourced')} sourced, ${n('assumption')} team assumptions, ${n('placeholder')} placeholders until data arrives. Edit the file to change them.</div>
+    <details class="cands"><summary>Show all ${Object.keys(P).length}</summary><table class="tbl"><thead><tr><th>Name</th><th>Value</th><th>Status</th><th>Source / note</th></tr></thead><tbody>${
+    Object.entries(P).map(([k,x])=>`<tr><td class="mono">${esc(k)}</td><td class="mono">${esc(x.value)} ${esc(x.unit||'')}</td><td>${PTAG[x.status]||esc(x.status||'')}</td><td class="hint">${esc([x.source,x.note].filter(Boolean).join(' · ')||'—')}</td></tr>`).join('')}</tbody></table></details></div>`; }
+
 /* ---------- cards ---------- */
 function drawData(){ if(!D) return;
-  $('dataCards').innerHTML=allSets().map(d=>`<div class="dcard"><div class="dhead"><b>${esc(d.name)}</b><span class="tag ${d.kind==='challenge'?'data':''}">${d.kind==='challenge'?'challenge data':d.kind==='user'?'your file':'external source'}</span></div>
+  $('dataCards').innerHTML=paramsCard()+allSets().map(d=>`<div class="dcard"><div class="dhead"><b>${esc(d.name)}</b><span class="tag ${d.kind==='challenge'?'data':''}">${d.kind==='challenge'?'challenge data':d.kind==='user'?'your file':'external source'}</span></div>
     <div class="hint" style="margin:2px 0">${esc(d.src)}</div><div class="mono dfile">${esc(d.file)}</div>
     <div style="font-size:13px;margin:4px 0">${esc(d.count())}<br><span class="hint" style="margin:0">Fields: ${esc(d.fields())}</span></div>
     <div class="row" style="justify-content:flex-start">${d.layer?`<button class="btn sm" data-show="${d.id}" aria-pressed="${DV.on.has(d.id)}">${DV.on.has(d.id)?'Hide on map':'Show on map'}</button>`:''}<button class="btn sm" data-table="${d.id}">Table</button>${d.kind==='user'?`<button class="btn sm" data-zoom="${d.id}">Zoom to</button><button class="btn sm" data-del="${d.id}">Remove</button>`:''}</div></div>`).join('');
@@ -2569,7 +2628,7 @@ $('dataCards').onclick=e=>{ const b=e.target.closest('button'); if(!b) return; c
   if(b.dataset.del){ DV.on.delete(id); if(map.getLayer('raw-'+id)) map.removeLayer('raw-'+id); if(map.getSource(id)) map.removeSource(id); DV.user=DV.user.filter(x=>x!==d); drawData(); } };
 
 /* ---------- raw layers only in the Data tab (simulation layers hidden there) ---------- */
-const SIMLAYERS=['water-img','water-3d','bld-2d','bld-hit','bld-3d','people','cars','roads-cut','roads-dmg','zones','zones-tex','obs-fill','obs-line','places','places-lab','places-name','ab-safe','ab-normal'];
+const SIMLAYERS=['water-img','water-3d','bld-2d','bld-hit','bld-3d','bld-rb','people','cars','roads-cut','roads-dmg','zones','zones-tex','obs-fill','obs-line','places','places-lab','places-name','ab-safe','ab-normal'];
 const _alData=applyLayers; applyLayers=function(){ _alData(); if(!ready) return; const inData=S.tab==='data';
   if(inData) SIMLAYERS.forEach(id=>map.getLayer(id)&&map.setLayoutProperty(id,'visibility','none'));
   allSets().forEach(d=>{ const l='raw-'+d.id; if(map.getLayer(l)) map.setLayoutProperty(l,'visibility',inData&&DV.on.has(d.id)?'visible':'none'); });
@@ -2624,7 +2683,7 @@ $('fUser').onchange=()=>{ const file=$('fUser').files[0],st=$('slotUser').queryS
 <script>
 // drill.js - Evacuation over the event clock: people leave by car, shelters fill up, the next best shelter is searched automatically,
 // streets close as the water rises, people are caught at home. Choices are made before pressing play; "Best actions" tests every
-// combination and shows the sequence that leaves the fewest people unsafe. Deterministic: same inputs give the same result.
+// combination and shows the sequence that leaves the fewest people not evacuated. Deterministic: same inputs give the same result.
 // Loaded as a classic script: top-level names are shared between files (order set in index.html).
 //
 // Model (a scenario built on assumptions, not a prediction):
@@ -2636,9 +2695,9 @@ $('fUser').onchange=()=>{ const file=$('fUser').files[0],st=$('slotUser').queryS
 //  - people still home when the water arrives: upstairs if their building (GHS-OBAT height) is ≥ water + one floor (3 m), else trapped
 //  - rescue teams take people out of danger at a fixed rate (people per hour) once mobilised (30 min after the first person is in danger)
 
-const DR={comply:80,capX:100,rescue:60,dec:{order:'plan',full:'redirect',help:'local'},run:null,prep:null,best:null,sel:null,mk:[]};
-const STOREY=3,NC=6,RESCUE_MOB=30,SUPPORT_X=3,EXTRA_LEAD=[0,60,120];
-const DR0={comply:80,capX:100,rescue:60,lead:180,mob:60,delay:15,speed:30}; // starting point for the scoreboard (defaults of the app)
+const DR={comply:80,capX:100,rescue:60,share:25,dec:{order:'plan',full:'redirect',help:'local'},run:null,prep:null,best:null,sel:null,mk:[]};
+let STOREY=3,NC=6,RESCUE_MOB=30,SUPPORT_X=3,EXTRA_LEAD=[0,60,120],SQUEEZE=.3,DOOR_BOOST=0; // values from data/params.json (applyParams)
+const DR0={comply:80,capX:100,rescue:60,lead:180,mob:60,delay:15,speed:20}; // starting point for the scoreboard (defaults of the app)
 const clockM=m=>m<0?`${clock(-m/SC.mins)} before start`:clock(m/SC.mins);
 
 /* ---------- inputs that depend on the plan and the water (rebuilt when either changes) ---------- */
@@ -2649,7 +2708,7 @@ function drillPrep(){ const P=E.plan; if(!P?.groups.length||!E.shelters.length) 
   const cellsOf=l=>{ if(l.cells) return l.cells; const out=[],seen=new Set(); for(let s=0;s<=l.len;s+=15){const p=along(l,s),i=G.at(p[0],p[1]),q=pixAt(p); if(seen.has(q+':'+i)) continue; seen.add(q+':'+i);
     const t=Math.min(i<0?Infinity:cutT(D.cells[i]),pixCut(q,r,F,M)); if(isFinite(t)) out.push([s,t]);} return l.cells=out; };
   const key=c=>Math.floor(c.gx/B)+':'+Math.floor(c.gy/B),up=new Map(); // share of residents whose building keeps a floor above the water (GHS-OBAT height)
-  for(const b of D.blds){ if(b.ci<0) continue; const c=D.cells[b.ci],d=c.depth[r]; if(!(d>.01)) continue; const k=key(c),w=b.pop||1,u=up.get(k)||up.set(k,{a:0,n:0}).get(k); u.n+=w; if(b.h>=d+STOREY) u.a+=w; }
+  for(const b of D.blds){ if(b.ci<0) continue; const c=D.cells[b.ci],d=c.depth[r]; if(!(d>.01)) continue; const k=key(c),w=b.pop||1,u=up.get(k)||up.set(k,{a:0,n:0}).get(k); u.n+=w; if(b.h>=d+STOREY&&!b.bank) u.a+=w; } // riverbank homes: upstairs unreliable, they must leave
   // when the water reaches the homes of a group: the residents' median moment (the group's first wet cell is often the riverbed)
   const tw=new Map(); for(const c of D.cells){ if(!c.pop||!(c.depth[r]>.01)) continue; (tw.get(key(c))||tw.set(key(c),[]).get(key(c))).push([floodStart(c,r),c.pop]); }
   const midT=k=>{ const a=(tw.get(k)||[]).sort((x,y)=>x[0]-y[0]),h=a.reduce((s,x)=>s+x[1],0)/2; let s=0; for(const [t,p] of a){ s+=p; if(s>=h) return t; } return null; };
@@ -2663,7 +2722,7 @@ function drillPrep(){ const P=E.plan; if(!P?.groups.length||!E.shelters.length) 
   return {groups,first:Math.min(...groups.map(g=>g.ts)),M,catchFC,rt:new Map(),rb:new Map()}; }
 
 // next best shelters after the chosen ones: all ranked candidates for an overnight stay with dry road access (places from floor area)
-function extraShelters(){ const inPlan=new Set(E.shelters.map(s=>s.src)); return (E.cands||[]).filter(c=>!inPlan.has(c)&&c.stay==='overnight'&&c.access!==false)
+function extraShelters(){ const inPlan=new Set(E.shelters.map(s=>s.src)); return (E.cands||[]).filter(c=>!inPlan.has(c)&&c.stay==='overnight'&&c.access!==false&&(c.cap>0||E.cap>0))
   .map(c=>({c:c.c,cap:c.cap||E.cap,name:c.name||kindName(c.kind),kind:c.kind,score:c.score})); }
 // road route between two shelters (one Dijkstra per full shelter, kept for the whole plan)
 function roadBetween(a,b){ const pk=a.join()+'>'+b.join(); if(DR.prep.rb.has(pk)) return DR.prep.rb.get(pk); const l=roadPath(a,b); DR.prep.rb.set(pk,l); return l; }
@@ -2672,26 +2731,27 @@ function roadPath(a,b){ const P=E.plan,g=P?.g; if(!g) return prepLine([a,b]); co
   const pts=[]; for(let u=j;u>=0;u=t.prev[u]) pts.push(g.pts[u]); return prepLine([a,...pts.reverse(),b]); }
 
 /* ---------- choices → model options ---------- */
-function drillOpts(dec=DR.dec,a={}){ const o={lead:SC.leadMin,comply:DR.comply/100,capX:DR.capX/100,mob:FW.mob,delay:FW.delay,v:E.speed*1000/60,rate:DR.rescue,...a};
+function drillOpts(dec=DR.dec,a={}){ const o={lead:SC.leadMin,comply:DR.comply/100,capX:DR.capX/100,mob:FW.mob,delay:FW.delay,v:E.speed*1000/60,rate:DR.rescue,share:DR.share/100,...a};
   return {...o,guide:dec.order==='near'?'near':'plan',door:dec.order==='door',tall:dec.order==='tall',lead:o.lead+(dec.early||0),full:dec.full||'redirect',support:dec.help==='nat'}; }
 
 /* ---------- one run: cohorts of people with a timeline of states ---------- */
-function simulate(o){ const pr=DR.prep; if(!pr) return null; const M=pr.M,W=pr.first-o.lead,comply=Math.min(1,o.comply+(o.door?.1:0));
+function simulate(o){ const pr=DR.prep; if(!pr) return null; const M=pr.M,W=pr.first-o.lead,comply=Math.min(1,o.comply+(o.door?DOOR_BOOST:0)),S0=Math.max(0,Math.min(1,o.share??1)); // S0: share of evacuees who need a public shelter, the others go to family/friends
   const sh=[...E.shelters.map((s,k)=>({c:s.c,name:s.name,cap:capOf(k)*o.capX})),...extraShelters().map(x=>({...x,cap:x.cap*o.capX,extra:true}))].map(s=>({...s,load:0,full:null,tl:[]}));
   // "tall": shelter places go first to people without a safe upper floor; the share f of the others that still fits leaves too, the rest stays upstairs
-  const C=sh.reduce((a,x)=>a+x.cap,0),need=pr.groups.reduce((a,g)=>a+g.pop*comply*(1-g.up),0),upN=pr.groups.reduce((a,g)=>a+g.pop*comply*g.up,0),f=o.tall?Math.max(0,Math.min(1,(C-need)/(upN||1))):1;
-  const capAt=s=>s.cap*(o.full==='pack'?1.3:1),co=[],arr=[],danger=[];
+  const C=sh.reduce((a,x)=>a+x.cap,0),need=pr.groups.reduce((a,g)=>a+g.pop*comply*(1-g.up)*S0,0),upN=pr.groups.reduce((a,g)=>a+g.pop*comply*g.up*S0,0),f=o.tall?Math.max(0,Math.min(1,(C-need)/(upN||1))):1;
+  const capAt=s=>s.cap*(o.full==='pack'?1+SQUEEZE:1),co=[],arr=[],danger=[];
   const wet=(c,t)=>{c.segs.push([t,'wet']); danger.push([t,c.n*(1-(c.up??c.g.up))]);};
   for(const g of pr.groups){
     if(comply<1){ const c={n:g.pop*(1-comply),g,segs:[[-Infinity,'home']]}; wet(c,g.ts); co.push(c); } // did not follow the order
     if(o.tall&&g.up*(1-f)>0){ const c={n:g.pop*comply*g.up*(1-f),g,up:1,segs:[[-Infinity,'home']]}; wet(c,g.ts); co.push(c); } // told to stay upstairs
     const go=1-g.up*(1-f);
-    for(const L of o.guide==='near'?g.near:g.legs) for(let j=0;j<NC;j++){ const n=L.n*comply*go/NC,dep=W+o.mob*2*(j+.5)/NC,c={n,g,segs:[[-Infinity,'home']]}; co.push(c);
+    for(const L of o.guide==='near'?g.near:g.legs) for(let j=0;j<NC;j++) for(const [part,away] of [[S0,false],[1-S0,true]]){ if(part<=0) continue;
+      const n=L.n*comply*go/NC*part,dep=W+o.mob*2*(j+.5)/NC,c={n,g,segs:[[-Infinity,'home']]}; co.push(c);
       if(dep>=g.ts){ c.segs.push([g.ts,'stuck',g.c]); danger.push([g.ts,n]); continue; } // water already at the door when they try to leave
-      const v=L.l.len/Math.max(1,L.l.len/o.v+o.delay); let stuck=null;
+      const v=L.l.len/Math.max(1,L.l.len/o.v+o.delay+(L.l.qd||0)); /* qd = queue minutes at clog points on this route (congestion.js, pessimistic) */ let stuck=null;
       for(const [s,t] of L.l.cells) if(dep+s/v>=t){ stuck=[dep+s/v,s]; break; }
       c.segs.push([dep,'walk',L.l,dep,v]);
-      if(stuck){ c.segs.push([stuck[0],'stuck',along(L.l,stuck[1])]); danger.push([stuck[0],n]); } else arr.push({t:dep+L.l.len/v,c,k:L.k}); }
+      if(stuck){ c.segs.push([stuck[0],'stuck',along(L.l,stuck[1])]); danger.push([stuck[0],n]); } else if(away) c.segs.push([dep+L.l.len/v,'away']); else arr.push({t:dep+L.l.len/v,c,k:L.k}); } // away: reaches family/friends outside the flood (same road, same risk)
   }
   arr.sort((a,b)=>a.t-b.t);
   while(arr.length){ const a=arr.shift(),s=sh[a.k],inN=Math.min(Math.max(0,capAt(s)-s.load),a.c.n),rest=a.c.n-inN;
@@ -2709,9 +2769,9 @@ function simulate(o){ const pr=DR.prep; if(!pr) return null; const M=pr.M,W=pr.f
   let A=0,i=0,q=0; const tStart=Math.min(0,W); for(let t=tStart;t<=M;t+=step){ while(i<danger.length&&danger[i][0]<=t) A+=danger[i++][1];
     const rate=t<t0?0:o.rate*(o.support?SUPPORT_X:1); q=Math.min(A,q+rate*step/60); R.push(q); }
   const run={o,W,f,comply,sh,co,R,tStart,step,M,firstDanger:danger[0]?.[0]??null,peakT:.6*M,firstFull:Math.min(...sh.map(s=>s.full??Infinity))};
-  run.peak=countAt(run,run.peakT); run.score=run.peak.danger+run.peak.noplace; return run; }
+  run.peak=countAt(run,run.peakT); run.score=run.peak.danger+run.peak.noplace+run.peak.up; return run; } // not evacuated at the peak: upstairs at home is a last resort, not safe
 const segAt=(c,t)=>{let s=c.segs[0]; for(const x of c.segs){ if(x[0]>t) break; s=x; } return s;};
-function countAt(run,t){ const k={home:0,walk:0,shel:0,up:0,trap:0,stuck:0,noplace:0};
+function countAt(run,t){ const k={home:0,walk:0,shel:0,away:0,up:0,trap:0,stuck:0,noplace:0};
   for(const c of run.co){ const s=segAt(c,t); if(s[1]==='wet'){ const u=c.up??c.g.up; k.up+=c.n*u; k.trap+=c.n*(1-u); } else k[s[1]==='shel'?'shel':s[1]]+=c.n; }
   const resc=run.R[Math.max(0,Math.min(run.R.length-1,Math.floor((t-run.tStart)/run.step)))]||0,dg=k.trap+k.stuck,f=dg>0?Math.max(0,1-resc/dg):1;
   k.resc=Math.min(dg,resc); k.trap*=f; k.stuck*=f; k.danger=k.trap+k.stuck; return k; }
@@ -2724,7 +2784,7 @@ let drT=null;
 function drillRun(){ if(!DR.prep){ DR.run=null; drawDrill(); return; } const o=drillOpts(); DR.run=simulate(o); DR.range=rangeOf(o);
   DR.base=simulate(drillOpts({},{comply:DR0.comply/100,capX:DR0.capX/100,rate:DR0.rescue,lead:DR0.lead,mob:DR0.mob,delay:DR0.delay,v:DR0.speed*1000/60}));
   clearTimeout(drT); drT=setTimeout(()=>{ DR.best=bestPlan(); drawDrill(); },250); drawDrill(); extraPins(); if(ready) render(); }
-// every combination of the choices; best = fewest people unsafe at the peak, then fewest changes
+// every combination of the choices; best = fewest people not evacuated at the peak, then fewest changes
 function bestPlan(){ if(!DR.prep) return null; let best=null;
   for(const early of EXTRA_LEAD) for(const order of ['plan','door','tall','near']) for(const full of ['redirect','pack']) for(const help of ['local','nat']){
     const dec={early,order,full,help},run=simulate(drillOpts(dec)),n=(early>0)+(order!=='plan')+(full!=='redirect')+(help==='nat');
@@ -2734,27 +2794,29 @@ function bestPlan(){ if(!DR.prep) return null; let best=null;
   best.range=rangeOf(drillOpts(best.dec)); return best; }
 
 /* ---------- action sequence for "Best actions" and the decision card ---------- */
-function actionPlan(b=DR.best){ if(!b) return []; const R=b.run,d=b.dec,g=k=>b.gain[k]>.5?` <span class="gain">−${fmt(b.gain[k])} unsafe</span>`:'',out=[],pr=DR.prep;
+function actionPlan(b=DR.best){ if(!b) return []; const R=b.run,d=b.dec,g=k=>b.gain[k]>.5?` <span class="gain">−${fmt(b.gain[k])} not evacuated</span>`:'',out=[],pr=DR.prep;
   const f=d.order==='tall'?R.f:1,stay=pr.groups.reduce((s,x)=>s+x.pop*R.comply*x.up*(1-f),0),used=R.sh.filter(s=>s.extra&&s.load>0);
+  out.push([-Infinity,`<b>Before the season</b>: <b>agree cross-border sheltering</b> with Dutch Limburg (Veiligheidsregio Zuid-Limburg) and Region Aachen through EMRIC: no agreement for sheltering evacuees across the border was found; this app covers the Belgian Vesdre only so far.`]);
+  if(D.bankN) out.push([-Infinity,`<b>Before the season</b>: tell the ${fmt(D.bankN)} riverbank buildings (≤ ${Math.round(D.bankM)} m from the river) that going upstairs is unreliable there: they <b>evacuate early</b>, at the first warning.`]);
   if(used.length) out.push([-Infinity,`<b>Before the season</b>: agree with the next best sites (${used.slice(0,4).map(x=>esc(x.name)).join(', ')}${used.length>4?'…':''}) that they open when the first shelters are full (+${fmt(used.reduce((s,x)=>s+x.cap,0))} places).`]);
   if(d.early) out.push([R.W,`<b>Be ready to warn ${d.early/60} h earlier</b> (${SC.leadMin+d.early} min before the water): forecast watch + a pre-agreed trigger (EFAS / IRM-KMI warnings).${g('early')}`]);
   const toGo=pr.groups.reduce((s,x)=>s+x.pop*(1-x.up*(1-f)),0);
-  if(d.order==='tall') out.push([R.W,`<b>Tell about ${fmt(stay)} residents whose building has a floor above the water to go upstairs and stay</b>: shelter places go first to people without a safe floor.${g('order')}`]);
+  if(d.order==='tall') out.push([R.W,`<b>Last resort: tell about ${fmt(stay)} residents who cannot get a shelter place and whose building has a floor above the water to go upstairs</b>: shelter places go first to people without a safe floor. Not a first choice: evacuating before the water is the goal.${g('order')}`]);
   out.push([R.W,`<b>Order the evacuation</b> of ${fmt(toGo)} residents, wave 1 (low ground, upstream) first, each street told <b>which shelter</b> to drive to (SMS, BE-Alert, loudspeakers)${d.order==='door'?' and <b>door-to-door</b> teams for people who do not react':''}.${d.order==='tall'?'':g('order')}`]);
   if(isFinite(R.firstFull)) out.push([R.firstFull,d.full==='pack'?`<b>When a shelter is full</b>: open corridors and halls (+30% emergency places).${g('full')}`:`<b>When a shelter is full</b>: send cars on to the next shelter with room (staff at the door with the live count).`]);
   if(R.firstDanger!=null) out.push([R.firstDanger,`<b>Rescue teams</b> to people trapped in flooded homes or streets, single-storey homes first${d.help==='nat'?'; <b>ask for national support</b> (civil protection, army)':''}.${g('help')}`]);
-  out.push([R.peakT,`<b>At the peak</b>: ${fmt(R.peak.shel)} in shelters, ${fmt(R.peak.up)} upstairs at home (check on them), ${fmt(R.score)} still unsafe.`]);
+  out.push([R.peakT,`<b>At the peak</b>: ${fmt(R.peak.shel)} in shelters, ${fmt(R.peak.up)} upstairs at home (last resort, check on them), ${fmt(R.peak.danger+R.peak.noplace)} in danger or without a place: ${fmt(R.score)} not evacuated.`]);
   return out.sort((a,b)=>a[0]-b[0]); }
 
 /* ---------- on screen: live counts, shelter fill, cars ---------- */
 const SVGI=p=>`<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
-const HUDI={home:'<path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/>',walk:'<path d="M5 16l1.5-5h11L19 16"/><rect x="3" y="16" width="18" height="4" rx="1"/><circle cx="7" cy="20" r="1.4"/><circle cx="17" cy="20" r="1.4"/>',
+const HUDI={away:'<path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/><path d="M10 14l2 2 4-4"/>',home:'<path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/>',walk:'<path d="M5 16l1.5-5h11L19 16"/><rect x="3" y="16" width="18" height="4" rx="1"/><circle cx="7" cy="20" r="1.4"/><circle cx="17" cy="20" r="1.4"/>',
   shel:'<path d="M12 3l9 5v13H3V8z"/><path d="M12 10v6M9 13h6"/>',up:'<path d="M4 20h4v-4h4v-4h4V8h4"/>',danger:'<path d="M12 3l10 18H2z"/><path d="M12 10v5M12 18v.5"/>',
   noplace:'<circle cx="12" cy="12" r="9"/><path d="M7 7l10 10"/>',resc:'<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/><path d="M5.6 5.6l3.6 3.6M18.4 5.6l-3.6 3.6M5.6 18.4l3.6-3.6M18.4 18.4l-3.6-3.6"/>'};
-const HUDT={home:'At home, water not there yet',walk:'Driving to a shelter',shel:'In a shelter / places available',up:'Water at home, building has a floor above it',danger:'Trapped without a safe floor, or stuck in a flooded street',noplace:'Reached a full shelter, no room in the area',resc:'Taken out by rescue teams'};
+const HUDT={away:'Left to family or friends outside the flood (no shelter place needed)',home:'At home, water not there yet',walk:'Driving to a shelter',shel:'In a shelter / places available',up:'Water at home, building has a floor above it',danger:'Trapped without a safe floor, or stuck in a flooded street',noplace:'Reached a full shelter, no room in the area',resc:'Taken out by rescue teams'};
 function drillTick(){ syncDock(); drawHud(); drawPins(); }
 function drawHud(){ const h=$('hud'),R=DR.run; if(!R){ h.hidden=true; return; } const t=S.T*R.M,k=countAt(R,t),room=R.sh.filter(x=>!x.extra||x.load>0).reduce((s,x)=>s+x.cap,0);
-  h.innerHTML=[['home','home',k.home],['walk','driving',k.walk],['shel',`sheltered /${fmt(room)}`,k.shel],['up','upstairs',k.up],['danger','danger',k.danger],['noplace','no place',k.noplace],['resc','rescued',k.resc]]
+  h.innerHTML=[['home','home',k.home],['walk','driving',k.walk],['shel',`sheltered /${fmt(room)}`,k.shel],['away','with family',k.away],['up','upstairs',k.up],['danger','danger',k.danger],['noplace','no place',k.noplace],['resc','rescued',k.resc]]
     .map(([c,t,v])=>`<span title="${HUDT[c]}" class="hi ${c}${v>=1&&(c==='danger'||c==='noplace')?' bad':''}">${SVGI(HUDI[c])}<b data-src="drill">${fmt(v)}</b><i>${t}</i></span>`).join(''); h.hidden=false; }
 const loadAt=(s,t)=>{ let ld=0; for(const [tt,l] of s.tl){ if(tt>t) break; ld=l; } return ld; };
 function drawPins(){ const R=DR.run; if(!R) return; const t=S.T*R.M,n=E.shelters.length;
@@ -2799,20 +2861,20 @@ function drawDrill(){ const box=$('drillOut'); if(!box) return; const R=DR.run,B
   if(!R){ box.innerHTML='<p class="hint">No evacuation plan yet.</p>'; return; }
   const row=(t,f,src)=>`<tr><td>${t}</td>${[b0,R,B?.run].map(x=>`<td class="mono" data-src="${src}">${x?fmt(f(x)):'…'}</td>`).join('')}</tr>`;
   box.innerHTML=`<table class="tbl score"><thead><tr><th></th><th>Start</th><th>Yours</th><th>Best</th></tr></thead><tbody>
-    ${row('<b>Unsafe at the peak</b>',x=>x.score,'drill')}${row('in danger',x=>x.peak.danger,'drill')}${row('no shelter place',x=>x.peak.noplace,'drill')}${row('in shelters',x=>x.peak.shel,'drill')}${row('upstairs at home',x=>x.peak.up,'obat')}${row('rescued',x=>x.peak.resc,'rescue')}
+    ${row('<b>Not evacuated at the peak</b>',x=>x.score,'drill')}${row('in danger',x=>x.peak.danger,'drill')}${row('no shelter place',x=>x.peak.noplace,'drill')}${row('in shelters',x=>x.peak.shel,'drill')}${row('left to family/friends',x=>x.peak.away,'drill')}${row('upstairs at home (last resort)',x=>x.peak.up,'obat')}${row('rescued',x=>x.peak.resc,'rescue')}
     <tr><td class="hint">likely range</td><td></td><td class="mono hint">${fmt(DR.range[0])}–${fmt(DR.range[1])}</td><td class="mono hint">${B?`${fmt(B.range[0])}–${fmt(B.range[1])}`:''}</td></tr></tbody></table>
-    <p class="hint">At the peak = clock ${clockM(R.peakT)}. Range: people react faster/slower (follow rate, driving speed ±20%, getting ready ×0.75–1.5).</p>
+    <p class="hint">Not evacuated = in danger + no shelter place + upstairs at home. Upstairs at home is a last resort: in July 2021 fast water damaged houses in the Vesdre valley. Evacuating before the water is the goal. Riverbank homes (≤ ${Math.round(D.bankM||0)} m from the river, ${D.bankSrc||''}) never count as having a safe floor. Public shelter = share of evacuees who need a public place (${DR.share}%); the others go to family or friends. Evidence: ~4.5% (Limburg 2021), ~13% planned in Verviers; default 25% keeps a margin. At the peak = clock ${clockM(R.peakT)}. Range: people react faster/slower (follow rate, driving speed ±20%, getting ready ×0.75–1.5).</p>
     <div class="row" style="justify-content:flex-start"><button class="btn primary sm" id="drDebrief">Best actions</button><button class="btn sm" id="drBest" ${B?'':'disabled'}>Use best choices</button></div>`;
   $('drDebrief').onclick=showDebrief; $('drBest').onclick=useBest; }
 function useBest(){ const B=DR.best; if(!B) return; DR.dec={order:B.dec.order,full:B.dec.full,help:B.dec.help}; if(B.dec.early){ SC.leadMin+=B.dec.early; $('sc-leadMin').value=SC.leadMin; makePlan(); }
   drawChoices(); drillRun(); restart0(); toast('Best choices set: press ▶'); }
 function showDebrief(){ const B=DR.best,R=DR.run,st=$('drillStage'); if(!B||!R){ toast('Still computing the best plan…'); return; } setPlaying(false);
-  $('drillBody').innerHTML=`<div class="stats"><div class="stat${R.score>B.run.score+.5?' warn':''}"><b data-src="drill">${fmt(R.score)}</b><span>unsafe at the peak with your choices (${fmt(DR.range[0])}–${fmt(DR.range[1])})</span></div>
+  $('drillBody').innerHTML=`<div class="stats"><div class="stat${R.score>B.run.score+.5?' warn':''}"><b data-src="drill">${fmt(R.score)}</b><span>not evacuated at the peak with your choices (${fmt(DR.range[0])}–${fmt(DR.range[1])})</span></div>
     <div class="stat"><b data-src="drill">${fmt(B.run.score)}</b><span>with the best actions (${fmt(B.range[0])}–${fmt(B.range[1])})</span></div>
-    <div class="stat"><b>${fmt(Math.max(0,R.score-B.run.score))}</b><span>more people safe</span></div></div>
+    <div class="stat"><b>${fmt(Math.max(0,R.score-B.run.score))}</b><span>more people evacuated</span></div></div>
     <ol class="steps">${actionPlan(B).map(([t,x])=>`<li><span class="mono">${isFinite(t)?clockM(t):'Before'}</span><span>${x}</span></li>`).join('')}</ol>
     <div class="row" style="justify-content:flex-start"><button class="btn primary sm" id="dbUse">Use these choices and play</button></div>
-    <p class="hint">"Unsafe" = trapped without a floor above the water, stuck in a flooded street, or without a shelter place, when the water is highest. ${3*4*2*2} combinations tested on the same flood. "Upstairs" is not risk-free: people must be checked on. A planning aid with assumptions, not a prediction of deaths.</p>`;
+    <p class="hint">"Not evacuated" = in danger (trapped without a floor above the water, or stuck in a flooded street), without a shelter place, or upstairs at home, when the water is highest. Upstairs at home is a last resort: in July 2021 fast water damaged houses in the Vesdre valley. Evacuating before the water is the goal. ${3*4*2*2} combinations tested on the same flood. "Upstairs" is not risk-free: people must be checked on. A planning aid with assumptions, not a prediction of deaths.</p>`;
   st.hidden=false; $('dbUse').onclick=()=>{ st.hidden=true; useBest(); setPlaying(true); }; $('drillClose').focus(); }
 
 /* ---------- controls under the map: sliders + the choices, set before pressing play ---------- */
@@ -2824,6 +2886,7 @@ const DOCK=[['size','Flood',0,2,1,()=>S.sizeIdx,v=>{$('size').value=v; $('size')
   ['rise','Water rises in',2,24,1,()=>Math.round(SC.mins*.45/60),v=>{SC.mins=Math.round(v*60/.45); $('sc-mins').value=SC.mins; alerted=warned=null; makePlan();},v=>v+' h'],
   ['comply','Follow',30,100,5,()=>DR.comply,v=>{DR.comply=v; drillRun();},v=>v+'%'],
   ['cap','Places',50,300,10,()=>DR.capX,v=>{DR.capX=v; drillRun();},v=>v+'%'],
+  ['share','Public shelter',5,100,5,()=>DR.share,v=>{DR.share=v; drillRun();},v=>v+'%'],
   ['walk','Speed',10,60,5,()=>E.speed,v=>{E.speed=v; $('evSpeedMs').value=v; makePlan();},v=>v+' km/h'],
   ['resc','Rescue',0,500,10,()=>DR.rescue,v=>{DR.rescue=v; drillRun();},v=>v+'/h']];
 const CHOICES=[['order','Order',[['plan','Each street → its shelter'],['tall','Places first: no upper floor'],['door','+ door-to-door'],['near','People choose']]],
@@ -2843,6 +2906,41 @@ $('dockHide').onclick=()=>{ const on=$('dock').classList.toggle('min'); $('dockH
 function syncDock(){ if(!$('dk-size')) return; DOCK.forEach(([k,,,,,get,,lab])=>{ const el=$('dk-'+k); if(el&&document.activeElement!==el&&+el.value!==get()){ el.value=get(); $('dkv-'+k).textContent=lab(get()); } }); }
 $('drillClose').onclick=()=>{$('drillStage').hidden=true;};
 $('drillCard').onclick=()=>openCard();
+
+</script>
+<script>
+// congestion.js - Clog points: where evacuation cars exceed road capacity (volume/capacity ratio), and the delay that implies.
+// Queue at a bottleneck: deterministic (point) queue, wait at the end of a window T = T × (V/C − 1) when demand exceeds capacity (Newell, Applications of Queueing Theory, 1982).
+// Formula: BPR link performance function (US Bureau of Public Roads, Traffic Assignment Manual, 1964): t = t0 × (1 + 0.15 × (V/C)^4).
+// Pessimistic: the worst queue of every clog point a route crosses is added to that route's travel time, then the run is redone.
+// V = cars per hour on a road piece (busiest 15-min window × 4) from the drill run; C = capacity per direction by road class.
+// Capacities: Highway Capacity Manual 2000 values quoted in KLD, Lee Nuclear Station ETE (NRC ML073510573): freeway ~2,250/lane,
+// multilane ~2,100/lane, two-lane road ~1,700; urban signalised street ≈ 1,900 × green share ≈ 950/lane (FHWA HPMS guidance 2020).
+// Lanes per direction by road class and persons per car are ASSUMPTIONS (shown in the app). Limit: delays are reported, not fed back into the run.
+const CLOG={occ:1.4,cap:{motorway:4200,motorway_link:1700,trunk:3400,trunk_link:1700,primary:1700,primary_link:1500,secondary:1700,secondary_link:1300,tertiary:950,tertiary_link:950,
+  minor:950,unclassified:950,residential:600,living_street:400,service:400},list:[],worst:0,delayMin:0};
+const clogCap=cls=>CLOG.cap[cls]??600;
+function computeClogs(){ CLOG.list=[]; CLOG.worst=0; CLOG.delayMin=0; const R=DR.run; if(!R||!roadSegs.size){ drawClogs(); return; }
+  const veh=new Map(),get=(a,b)=>{const k1=kk(a)+'|'+kk(b),k2=kk(b)+'|'+kk(a); return roadSegs.has(k1)?k1:roadSegs.has(k2)?k2:null;};
+  for(const c of R.co){ if(!(c.n>0)) continue; for(const s of c.segs){ if(s[1]!=='walk') continue; const l=s[2],dep=s[3],v=s[4];
+      for(let j=1;j<l.pts.length;j++){ const k=get(l.pts[j-1],l.pts[j]); if(!k) continue; const t=dep+l.cum[j-1]/v,bin=Math.floor(t/15); let m=veh.get(k); if(!m) veh.set(k,m=new Map()); m.set(bin,(m.get(bin)||0)+c.n/CLOG.occ); } } }
+  for(const [k,m] of veh){ const s=roadSegs.get(k),C=clogCap(s.cls),peak=Math.max(...m.values())*4,vc=peak/C; if(vc<=1) continue;
+    const t0=s.len/(E.speed*1000/60),extra=t0*0.15*vc**4; CLOG.list.push({a:s.a,b:s.b,vc,cars:peak,cls:s.cls,extra,queue:15*(vc-1)}); }
+  CLOG.list.sort((x,y)=>y.vc-x.vc); CLOG.worst=CLOG.list[0]?.vc||0; CLOG.delayMin=CLOG.list.reduce((s,x)=>s+x.extra,0); drawClogs(); }
+function drawClogs(){ if(!ready) return; if(!map.getSource('clogs')){ map.addSource('clogs',{type:'geojson',data:{type:'FeatureCollection',features:[]}});
+    map.addLayer({id:'clogs',type:'line',source:'clogs',layout:{'line-cap':'round'},paint:{'line-color':css('--clog'),'line-dasharray':[1,.6],'line-width':['interpolate',['linear'],['zoom'],11,3,16,9],'line-opacity':.9}}); }
+  map.getSource('clogs').setData({type:'FeatureCollection',features:CLOG.list.map(x=>({type:'Feature',geometry:{type:'LineString',coordinates:[x.a,x.b]},properties:{vc:+x.vc.toFixed(2)}}))});
+  map.setLayoutProperty('clogs','visibility',S.tab==='safety'||S.tab==='sim'?'visible':'none'); }
+function clogText(){ return CLOG.list.length?`<b>${CLOG.list.length} clog points</b>: road pieces where evacuation cars exceed capacity (worst ${CLOG.worst.toFixed(1)}× capacity, ${CLOG.list[0].cls} road). At the worst point cars queue up to ≈ ${Math.round(CLOG.list[0].queue)} min (deterministic queue over the busiest 15 min: wait = 15 × (V/C − 1)); slower driving on clogged pieces ≈ ${Math.round(CLOG.delayMin)} min in total (BPR). Added to the travel time of every route through them (pessimistic) and the run is redone. Stagger departures by wave on these corridors.`
+  :'No clog point: cars stay under road capacity in this run (BPR / Highway Capacity Manual values).'; }
+function routeLines(){ const out=new Set(); (DR.prep?.groups||[]).forEach(g=>[...g.legs,...g.near].forEach(L=>out.add(L.l))); return [...out]; }
+function feedQueues(){ const q=new Map(); CLOG.list.forEach(x=>q.set(kk(x.a)+'|'+kk(x.b),x.queue)); let any=false;
+  for(const l of routeLines()){ let s=0; for(let j=1;j<l.pts.length;j++) s+=q.get(kk(l.pts[j-1])+'|'+kk(l.pts[j]))||q.get(kk(l.pts[j])+'|'+kk(l.pts[j-1]))||0; l.qd=s; if(s>0) any=true; } return any; }
+const _drillRunC=drillRun; drillRun=function(){ routeLines().forEach(l=>l.qd=0); _drillRunC(); computeClogs();
+  if(DR.prep&&feedQueues()){ const o=drillOpts(); DR.run=simulate(o); DR.range=rangeOf(o); DR.base=simulate(drillOpts({},{comply:DR0.comply/100,capX:DR0.capX/100,rate:DR0.rescue,lead:DR0.lead,mob:DR0.mob,delay:DR0.delay,v:DR0.speed*1000/60})); if(ready) render(); }
+  drawDrill(); if(typeof SRC==='object') SRC.clog=['mix','Clog points: cars per hour on each road piece (drill run, people ÷ 1.4 per car) vs capacity (Highway Capacity Manual 2000 via KLD/NRC; FHWA 2020); delay from the BPR function t = t0(1 + 0.15 (V/C)^4), US Bureau of Public Roads 1964.','Lanes per road class and persons per car are assumptions. Pessimistic: the worst queue of each clog point is added to every route crossing it.']; };
+const _drawDrillC=drawDrill; drawDrill=function(){ _drawDrillC(); const b=$('drillOut'); if(b&&DR.run) b.insertAdjacentHTML('beforeend',`<p class="hint" data-src="clog">${clogText()} Cars = people ÷ ${CLOG.occ} per car (assumption).</p>`); };
+const _applyLayersC=applyLayers; applyLayers=function(){ _applyLayersC(); if(ready&&map.getLayer('clogs')) map.setLayoutProperty('clogs','visibility',(S.tab==='safety'||S.tab==='sim')?'visible':'none'); };
 
 </script>
 <script>
@@ -2868,25 +2966,8 @@ document.addEventListener('click',e=>{ const el=e.target.closest('[data-src]'),p
 addEventListener('keydown',e=>{ if(e.key==='Escape'){ $('srcPop').hidden=true; } });
 
 /* ---------- mayor's decision card: one printable page ---------- */
-function openCard(){ const r=rp(),pk=peak(r),c=floodCost(r),B=DR.best,R=DR.run,P=E.plan; if(!B||!R){ toast('Still computing the best plan…'); return; }
-  const places=E.shelters.reduce((s,x,k)=>s+capOf(k),0),strip=s=>s.replace(/<span class="gain">(.*?)<\/span>/g,'<em>($1)</em>');
-  const w=open('','_blank'); if(!w){ toast('Allow pop-ups to open the card'); return; }
-  w.document.write(`<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Flood decision card</title><style>
-    body{font:14px/1.45 system-ui,sans-serif;color:#1d2529;max-width:760px;margin:24px auto;padding:0 16px}h1{font-size:22px;margin:0}h2{font-size:15px;margin:18px 0 6px;text-transform:uppercase;letter-spacing:.04em}
-    .k{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}.k div{border:1px solid #ccd;border-radius:6px;padding:8px}.k b{display:block;font-size:20px}
-    ol{padding-left:20px}li{margin:4px 0}.t{font-family:ui-monospace,monospace;color:#555;margin-right:6px}em{color:#0e6b5e;font-style:normal}.s{font-size:12px;color:#555}
-    @media print{button{display:none}}</style></head><body>
-    <h1>Flood decision card</h1><div class="s">Vesdre valley (BE) · ${sizeWord(r).toLowerCase()} flood, 1-in-${r} years (${chance(r)} chance each year) · warning ${SC.leadMin} min before the water · Flood Scenario Explorer</div>
-    <h2>What is at stake</h2><div class="k"><div><b>${fmt(pk.people)}</b>residents in flooded areas</div><div><b>${fmt(pk.bld)}</b>buildings in the water</div>
-      <div><b>${eur(c.damage)}</b>damage to buildings and roads (proxy)</div><div><b>${fmt(places)} / ${fmt(P.total)}</b>shelter places / people to move</div></div>
-    ${D.hasObs?`<p class="s">July 2021 satellite check: ${$('agreeHead').textContent.replace(/^.*?:\s*/,'')}</p>`:''}
-    <h2>Result of the drill</h2><p>People unsafe when the water is highest: <b>${fmt(R.score)}</b> (range ${fmt(DR.range[0])}–${fmt(DR.range[1])}) with the current settings,
-      <b>${fmt(B.run.score)}</b> (range ${fmt(B.range[0])}–${fmt(B.range[1])}) with the sequence below.</p>
-    <h2>Sequence of actions</h2><ol>${actionPlan(B).map(([t,x])=>`<li><span class="t">${isFinite(t)?clockM(t):'Before'}</span>${strip(x)}</li>`).join('')}</ol>
-    <h2>Sources and limits</h2><p class="s">Data: EFAS flood maps, GHS-POP, GHS-OBAT (JRC), Copernicus EMS 2021, Copernicus DEM, OpenStreetMap. Published sources: JRC depth–damage curves, Sphere standard (3.5 m² per person).
-      Assumptions (set by the team): follow rate ${DR.comply}%, time to get ready ${FW.mob} min, walking speed ${(E.speed/3.6).toFixed(1)} m/s, rescue ${DR.rescue} people/h, shelter places ${DR.capX}% of planned.
-      "Unsafe" = trapped without a floor above the water, stuck in a flooded street, or without a shelter place. The timing of the water is illustrative: a training and planning aid, not a forecast of casualties.</p>
-    <button onclick="print()">Print or save as PDF</button></body></html>`); w.document.close(); }
+// Anna's report replaces the separate decision card: one PDF, page 1 = the one-minute summary (report.js)
+function openCard(){ openReport(); }
 $('cardBtn').onclick=openCard;
 
 /* ---------- guided demo ---------- */
@@ -2896,8 +2977,8 @@ const TOUR=[
   ['Watch the water rise',()=>{tab('sim'); S.T=0; setSpeed(5); setPlaying(true);},'Upstream and low ground flood first. Buildings turn colour when water reaches them; red streets are closed to cars.'],
   ['Who must leave, and where to',()=>{setPlaying(false); tab('safety'); S.T=.3; render();},'Each circle is a group of residents, with a car route on real streets to a shelter the app chose (far from water, room for many). Click a shelter pin to see the area it serves.'],
   ['Choose, then play',()=>{ tab('sim'); S.T=0; render(); },'Under the map: the order to give, what happens when a shelter is full, and rescue support. Choose before pressing ▶: cars leave, shelters fill up, the next best shelter is found, streets flood.'],
-  ['Best actions',()=>{ setPlaying(false); showDebrief(); },'The app tests every combination of choices on the same flood and shows the sequence that leaves the fewest people unsafe, with a range.'],
-  ['The mayor\'s decision card',()=>{ $('drillStage').hidden=true; tab('policy'); },'One printable page: what is at stake, the sequence of actions with times, and the sources and limits. Button: "Mayor\'s decision card".']];
+  ['Best actions',()=>{ setPlaying(false); showDebrief(); },'The app tests every combination of choices on the same flood and shows the sequence that leaves the fewest people not evacuated, with a range.'],
+  ['Anna\'s report',()=>{ $('drillStage').hidden=true; },'Anna\'s report: one page with what flooded, what changed, whether everyone can be sheltered, and what to do first. Button: "Report" under the map.']];
 let tourI=-1;
 const tab=t=>document.querySelector(`.tabs [data-t="${t}"]`)?.click();
 function tourGo(i){ tourI=i; const b=$('tour'); if(i<0||i>=TOUR.length){ b.hidden=true; tourI=-1; return; } const [t,act,txt]=TOUR[i]; try{act();}catch(e){}
@@ -2983,11 +3064,11 @@ const CH={order:{plan:'each street → its shelter',tall:'places first for homes
 let played=false,endDone=false;
 FX.push(()=>{ if(S.playing) played=true; if(S.T<.99) endDone=false; if(S.T>=1&&!S.playing&&played&&!endDone&&DR.run){ endDone=true; played=false; runEnded(); } });
 function runEnded(){ const R=DR.run,s=runSettings();
-  RUNS.push({at:new Date().toLocaleString('en-GB'),...s,unsafe:Math.round(R.score),danger:Math.round(R.peak.danger),noplace:Math.round(R.peak.noplace),shel:Math.round(R.peak.shel),up:Math.round(R.peak.up),
+  RUNS.push({at:new Date().toLocaleString('en-GB'),...s,unsafe:Math.round(R.score),danger:Math.round(R.peak.danger),noplace:Math.round(R.peak.noplace),shel:Math.round(R.peak.shel),up:Math.round(R.peak.up),away:Math.round(R.peak.away||0),
     range:DR.range.map(Math.round),extra:R.sh.filter(x=>x.extra&&x.load>0).length}); saveRuns();
   const b=$('runEnd'); b.innerHTML=`<div class="ih">${SVGI('<path d="M14 3H6v18h12V7z"/><path d="M14 3v4h4M9 13h6M9 17h6"/>')}<b>Run finished</b></div>
-    <p><b>${fmt(R.score)}</b> people unsafe at the peak (range ${fmt(DR.range[0])}–${fmt(DR.range[1])}), ${fmt(R.peak.shel)} in shelters. Run ${RUNS.length} saved for comparison.</p>
-    <div class="iopts row"><button class="btn sm primary" id="reOpen">PDF report</button><button class="btn sm" id="reData">Data files</button><button class="btn sm" id="reNo">Not now</button></div>`;
+    <p><b>${fmt(R.score)}</b> people not evacuated at the peak (range ${fmt(DR.range[0])}–${fmt(DR.range[1])}), ${fmt(R.peak.shel)} in shelters${R.peak.away?`, ${fmt(R.peak.away)} with family or friends`:''}. Run ${RUNS.length} saved for comparison.</p>
+    <div class="iopts row"><button class="btn sm primary" id="reOpen">Anna's report (PDF)</button><button class="btn sm" id="reData">Data files</button><button class="btn sm" id="reNo">Not now</button></div>`;
   b.hidden=false; $('reOpen').onclick=()=>{ b.hidden=true; openReport(); }; $('reData').onclick=downloadAll; $('reNo').onclick=()=>b.hidden=true; }
 $('reportBtn').onclick=()=>openReport();
 
@@ -3004,73 +3085,110 @@ async function openReport(){ const R=DR.run; if(!R){ toast('Run the simulation f
   const B=DR.best||bestPlan(),sn=await snapMap(),sens=sensitivity(),r=rp(),pk=peak(r),st=runSettings(),towns=townStats(R),cost=floodCost(r),g=agreePix?.(r);
   const used=R.sh.map((s,i)=>({...s,i,src:i<E.shelters.length?E.shelters[i].src:(E.cands||[]).find(c=>c.c===s.c)})).filter(s=>!s.extra||s.load>0);
   const crit=(D.places||[]).filter(p=>p.ci>=0&&(p.group==='critical'||p.group==='shelter')&&D.cells[p.ci].depth[r]>.01).map(p=>({p,d:D.cells[p.ci].depth[r]})).sort((a,b)=>b.d-a.d);
-  const plain=s=>String(s).replace(/<span class="gain">(.*?)<\/span>/g,'<em>($1)</em>'),acts=actionPlan(B),first=acts.find(([,x])=>!/At the peak/.test(x)),top=towns.slice().sort((a,b)=>b.unsafe-a.unsafe||b.res-a.res);
+  const plain=s=>String(s).replace(/<span class="gain">(.*?)<\/span>/g,'<em>($1)</em>'),acts=actionPlan(B),todo=acts.filter(([,x])=>!/At the peak/.test(x)),first=todo[0],top=towns.slice().sort((a,b)=>b.unsafe-a.unsafe||b.res-a.res);
   const notes=(()=>{ try{ return localStorage.getItem('fse-q2')||''; }catch(e){ return ''; } })(),tag=k=>`<span class="tg ${k}">${{data:'data',ext:'published source',as:'assumption'}[k]}</span>`;
   const osm=c=>`https://www.openstreetmap.org/?mlat=${c[1].toFixed(5)}&mlon=${c[0].toFixed(5)}#map=17/${c[1].toFixed(5)}/${c[0].toFixed(5)}`,mx=Math.max(1,...sens.rows.map(x=>Math.max(x.lo,x.hi,sens.base)));
-  w.document.open(); w.document.write(`<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Flood report – ${esc(st.flood)}</title><style>
+  // one-minute summary inputs
+  const share=typeof DR!=='undefined'&&DR.share!=null?+DR.share:100,toMove=P_total(),needPub=toMove*share/100,places=E.shelters.reduce((s,x,k)=>s+capOf(k),0);
+  const extraUsed=R.sh.filter(s=>s.extra&&s.load>0),extraPl=extraUsed.reduce((s,x)=>s+x.cap,0),unk=(E.cands||[]).filter(c=>c.stay==='overnight'&&!c.cap).length;
+  const medIn=crit.filter(({p})=>['hospital','clinic','care_home'].includes(p.kind)).length,schIn=crit.filter(({p})=>p.kind==='school').length,away=R.peak.away||0;
+  const q2=Array.isArray(D.q2)&&D.q2.length?D.q2:null,q2Types=q2?Object.entries(q2.reduce((m,x)=>(m[x.type||'other']=(m[x.type||'other']||0)+1,m),{})).sort((a,b)=>b[1]-a[1]):[],q2Ver=q2?q2.filter(x=>x.verified===true||x.verified==='yes'||x.verified===1).length:0;
+  const isVer=x=>x.verified===true||x.verified==='yes'||x.verified===1,srcLink=x=>x.url?`<a href="${esc(x.url)}">${esc(x.source||'source')}</a>`:esc(x.source||'');
+  const P=typeof PARAMS==='object'&&PARAMS?PARAMS:null,ptag=s=>/data/i.test(s||'')?'data':/assum|unsourced|illustr|placeholder/i.test(s||'')?'as':'ext';
+  const pf=(keys,def)=>{ if(P) for(const k of keys) if(P[k]) return {t:ptag(P[k].status),s:P[k].source||''}; return {t:def,s:''}; };
+  const gap=needPub-(places+extraPl);
+  w.document.open(); w.document.write(`<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Anna's flood report – ${esc(st.flood)}</title><style>
   body{font:12.5px/1.45 system-ui,sans-serif;color:#1d2529;max-width:820px;margin:20px auto;padding:0 16px} h1{font-size:22px;margin:0} h2{font-size:15px;margin:20px 0 6px;padding-bottom:3px;border-bottom:2px solid #0e8f7e;text-transform:uppercase;letter-spacing:.03em}
   h3{font-size:13px;margin:12px 0 4px} table{width:100%;border-collapse:collapse;margin:4px 0} th,td{padding:3px 5px;border-bottom:1px solid #dde3e5;text-align:left;vertical-align:top} td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
   .k{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:8px 0}.k div{border:1px solid #cdd6d9;border-radius:6px;padding:6px 8px}.k b{display:block;font-size:19px}
-  .s{color:#56696f;font-size:11.5px} .lead{font-size:14px;border-left:4px solid #0e8f7e;padding:6px 10px;background:#eef7f5} em{color:#0e6b5e;font-style:normal;font-weight:600}
+  .s{color:#56696f;font-size:11.5px} .lead{font-size:15px;border-left:5px solid #0e8f7e;padding:8px 12px;background:#eef7f5;margin:10px 0} em{color:#0e6b5e;font-style:normal;font-weight:600}
   .tg{font-size:10px;padding:1px 5px;border-radius:8px;color:#fff;white-space:nowrap}.tg.data{background:#0e8f7e}.tg.ext{background:#1d4ed8}.tg.as{background:#a87b00}
+  .four{display:grid;grid-template-columns:1fr 1fr;gap:10px}.four section{border:1px solid #cdd6d9;border-radius:8px;padding:8px 10px}.four h3{margin:0 0 4px;font-size:13.5px;color:#0b5f53}.four p{margin:3px 0}.four ul,.four ol{margin:3px 0;padding-left:18px}
+  .big{font-size:18px;font-weight:700}.warn{color:#a8231c}
   .map{position:relative}.map img{width:100%;display:block;border-radius:6px}.pin{position:absolute;transform:translate(-50%,-100%);background:#0e8f7e;color:#fff;border:2px solid #fff;border-radius:50%;width:18px;height:18px;font:700 10px/18px sans-serif;text-align:center}.pin.full{background:#c0262d}
   .bar{height:9px;background:#cdd6d9;border-radius:3px;position:relative}.bar i{position:absolute;top:0;height:9px;background:#c0262d;border-radius:3px}.bar u{position:absolute;top:-2px;width:2px;height:13px;background:#1d2529}
   ol li{margin:3px 0} .t{font-family:ui-monospace,monospace;color:#56696f;margin-right:6px} .pb{page-break-before:always} .note{white-space:pre-wrap;border:1px dashed #cdd6d9;padding:6px 8px;border-radius:6px}
   @media print{button{display:none} body{margin:0}}</style></head><body>
   <button onclick="print()" style="float:right;padding:6px 12px">Save as PDF / print</button>
-  <h1>Flood scenario report</h1><div class="s">Vesdre valley (Liège province, BE) · ${esc(st.flood)} · water rises in ${st.rise_h} h · run of ${new Date().toLocaleString('en-GB')} · Flood Scenario Explorer (European AI Challenge 2026)</div>
-  <p class="lead"><b>First action for Anna:</b> ${first?plain(first[1]):'—'}</p>
+  <h1>If the July 2021 flood came back tomorrow</h1><div class="s">For Anna, cross-border crisis coordinator · Vesdre valley (Liège province, BE) · ${esc(st.flood)} · run of ${new Date().toLocaleString('en-GB')} · ${isDemo?'<b>DEMO DATA</b> · ':''}Flood Scenario Explorer</div>
+  <p class="lead"><b>First action:</b> ${first?plain(first[1]):'—'}</p>
+  <div class="four">
+   <section><h3>What the flood covered</h3>
+    <p><span class="big">${fmt(pk.people)}</span> residents and <b>${fmt(pk.bld)}</b> buildings in the water, ${pk.area.toFixed(1)} km² ${tag('data')}</p>
+    <p class="s">Flood map ${esc(st.flood)} (EFAS), about the July 2021 rain in this valley. The July 2021 satellite outline is incomplete in this version (data pipeline not finished): it cannot confirm or reject the map yet.</p>
+    ${towns.length?`<p>Most residents in the water: ${towns.slice(0,3).map(t=>`<b>${esc(t.name)}</b> ${fmt(t.res)}`).join(' · ')} ${tag('data')}</p>`:''}</section>
+   <section><h3>What has changed since 2021</h3>
+    ${q2?`<p><span class="big">${q2.length}</span> measures documented, <b>${q2Ver}</b> verified ${tag('ext')}</p><p class="s">${q2Types.slice(0,4).map(([t,n])=>`${esc(t)}: ${n}`).join(' · ')}</p>
+      <ul>${q2.slice().sort((a,b)=>isVer(b)-isVer(a)).slice(0,3).map(x=>`<li>${esc(x.area||'')}${x.area?': ':''}${esc(x.measure||'')} <span class="s">(${srcLink(x)}${isVer(x)?'':', not verified'})</span></li>`).join('')}</ul>`
+     :notes?`<div class="note">${esc(notes.slice(0,400))}${notes.length>400?'…':''}</div>`:'<p>Not documented yet.</p>'}
+    <p class="s">The flood maps describe the ground before 2021: new defences, rebuilt or demolished homes do not change the numbers here.</p></section>
+   <section><h3>Can we shelter everyone who must leave?</h3>
+    <p><span class="big">${fmt(toMove)}</span> people must leave ${tag('data')}; <b>${fmt(needPub)}</b> need a public shelter (${share}%) ${tag('as')}</p>
+    <p>Places: <b>${fmt(places)}</b> in the chosen shelters${extraPl?` + ${fmt(extraPl)} in next best sites`:''} ${tag('ext')} → ${gap>0?`<b class="warn">${fmt(gap)} places short</b>`:`<b>enough places</b> (${fmt(-gap)} spare)`}</p>
+    <p>${unk} possible sites with capacity to be checked (not counted)${medIn||schIn?` · inside the flood: <b class="warn">${medIn} hospitals / care sites, ${schIn} schools</b>`:' · no hospital or school inside the flood'} ${tag('data')}</p></section>
+   <section><h3>Where we are still exposed – act first</h3>
+    <p><span class="big">${fmt(R.score)}</span> not evacuated at the peak (${fmt(DR.range[0])}–${fmt(DR.range[1])}) ${tag('as')}${away?` · ${fmt(away)} left to family or friends`:''}</p><p>${typeof clogText==='function'?clogText():''} ${tag('ext')}</p>
+    ${top.length?`<p>Most exposed: ${top.slice(0,3).map(t=>`<b>${esc(t.name)}</b> ${fmt(t.unsafe)}`).join(' · ')} <span class="s">(in danger or without a place)</span></p>`:''}
+    <ol>${todo.slice(0,3).map(([t,x])=>`<li><span class="t">${isFinite(t)?clockM(t):''}</span>${plain(x)}</li>`).join('')}</ol></section>
+  </div>
+  <p class="s">Tags: <span class="tg data">data</span> challenge datasets · <span class="tg ext">published source</span> · <span class="tg as">assumption</span>. Not a forecast and not a count of casualties. Details, sources and assumptions on the next pages.</p>
+
+  <h2 class="pb">The flood at its peak</h2>
   <div class="map"><img src="${sn.url}" alt="Flood at its peak with shelters">${sn.pins.filter(p=>p.x>0&&p.x<100&&p.y>0&&p.y<100).map(p=>`<span class="pin${p.full?' full':''}" style="left:${p.x}%;top:${p.y}%">${p.n}</span>`).join('')}</div>
   <div class="s">Water at the peak (blue, darker = deeper), buildings coloured where water reached them, shelters (numbered; red = full; + = next best site used). Scale: whole study area, ~25 × 10 km.</div>
-  <div class="k"><div><b>${fmt(pk.people)}</b>residents in flooded areas ${tag('data')}</div><div><b>${fmt(pk.bld)}</b>buildings in the water ${tag('data')}</div><div><b>${fmt(R.score)}</b>unsafe at the peak (${fmt(DR.range[0])}–${fmt(DR.range[1])}) ${tag('as')}</div><div><b>${eur(cost.damage)}</b>damage, buildings + roads (proxy) ${tag('ext')}</div></div>
+  <div class="k"><div><b>${fmt(pk.people)}</b>residents in flooded areas ${tag('data')}</div><div><b>${fmt(pk.bld)}</b>buildings in the water ${tag('data')}</div><div><b>${fmt(R.score)}</b>not evacuated at the peak (${fmt(DR.range[0])}–${fmt(DR.range[1])}) ${tag('as')}</div><div><b>${eur(cost.damage)}</b>damage, buildings + roads (proxy) ${tag('ext')}</div></div>
 
-  <h2>Q1 · What does the flood cover?</h2>
+  <h2>What the flood covered</h2>
   <p>The ${esc(st.flood)} flood map (EFAS) puts <b>${fmt(pk.people)} residents</b> (GHS-POP) and <b>${fmt(pk.bld)} buildings</b> (GHS-OBAT) under water over ${pk.area.toFixed(1)} km². The July 2021 rain matched about a 1-in-100 rain in this valley (37 years of ERA5 rain, Gumbel fit).
   ${g?` July 2021 satellite check (Copernicus EMS): ${esc($('agreeHead').textContent.replace(/^.*?:\s*/,''))}`:''}</p>
   ${towns.length?`<table><thead><tr><th>Town / village</th><th class="n">Residents in water</th><th class="n">Buildings in water</th><th class="n">Area, km²</th></tr></thead><tbody>${towns.slice(0,15).map(t=>`<tr><td>${esc(t.name)} <span class="s">${t.cls}</span></td><td class="n">${fmtFull(t.res)}</td><td class="n">${fmtFull(t.bld)}</td><td class="n">${(t.area/1e6).toFixed(2)}</td></tr>`).join('')}</tbody></table><div class="s">Each ${Math.round(D.G.m)} m cell counted in the closest named place (OpenStreetMap). ${towns.length>15?`${towns.length-15} more places in the data files.`:''}</div>`:''}
 
-  <h2>Q2 · What has been done since 2021?</h2>
-  ${notes?`<div class="note">${esc(notes)}</div>`:'<p class="s">Desk research of the team (Policy tab → "Q2 notes"): not filled in yet.</p>'}
+  <h2>What has changed since 2021</h2>
+  ${q2?`<table><thead><tr><th>Area</th><th>Measure</th><th>Type</th><th>Date</th><th>Source</th><th>Verified</th></tr></thead><tbody>${q2.map(x=>`<tr><td>${esc(x.area||'')}</td><td>${esc(x.measure||'')}</td><td>${esc(x.type||'')}</td><td>${esc(x.date||'')}</td><td class="s">${srcLink(x)}</td><td>${isVer(x)?'✓':'✗'}</td></tr>`).join('')}</tbody></table>`
+   :notes?`<div class="note">${esc(notes)}</div>`:'<p class="s">Desk research of the team: not documented yet.</p>'}
   <p class="s">The model maps are the same before and after 2021: new defences, rebuilt or abandoned buildings are not in the data, so the numbers above describe exposure without them.</p>
 
-  <h2 class="pb">Q3 · Could we shelter the exposed people in buildings standing today?</h2>
-  <p><b>${fmt(P_total())}</b> people have to leave. The app chose ${E.shelters.length} shelters (outside every mapped flood, at least 150 m from water, dry road access) with <b>${fmt(E.shelters.reduce((s,x,k)=>s+capOf(k),0))} places</b>${R.sh.some(s=>s.extra&&s.load)?`; when they were full, cars went on to ${R.sh.filter(s=>s.extra&&s.load).length} next best sites (+${fmt(R.sh.filter(s=>s.extra&&s.load).reduce((s,x)=>s+x.cap,0))} places)`:''}. At the peak: <b>${fmt(R.peak.shel)} in shelters</b>, ${fmt(R.peak.up)} upstairs at home, ${fmt(R.peak.noplace)} without a place.</p>
+  <h2 class="pb">Can we shelter everyone who must leave?</h2>
+  <p><b>${fmt(toMove)}</b> people have to leave; <b>${fmt(needPub)}</b> (${share}%) are expected to need a public shelter, the others go to family or friends ${tag('as')}. The app chose ${E.shelters.length} shelters (outside every mapped flood, at least 150 m from water, dry road access) with <b>${fmt(places)} places</b>${extraUsed.length?`; when they were full, cars went on to ${extraUsed.length} next best sites (+${fmt(extraPl)} places)`:''}. ${unk} possible sites have no known capacity: shown in amber on the map, to be checked, not counted. At the peak: <b>${fmt(R.peak.shel)} in shelters</b>, ${fmt(R.peak.up)} upstairs at home (last resort), ${fmt(R.peak.noplace)} without a place${away?`, ${fmt(away)} with family or friends`:''}.</p>
+  <p class="s">The nearest safe shelter may be across the border (Dutch Limburg, Region Aachen): this version covers the Belgian Vesdre only; no cross-border sheltering agreement was found (EMRIC is the existing cooperation).</p>
   <table><thead><tr><th>#</th><th>Shelter</th><th>Type</th><th class="n">Places</th><th class="n">People in</th><th>Full at</th><th>Why</th></tr></thead><tbody>${used.map(s=>`<tr><td>${s.i<E.shelters.length?s.i+1:'+'}</td><td><a href="${osm(s.c)}">${esc(s.name)}</a></td><td>${s.src?esc(kindName(s.src.kind)):''}</td><td class="n">${fmtFull(s.cap)}</td><td class="n">${fmtFull(s.load)}</td><td>${s.full!=null?clockM(s.full):'—'}</td>
     <td class="s">${s.src?[s.src.margin!=null?`${Math.round(s.src.margin)} m above water`:'',`${Math.round(s.src.dmin)} m from water`,s.src.capSrc||''].filter(Boolean).join(' · '):''}</td></tr>`).join('')}</tbody></table>
-  <div class="s">Places = floor area (building outline × floors from GHS-OBAT height) ÷ 3.5 m² per person (Sphere standard) ${tag('ext')} — a maximum: beds, toilets and staff limit it further.</div>
+  <div class="s">Places = published capacity when known, else floor area (building outline × floors from GHS-OBAT height) ÷ 3.5 m² per person (Sphere standard) ${tag('ext')} — a maximum: beds, toilets and staff limit it further.</div>
   <h3>Hospitals, emergency services and schools inside the flood</h3>
   ${crit.length?`<table><tbody>${crit.slice(0,14).map(({p,d})=>`<tr><td>${esc(p.name||kindName(p.kind))}</td><td>${esc(kindName(p.kind))}</td><td class="n">${d.toFixed(2)} m of water</td></tr>`).join('')}</tbody></table>`:'<p>None in this flood.</p>'}
 
-  <h2>Q4 · Where do we still stand exposed?</h2>
-  ${top.length?`<table><thead><tr><th>Most exposed places</th><th class="n">Residents in water</th><th class="n">Unsafe at peak</th><th class="n">No place</th><th class="n">Shelter places in the place</th></tr></thead><tbody>${top.slice(0,8).map(t=>`<tr><td>${esc(t.name)}</td><td class="n">${fmtFull(t.res)}</td><td class="n">${fmtFull(t.unsafe)}</td><td class="n">${fmtFull(t.noplace)}</td><td class="n">${fmtFull(t.places)}</td></tr>`).join('')}</tbody></table>`:''}
+  <h2>Where we are still exposed</h2>
+  ${top.length?`<table><thead><tr><th>Most exposed places</th><th class="n">Residents in water</th><th class="n">In danger or no place at peak</th><th class="n">No place</th><th class="n">Shelter places in the place</th></tr></thead><tbody>${top.slice(0,8).map(t=>`<tr><td>${esc(t.name)}</td><td class="n">${fmtFull(t.res)}</td><td class="n">${fmtFull(t.unsafe)}</td><td class="n">${fmtFull(t.noplace)}</td><td class="n">${fmtFull(t.places)}</td></tr>`).join('')}</tbody></table>`:''}
   <h3>Best sequence of actions (${3*4*2*2} combinations tested)</h3>
-  <p>With these actions: <b>${fmt(B.run.score)}</b> unsafe (range ${fmt(B.range[0])}–${fmt(B.range[1])}) instead of ${fmt(R.score)} with the choices of this run.</p>
-  <ol>${acts.map(([t,x])=>`<li><span class="t">${isFinite(t)?clockM(t):'Before'}</span>${plain(x)}</li>`).join('')}</ol>
+  <p>With these actions: <b>${fmt(B.run.score)}</b> not evacuated (range ${fmt(B.range[0])}–${fmt(B.range[1])}) instead of ${fmt(R.score)} with the choices of this run.</p>
+  <ol>${acts.map(([t,x])=>`<li><span class="t">${isFinite(t)?clockM(t):''}</span>${plain(x)}</li>`).join('')}</ol>
 
   <h2 class="pb">Factors of this run</h2>
-  <table><tbody>${[['Flood size',st.flood,'data'],['Water rises in',st.rise_h+' h','as'],['Warning before the water',st.warning_min+' min','as'],['People who follow the order',st.follow_pct+'%','as'],['Time to get ready / delay on the way',`${st.ready_min} / ${st.delay_min} min`,'as'],
-    ['Driving speed',st.speed_kmh+' km/h','as'],['Road closed to cars from',st.car_limit_m+' m of water','ext'],['Shelter places',st.places_pct+'% of floor-area capacity','as'],['Rescue capacity',st.rescue_per_h+' people/h (×3 with national support)','as'],
-    ['Order given',CH.order[st.order],'as'],['When a shelter is full',CH.full[st.when_full],'as'],['Rescue support',CH.help[st.rescue_support],'as']].map(([a,b,k])=>`<tr><td>${a}</td><td><b>${esc(b)}</b></td><td>${tag(k)}</td></tr>`).join('')}</tbody></table>
+  <table><tbody>${[['Flood size',st.flood,['flood'],'data'],['Water rises in',st.rise_h+' h',['rise','mins'],'as'],['Warning before the water',st.warning_min+' min',['lead','leadMin','warning'],'as'],['People who follow the order',st.follow_pct+'%',['comply','follow'],'as'],
+    ['Time to get ready / delay on the way',`${st.ready_min} / ${st.delay_min} min`,['mob','ready'],'as'],['Driving speed',st.speed_kmh+' km/h',['speed','driveSpeed','speedCar'],'as'],['Road closed to cars from',st.car_limit_m+' m of water',['carDepth','car_depth','carLimit'],'ext'],
+    ['Public shelter share',share+'% of people who leave',['share','publicShare','shelterShare'],'as'],['Shelter places',st.places_pct+'% of floor-area capacity',['capX','places'],'as'],['Rescue capacity',st.rescue_per_h+' people/h (×3 with national support)',['rescue','rescueRate'],'as'],
+    ['Order given',CH.order[st.order],[],'as'],['When a shelter is full',CH.full[st.when_full],[],'as'],['Rescue support',CH.help[st.rescue_support],[],'as']].map(([a,b,keys,def])=>{ const f=pf(keys,def); return `<tr><td>${a}</td><td><b>${esc(b)}</b></td><td>${tag(f.t)}</td><td class="s">${esc(f.s)}</td></tr>`; }).join('')}</tbody></table>
 
   <h2>Which assumption matters most? (sensitivity)</h2>
-  <p class="s">Each assumption moved down and up on its own; same flood and choices. Bar = people unsafe at the peak (low → high), line = this run (${fmt(sens.base)}).</p>
+  <p class="s">Each assumption moved down and up on its own; same flood and choices. Bar = people not evacuated at the peak (low → high), line = this run (${fmt(sens.base)}).</p>
   <table><thead><tr><th>Assumption</th><th>Down / up</th><th class="n">Down</th><th class="n">Up</th><th style="width:30%"></th></tr></thead><tbody>${sens.rows.map(x=>`<tr><td>${x.n}</td><td class="s">${x.v}</td><td class="n">${fmtFull(x.lo)}</td><td class="n">${fmtFull(x.hi)}</td>
     <td><div class="bar"><i style="left:${Math.min(x.lo,x.hi)/mx*100}%;width:${Math.max(1,Math.abs(x.hi-x.lo)/mx*100)}%"></i><u style="left:${sens.base/mx*100}%"></u></div></td></tr>`).join('')}</tbody></table>
 
-  ${RUNS.length>1?`<h2>Compare runs</h2><table><thead><tr><th>Run</th><th>Flood</th><th class="n">Rise h</th><th class="n">Warn min</th><th class="n">Follow</th><th>Order</th><th>Full</th><th class="n">Unsafe</th><th class="n">Sheltered</th></tr></thead><tbody>${RUNS.slice(-8).map((x,i)=>`<tr><td>${RUNS.length-Math.min(8,RUNS.length)+i+1} <span class="s">${esc(x.at)}</span></td><td>${esc(x.flood.replace(/ \(.*\)/,''))}</td><td class="n">${x.rise_h}</td><td class="n">${x.warning_min}</td><td class="n">${x.follow_pct}%</td><td>${esc(CH.order[x.order]||'')}</td><td>${esc(CH.full[x.when_full]||'')}</td><td class="n">${fmtFull(x.unsafe)}</td><td class="n">${fmtFull(x.shel)}</td></tr>`).join('')}</tbody></table>`:''}
+  ${RUNS.length>1?`<h2>Compare runs</h2><table><thead><tr><th>Run</th><th>Flood</th><th class="n">Rise h</th><th class="n">Warn min</th><th class="n">Follow</th><th>Order</th><th>Full</th><th class="n">Not evacuated</th><th class="n">Sheltered</th></tr></thead><tbody>${RUNS.slice(-8).map((x,i)=>`<tr><td>${RUNS.length-Math.min(8,RUNS.length)+i+1} <span class="s">${esc(x.at)}</span></td><td>${esc(x.flood.replace(/ \(.*\)/,''))}</td><td class="n">${x.rise_h}</td><td class="n">${x.warning_min}</td><td class="n">${x.follow_pct}%</td><td>${esc(CH.order[x.order]||'')}</td><td>${esc(CH.full[x.when_full]||'')}</td><td class="n">${fmtFull(x.unsafe)}</td><td class="n">${fmtFull(x.shel)}</td></tr>`).join('')}</tbody></table>`:''}
 
   <h2 class="pb">Methods (to reproduce)</h2>
   <ol class="s">
    <li><b>Flood depth</b>: EFAS flood hazard maps (1-in-10/100/500 years) per grid cell; other return periods interpolated on the water level, log scale. A rain scenario is turned into a return period with a Gumbel fit of 37 years of 48-hour rain (ERA5).</li>
    <li><b>Water over time</b> (illustrative): local level = peak × rise(T − lag); rise = (1 − cos(πT/0.45))/2 up to the peak (45% of the event), flat to 60%, then falling; lag up to 15% of the event from upstream to downstream (Copernicus DEM). Depth now = depth − (1 − rise) × L, L = deepest water within 250 m.</li>
-   <li><b>People</b>: GHS-POP residents spread over GHS-OBAT buildings; groups of ~400 m; a group's water time = residents' median start of flooding.</li>
+   <li><b>People</b>: GHS-POP residents spread over GHS-OBAT buildings; groups of ~400 m; a group's water time = residents' median start of flooding. A share of those who leave (public shelter share) needs a public shelter; the others go to family or friends.</li>
    <li><b>Evacuation</b>: warning = water at the first homes − warning time; departures spread over 2 × time to get ready; cars on OpenStreetMap streets (Dijkstra, deeper streets cost more) at the driving speed + delay. A car is stuck when it reaches a street point after the water there exceeds ${CAR_DEPTH} m.</li>
-   <li><b>Shelters</b>: OpenStreetMap schools, sports and community halls outside every mapped flood, ≥ 150 m from water, with dry road access; ranked by people at risk within 1.5 km, capacity, height above the water and distance (equal weights). Full on arrival → next shelter with room, by road.</li>
+   <li><b>Shelters</b>: OpenStreetMap schools, sports and community halls outside every mapped flood and the July 2021 outline, ≥ 150 m from water, with dry road access; ranked by people at risk within 1.5 km, capacity, height above the water and distance (equal weights). Sites without a known capacity are flagged, not counted. Full on arrival → next shelter with room, by road.</li>
    <li><b>At home</b>: a resident is "upstairs" if the building (GHS-OBAT height) is ≥ water + 3 m, else "trapped". Rescue serves the trapped and stuck at a fixed rate, from 30 min after the first person is in danger.</li>
-   <li><b>Unsafe at the peak</b> = trapped + stuck (not yet rescued) + without a shelter place, at 60% of the event. Range = faster / slower reactions (follow ±, speed ±20%, getting ready ×0.75–1.5).</li>
+   <li><b>Not evacuated at the peak</b> = trapped + stuck (not yet rescued) + without a shelter place + upstairs at home (a last resort), at 60% of the event. Range = faster / slower reactions (follow ±, speed ±20%, getting ready ×0.75–1.5).</li>
    <li><b>Damage</b>: JRC depth–damage curves (Huizinga 2017) × floor area, 2010 prices × 1.218 (HICP).</li></ol>
+  ${P?`<h2>Assumptions and sources</h2><table><thead><tr><th>Parameter</th><th>Value</th><th>Status</th><th>Source</th></tr></thead><tbody>${Object.entries(P).map(([k,v])=>`<tr><td>${esc(v.label||k)}</td><td class="n">${esc(String(v.value??''))} ${esc(v.unit||'')}</td><td>${tag(ptag(v.status))} <span class="s">${esc(v.status||'')}</span></td><td class="s">${v.url?`<a href="${esc(v.url)}">${esc(v.source||v.url)}</a>`:esc(v.source||'—')}</td></tr>`).join('')}</tbody></table>`:''}
   <h2>Limits</h2>
-  <p class="s">Not a forecast and not a count of casualties: water timing is illustrative, behaviour settings are assumptions. EFAS maps are ~90 m: small streams and blocked bridges are missing. Defences and buildings changed since 2021 are not in the data. The 2021 satellite outline covers only a small part of this valley. Shelter places are an upper bound. ${esc(st.data)}.</p>
+  <p class="s">Not a forecast and not a count of casualties: water timing is illustrative, behaviour settings are assumptions. EFAS maps are ~90 m: small streams and blocked bridges are missing. Defences and buildings changed since 2021 are not in the data. The 2021 satellite outline is incomplete in this version. Shelter places are an upper bound. ${esc(st.data)}.</p>
   </body></html>`); w.document.close(); }
 const P_total=()=>E.plan?.total||0;
 
@@ -3079,7 +3197,7 @@ const csv=(rows)=>rows.map(r=>r.map(v=>typeof v==='string'&&/[",\n]/.test(v)?`"$
 const dl=(name,text,type='text/csv')=>{ const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([text],{type})); a.download=name; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),2000); };
 function downloadAll(){ const R=DR.run; if(!R) return; const r=rp(),tag=`rp${r}`,steps=[]; for(let t=Math.ceil(R.tStart/15)*15;t<=R.M;t+=15) steps.push(t);
   const files=[
-    [`timeline_${tag}.csv`,csv([['minute','at_home','driving','sheltered','upstairs','in_danger','no_place','rescued'],...steps.map(t=>{const k=countAt(R,t); return [t,...['home','walk','shel','up','danger','noplace','resc'].map(x=>Math.round(k[x]))];})])],
+    [`timeline_${tag}.csv`,csv([['minute','at_home','driving','sheltered','upstairs','in_danger','no_place','rescued','left_to_family_friends'],...steps.map(t=>{const k=countAt(R,t); return [t,...['home','walk','shel','up','danger','noplace','resc','away'].map(x=>Math.round(k[x]||0))];})])],
     [`shelters_${tag}.csv`,csv([['id','name','lon','lat','places','people_in','full_at_minute','next_best_site'],...R.sh.map((s,i)=>[i<E.shelters.length?i+1:'+'+(i-E.shelters.length+1),s.name,s.c[0].toFixed(5),s.c[1].toFixed(5),Math.round(s.cap),Math.round(s.load),s.full!=null?Math.round(s.full):'',s.extra?1:0])])],
     [`shelter_fill_${tag}.csv`,(()=>{ const U=R.sh.map((s,i)=>({s,i})).filter(x=>x.s.load>0); return csv([['minute',...U.map(x=>x.s.name)],...steps.map(t=>[t,...U.map(x=>Math.round(loadAt(x.s,t)))])]); })()],
     [`towns_${tag}.csv`,csv([['place','class','lon','lat','residents_in_water','buildings_in_water','unsafe_at_peak','in_danger','no_place','sheltered','shelter_places'],...townStats(R).map(t=>[t.name,t.cls,t.c[0],t.c[1],...['res','bld','unsafe','danger','noplace','shel','places'].map(k=>Math.round(t[k]))])])],
@@ -3272,7 +3390,7 @@ function showGuide(on){$('guide').hidden=!on; document.body.classList.toggle('ex
 $('helpBtn').onclick=()=>showGuide($('guide').hidden); $('guideOk').onclick=()=>{showGuide(false); store.set('fse-guide','1');};
 
 function load(data,demo){
-  D=data; computeZones(D); isDemo=demo; peakCache={}; S.sizeIdx=Math.min(1,D.rps.length-1); S.T=0; setPlaying(false);
+  D=data; computeZones(D); riverbank(D); isDemo=demo; peakCache={}; S.sizeIdx=Math.min(1,D.rps.length-1); S.T=0; setPlaying(false);
   $('dataBadge').textContent=demo?'DEMO DATA':'TEAM DATA'; $('dataBadge').classList.toggle('real',!demo);
   buildSources(); drawSize(); drawLegend(); drawZones(); drawActor(); drawAgree(); drawCmp(); drawDList();
   if(!map) initMap(); else if(ready){ refreshData(); applyLayers(); render(); map.fitBounds(D.bbox,{padding:50}); }

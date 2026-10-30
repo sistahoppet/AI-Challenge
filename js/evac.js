@@ -2,14 +2,14 @@
 // Loaded as a classic script: top-level names are shared between files (order set in index.html).
 
 /* ---------- choices (shelter capacity, speed and warning time are user assumptions, not data) ---------- */
-const E={shelters:[],who:'water',cap:500,speed:4,lead:3,adding:false,plan:null,walkers:[]};
+const E={shelters:[],who:'water',cap:0,speed:4,lead:3,adding:false,plan:null,walkers:[]};
 // start from real buildings (schools, sports halls…) when the places file is loaded, else from the safest grid spots
 function evacReset(){ RS.out=null; RS.cmp=null; for(const k in tsCache) delete tsCache[k]; const sc=shelterCandidates(); E.cands=sc.list; E.out=sc.out; const real=pickShelters(sc.list);
   E.shelters=real.length?real.map(asShelter)
-    :D.safe.map((s,k)=>({c:s.c,auto:true,name:`Safe place ${k+1}`,cap:null,stay:'overnight',desc:`${s.b} buildings · ${Math.round(s.dmin)} m from flood water`}));
-  makePlan(); }
+    :D.safe.map((s,k)=>({c:s.c,auto:true,name:`Safe place ${k+1}`,cap:null,demo:true,stay:'overnight',desc:`${s.b} buildings · ${Math.round(s.dmin)} m from flood water`}));
+  placesData(); makePlan(); } // map colours: sites with capacity to be checked
 const asShelter=p=>({...p,auto:true,src:p,name:p.name||kindName(p.kind),cap:p.cap||null,capSrc:p.capSrc});
-const capOf=k=>E.shelters[k].userCap??E.shelters[k].cap??(E.shelters[k].stay==='assembly'?0:E.cap); // set by hand > floor area > team default (assembly points: 0 until set)
+const capOf=k=>{const s=E.shelters[k]; return s.userCap??s.cap??(s.demo?(E.cap||500):s.stay==='assembly'?0:E.cap);}; // set by hand > floor area > 'places when size unknown' (default 0 = not counted; demo data only: 500)
 
 /* ---------- route network: OpenStreetMap streets when loaded, otherwise grid cells (open ground) ---------- */
 // mode: 'foot' | 'car'. limit: water depth above which a segment is closed (Infinity = open, deeper costs more unless plain).
@@ -115,22 +115,23 @@ function drawShelterList(){ const ul=$('safeList'),P=E.plan;
     return `<li class="shel"><button data-k="${k}"><span class="n${s.auto?'':' you'}">${k+1}</span><span><b>${esc(s.name)}</b> <span class="hint" style="margin:0">${s.kind?`${kindName(s.kind)} · ${STAY[s.stay]||''}`:s.auto?'':'added by you'}</span>
       ${s.dmin!=null&&s.src?`<br>${chips(s)}`:s.desc?`<br><span class="hint" style="margin:0">${esc(s.desc)}</span>`:''}</span></button>
       <span class="capbox"><span class="mono">${fmtFull(capOf(k))} places</span><span class="mono">${fmtFull(ld)} planned${full?' · FULL':''}</span>
-      <span class="hint" style="margin:0">${s.cap?'from floor area':'default'}</span></span></li>`;}).join('');
+      <span class="hint" style="margin:0">${s.capSrc&&/places \(/.test(s.capSrc)?'published capacity':s.cap?'from floor area':s.userCap!=null?'set by hand':s.demo?'default (demo)':E.cap?'your assumption':'capacity to be checked – not counted'}</span></span></li>`;}).join('');
   const inPlan=new Set(E.shelters.map(s=>s.src)),rest=(E.cands||[]).filter(c=>!inPlan.has(c));
-  $('candList').innerHTML=`<summary>Next best shelters (${rest.length}), used when the first ones are full · excluded: ${E.out?.zone||0} in a flood zone, ${E.out?.near||0} closer than 150 m to water</summary>`
-    +rest.slice(0,25).map(c=>`<div class="cand"><span><b>${esc(c.name||kindName(c.kind))}</b> <span class="hint" style="margin:0">${kindName(c.kind)} · ${STAY[c.stay]} · ${c.cap?fmtFull(c.cap)+' places':'capacity unknown'} · score ${Math.round(c.score*100)}</span><br>${chips(c)}</span>
+  $('candList').innerHTML=`<summary>Next best shelters (${rest.length}), used when the first ones are full · excluded: ${E.out?.zone||0} in a flood zone, ${E.out?.near||0} closer than 150 m to water, ${E.out?.y2021||0} flooded in July 2021 · ${(E.cands||[]).filter(c=>c.stay==='overnight'&&!c.cap).length} sites with capacity to be checked (amber on the map): ${E.cap?`counted as ${E.cap} places (your assumption)`:'not counted'}</summary>`
+    +rest.slice(0,25).map(c=>`<div class="cand"><span><b>${esc(c.name||kindName(c.kind))}</b> <span class="hint" style="margin:0">${kindName(c.kind)} · ${STAY[c.stay]} · ${c.cap?fmtFull(c.cap)+' places':'<span style="color:var(--unk)">capacity to be checked – not counted</span>'} · score ${Math.round(c.score*100)}</span><br>${chips(c)}</span>
       </div>`).join(''); }
 function drawEvacPanel(){ const P=E.plan,r=rp(),pct=n=>P.total?Math.round(n/P.total*100)+'%':'–';
   $('evScen').textContent=`For the ${sizeWord(r).toLowerCase()} flood (1-in-${r} years) picked in Simulate.`;
-  $('evStats').innerHTML=[[P.total,'people to move'],[P.moved-P.slow,`reach a shelter in time on foot (${pct(P.moved-P.slow)})`],[P.slow+P.over,'need help: too far or no place left']]
-    .map(([n,t],i)=>`<div class="stat${i===2&&n>0?' warn':''}"><b>${fmt(n)}</b><span>${t}</span></div>`).join('');
-  $('evGroups').innerHTML=P.routes.slice(0,14).map((x,i)=>`<li><button data-r="${i}"><span class="wv" style="background:var(--wave${x.wave})">${x.wave}</span><span>${fmtFull(x.people)} people → shelter ${x.k+1}<br><span class="mono">${(x.len/1000).toFixed(1)} km · ${Math.round(x.min)} min on foot ${x.ok?'✓':'⚠ too slow'}</span></span></button></li>`).join('')
+  $('evStats').innerHTML=[[P.total,'people to move'],[P.moved-P.slow,`reach a shelter in time by car (${pct(P.moved-P.slow)})`],[P.slow+P.over,'need help: too far or no place left']]
+    .map(([n,t],i)=>`<div class="stat${i===2&&n>0?' warn':''}"><b>${fmt(n)}</b><span>${t}</span></div>`).join('')
+    +(typeof DR!=='undefined'&&DR.share!=null?`<p class="hint" style="margin:6px 0 0;grid-column:1/-1">Need a public shelter: <b>${fmt(P.total*DR.share/100)}</b> of ${fmt(P.total)} (${DR.share}%, the others go to family or friends)</p>`:'');
+  $('evGroups').innerHTML=P.routes.slice(0,14).map((x,i)=>`<li><button data-r="${i}"><span class="wv" style="background:var(--wave${x.wave})">${x.wave}</span><span>${fmtFull(x.people)} people → shelter ${x.k+1}<br><span class="mono">${(x.len/1000).toFixed(1)} km · ${Math.round(x.min)} min by car ${x.ok?'✓':'⚠ too slow'}</span></span></button></li>`).join('')
     +(P.routes.length>14?`<li class="hint">+ ${P.routes.length-14} more routes (in the downloads, Alert tab)</li>`:'')
     +(P.over?`<li class="hint" style="color:var(--err)">${fmtFull(P.over)} people have no shelter place: add a shelter or raise the capacity.</li>`:'');
   $('evNote').textContent=(P.kind==='streets'?'Routes follow OpenStreetMap streets and avoid deep water. ':P.kind==='ground'?'Routes go over open ground (streets not loaded yet: zoom in on the area). ':'')
     +'Waves: wave 1 is where water arrives first in the video (low ground, upstream sections first). This is an order, not real timing. Capacity, speed and warning time are your assumptions.'; }
 const num=(id,k)=>$(id).onchange=e=>{const v=+e.target.value; if(v>0){E[k]=v; makePlan();}};
-num('evCap','cap'); E.speed=30; // km/h, OpenStreetMap streets in a town (CAR_KMH in places.js)
+$('evCap').onchange=e=>{const v=+e.target.value; if(v>=0){E.cap=v; evacReset();}}; E.speed=20; // km/h, OpenStreetMap streets in a town (CAR_KMH in places.js)
 $('evSpeedMs').onchange=e=>{const v=+e.target.value; if(v>0){E.speed=v; makePlan();}}; // km/h
 $('sf-foot').onchange=e=>{const v=+e.target.value; if(v>0){FOOT_DEPTH=v; graphCache={}; if(AB.a) abRoute(false);}};
 $('sf-car').onchange=e=>{const v=+e.target.value; if(v>0){CAR_DEPTH=v; roadsReset(); render(); drawLegend();}};
