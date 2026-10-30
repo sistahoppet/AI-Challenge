@@ -224,7 +224,9 @@ $('dockIn').oninput=e=>{ const k=e.target.id?.slice(3),d=DOCK.find(x=>x[0]===k);
 $('dockIn').onclick=e=>{ if(e.target.id==='dkBuild'){ buildScenario(); restart0(); } };
 $('dockCh').onchange=e=>{ const k=e.target.dataset.ch; if(!k) return; DR.dec[k]=e.target.value; drillRun(); restart0(); };
 $('dockCh').onclick=e=>{ if(e.target.id==='dkBest') showDebrief(); };
-$('dockHide').onclick=()=>{ const on=$('dock').classList.toggle('min'); $('dockHide').textContent=on?'Controls ▴':'▾'; $('dockHide').setAttribute('aria-expanded',!on); };
+// fold the simulation controls; the choice is remembered in this browser
+function setDock(min){ $('dock').classList.toggle('min',min); $('dockHide').textContent=min?'Show controls ▴':'Hide controls ▾'; $('dockHide').setAttribute('aria-expanded',!min); try{localStorage.setItem('fse-dock',min?'min':'');}catch(e){} }
+$('dockHide').onclick=()=>setDock(!$('dock').classList.contains('min'));
 function syncDock(){ if(!$('dk-size')) return; DOCK.forEach(([k,,,,,get,,lab])=>{ const el=$('dk-'+k); if(el&&document.activeElement!==el&&+el.value!==get()){ el.value=get(); $('dkv-'+k).textContent=lab(get()); } }); }
 $('drillClose').onclick=()=>{$('drillStage').hidden=true;};
 $('drillCard').onclick=()=>openCard();

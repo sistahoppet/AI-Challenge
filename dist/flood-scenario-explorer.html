@@ -387,6 +387,9 @@ body.nopanel .panelbtn{width:auto;padding:0 8px;height:40px;font-size:13px}
 /* loading an area from the team server */
 .srvload{position:fixed;inset:0;z-index:60;border:0;border-radius:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:16px;font-size:15px;text-align:center}
 .srvload[hidden]{display:none}
+
+/* simpler screen (team choice): no Guided demo, Explain or Load team data buttons, no counter bar over the map (the numbers stay in the side panel) */
+#tourBtn,#helpBtn,#openData,#hud{display:none!important}
 </style>
 </head>
 <body>
@@ -513,7 +516,7 @@ body.nopanel .panelbtn{width:auto;padding:0 8px;height:40px;font-size:13px}
           </div>
         </div>
       </section>
-      <div class="dock" id="dock" aria-label="Scenario controls"><div class="dockcol"><div class="dockin" id="dockIn"></div><div class="dockin choices" id="dockCh"></div></div><button class="btn sm" id="dockHide" aria-expanded="true" title="Hide or show the controls">▾</button></div>
+      <div class="dock" id="dock" aria-label="Scenario controls"><div class="dockcol"><div class="dockin" id="dockIn"></div><div class="dockin choices" id="dockCh"></div></div><button class="btn sm" id="dockHide" aria-expanded="true" title="Hide or show the simulation controls">Hide controls ▾</button></div>
       <div class="player" aria-label="Simulation player">
         <button class="pbtn" id="restart" title="Back to start" aria-label="Back to start">⏮</button>
         <button class="pbtn main" id="play" aria-label="Play">▶</button>
@@ -3735,7 +3738,9 @@ $('dockIn').oninput=e=>{ const k=e.target.id?.slice(3),d=DOCK.find(x=>x[0]===k);
 $('dockIn').onclick=e=>{ if(e.target.id==='dkBuild'){ buildScenario(); restart0(); } };
 $('dockCh').onchange=e=>{ const k=e.target.dataset.ch; if(!k) return; DR.dec[k]=e.target.value; drillRun(); restart0(); };
 $('dockCh').onclick=e=>{ if(e.target.id==='dkBest') showDebrief(); };
-$('dockHide').onclick=()=>{ const on=$('dock').classList.toggle('min'); $('dockHide').textContent=on?'Controls ▴':'▾'; $('dockHide').setAttribute('aria-expanded',!on); };
+// fold the simulation controls; the choice is remembered in this browser
+function setDock(min){ $('dock').classList.toggle('min',min); $('dockHide').textContent=min?'Show controls ▴':'Hide controls ▾'; $('dockHide').setAttribute('aria-expanded',!min); try{localStorage.setItem('fse-dock',min?'min':'');}catch(e){} }
+$('dockHide').onclick=()=>setDock(!$('dock').classList.contains('min'));
 function syncDock(){ if(!$('dk-size')) return; DOCK.forEach(([k,,,,,get,,lab])=>{ const el=$('dk-'+k); if(el&&document.activeElement!==el&&+el.value!==get()){ el.value=get(); $('dkv-'+k).textContent=lab(get()); } }); }
 $('drillClose').onclick=()=>{$('drillStage').hidden=true;};
 $('drillCard').onclick=()=>openCard();
@@ -4232,7 +4237,7 @@ function setPanel(open){ document.body.classList.toggle('nopanel',!open); const 
   b.title=b.ariaLabel=open?'Hide the side panel':'Show the side panel'; b.textContent=open?'›':'‹ Panel'; try{ localStorage.setItem('fse-panel',open?'1':'0'); }catch(e){} setTimeout(()=>map?.resize(),60); }
 $('panelBtn').onclick=()=>setPanel(document.body.classList.contains('nopanel')); $('panelHide').onclick=()=>setPanel(false);
 try{ if(localStorage.getItem('fse-panel')==='0') setPanel(false); }catch(e){}
-if(innerHeight<760) $('dockHide').click(); // small screen: the map gets the room, the controls open with one click
+{ let d=null; try{d=localStorage.getItem('fse-dock');}catch(e){} setDock(d==null?innerHeight<760:d==='min'); } // small screen: the map gets the room, the controls open with one click
 // at the start of a run (clock 0, paused) the map has no water yet: say so next to the play button
 FX.push(()=>{ const h=$('playHint'),on=S.T<.001&&!S.playing&&!!D; if(h.hidden===on) h.hidden=!on; $('play').classList.toggle('pulse',on); });
 
@@ -4275,7 +4280,7 @@ const mq=matchMedia('(prefers-color-scheme: dark)'); mq.addEventListener?.('chan
 new MutationObserver(recolor).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
 if(!window.maplibregl){ $('map').innerHTML='<p style="padding:24px">The map library did not load. Check your internet connection and reload.</p>'; }
 else { // demo first so the map shows at once (the team files take seconds to download), then team data replaces it
-  load(ingest(makeDemo()).data,true); apiInit(); if(!store.get('fse-guide')) showGuide(true); // the synthetic demo only builds the map: it stays covered until the real data is in
+  load(ingest(makeDemo()).data,true); apiInit(); // the synthetic demo only builds the map: it stays covered until the real data is in
   srvMsg('Loading the team data…'); (SERVER_AOI?loadServerArea(SERVER_AOI):tryAutoLoad().then(()=>srvMsg(''))); }
 
 </script>
