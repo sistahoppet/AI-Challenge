@@ -3,8 +3,9 @@
 // Loaded as a classic script: top-level names are shared between files (order set in index.html).
 // API address: ?api=http://host:port in the page URL, or the field in the tab (remembered in this browser).
 
-// served from valencia (hosted copy) → the live API on the same host; elsewhere (laptop preview) → the :8081 test server
-const API_DEFAULT=/^valencia\b|^100\.108\.90\.108$/.test(location.hostname)?`http://${location.hostname}:8080`:'http://valencia.tail142ce3.ts.net:8081';
+// public site (dev.nsrddyn.com) → the live API behind the same nginx at /api; valencia (tailnet copy) → the live API on the same host;
+// elsewhere (laptop preview) → the :8081 test server
+const API_DEFAULT=location.hostname==='dev.nsrddyn.com'?`${location.origin}/api`:/^valencia\b|^100\.108\.90\.108$/.test(location.hostname)?`http://${location.hostname}:8080`:'http://valencia.tail142ce3.ts.net:8081';
 const A={url:(new URLSearchParams(location.search).get('api')||(()=>{try{return localStorage.getItem('fse-api');}catch(e){return null;}})()||API_DEFAULT).replace(/\/+$/,''),
   ok:false,area:null,pick:null,corner:null,helper:null,req:null,shelters:null,busy:0,cells:[],res:{}};
 

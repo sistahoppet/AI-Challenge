@@ -3,7 +3,7 @@
 // Answer by: Claude (key typed here, sent only to the policy API for that one request), the local model on the server, or rules only.
 // Policy API address: ?policy=http://host:port in the page URL, or the field (remembered in this browser).
 
-const POLICY_DEFAULT=/^valencia\b|^100\.108\.90\.108$/.test(location.hostname)?`http://${location.hostname}:8082`:'http://valencia.tail142ce3.ts.net:8082';
+const POLICY_DEFAULT=location.hostname==='dev.nsrddyn.com'?`${location.origin}/policy`:/^valencia\b|^100\.108\.90\.108$/.test(location.hostname)?`http://${location.hostname}:8082`:'http://valencia.tail142ce3.ts.net:8082';
 const store={get(k){try{return localStorage.getItem(k)??sessionStorage.getItem(k);}catch(e){return null;}},
   set(k,v,keep){try{(keep?localStorage:sessionStorage).setItem(k,v);(keep?sessionStorage:localStorage).removeItem(k);}catch(e){}},
   del(k){try{localStorage.removeItem(k);sessionStorage.removeItem(k);}catch(e){}}};
