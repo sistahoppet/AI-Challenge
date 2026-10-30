@@ -3,15 +3,16 @@
 // Loaded as a classic script: top-level names are shared between files (order set in index.html).
 // API address: ?api=http://host:port in the page URL, or the field in the tab (remembered in this browser).
 
-// served from valencia (hosted copy) → the live API on the same host; elsewhere (laptop preview) → the :8081 test server
-const API_DEFAULT=/^valencia\b|^100\.108\.90\.108$/.test(location.hostname)?`http://${location.hostname}:8080`:'http://valencia.tail142ce3.ts.net:8081';
-const A={url:(new URLSearchParams(location.search).get('api')||(()=>{try{return localStorage.getItem('fse-api');}catch(e){return null;}})()||API_DEFAULT).replace(/\/+$/,''),
+// public HTTPS address of the team server (no Tailscale needed); old tailnet addresses saved in this browser are dropped
+const API_DEFAULT='https://dev.nsrddyn.com/api';
+const oldUrl=u=>!u||/valencia|100\.108\.|ts\.net|:808\d/.test(u);
+const A={url:(new URLSearchParams(location.search).get('api')||(()=>{try{const u=localStorage.getItem('fse-api');return oldUrl(u)?null:u;}catch(e){return null;}})()||API_DEFAULT).replace(/\/+$/,''),
   ok:false,area:null,pick:null,corner:null,helper:null,req:null,shelters:null,busy:0,cells:[],res:{}};
 
 /* ---------- calls ---------- */
 async function api(path,body,method){
   let r; try{ r=await fetch(A.url+path,{method:method||(body?'POST':'GET'),headers:body?{'content-type':'application/json'}:{},body:body?JSON.stringify(body):undefined}); }
-  catch(e){ setApiOk(false); throw new Error('The API can\'t be reached at '+A.url+'. Check the address and that you are on the team network (Tailscale).'); }
+  catch(e){ setApiOk(false); throw new Error('The API can\'t be reached at '+A.url+'. Check the address and your internet connection.'); }
   const j=await r.json().catch(()=>({error:'HTTP '+r.status}));
   if(!r.ok) throw new Error(j.error||('HTTP '+r.status)); keepRes(path,j); return j;
 }
@@ -210,11 +211,11 @@ $('hNeedOut').onclick=async e=>{ const b=e.target.closest('[data-acc],[data-act]
 
 /* ---------- 6. building damage + model checks (read-only) ---------- */
 async function loadImpact(){ try{ const j=await api('/impact');
-  $('iOut').innerHTML=table(j.aois,[['activation','EMS'],['aoi','AOI'],['product','Map'],['flooded','Flooded bldgs'],['loss_m','Loss €M'],['displaced','Displaced']])
+  $('iOut').innerHTML=table(j.aois,[['country','Country'],['activation','EMS'],['aoi','AOI'],['product','Map'],['area_km2','km²'],['polygons','Polygons'],['flooded','Flooded bldgs'],['capped','Capped'],['depth','Depth m'],['damage','Damage 0–1'],['loss_m','Loss €M'],['affected','Affected'],['displaced','Displaced']])
     +'<p class="hint">From the July 2021 satellite maps (Copernicus EMS) × GHS-OBAT buildings. Money uses an assumed rebuild cost per m².</p>'; }
   catch(e){ $('iOut').innerHTML=`<p class="hint err">✗ ${esc(e.message)}</p>`; } }
 async function loadModels(){ try{ const j=await api('/models');
-  $('mOut').innerHTML=table(j.models,[['name','Model'],['what','What it does'],['runs_on','Where']])+'<h3>How well they work (held-out checks)</h3>'+table(j.evaluation,[['check','Check'],['model','Model'],['metric','Metric'],['value','Value']]); }
+  $('mOut').innerHTML=table(j.models.map(m=>({...m,endpoints:(m.endpoints||[]).join(', ')})),[['name','Model'],['what','What it does'],['runs_on','Where'],['endpoints','Routes'],['script','Script']])+'<h3>How well they work (held-out checks)</h3>'+table(j.evaluation,[['check','Check'],['model','Model'],['metric','Metric'],['value','Value']]); }
   catch(e){ $('mOut').innerHTML=`<p class="hint err">✗ ${esc(e.message)}</p>`; } }
 
 /* ---------- connection + area buttons ---------- */

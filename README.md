@@ -120,6 +120,18 @@ Needs Python with `requests mapbox-vector-tile shapely pyproj` (and the challeng
 
   It then appears under *Other areas* in the menu (the page reloads with `?area=cities/<name>`).
 
+## Live model tab (team server)
+
+The tab talks to two public HTTPS APIs on the team server, no Tailscale needed:
+
+- **Flood models** `https://dev.nsrddyn.com/api` ([flood_api](https://github.com/nasrlol/eu-ai-challange)): flood risk, evacuation, timeline,
+  area check, "am I in danger", help a friend, 2021 building damage, model checks.
+- **Policy advisor** `https://dev.nsrddyn.com/policy` ([flood-policy-advisor](https://github.com/nasrlol/flood-policy-advisor)): picks and orders
+  policies from the team catalogue, citing the model numbers. **Run all models + advice** runs sections 2–5 on the chosen area, then asks it.
+  Every answer shows the facts sent, the rules that fired and the model limits; the full catalogue is listed under the button.
+
+Other address: `?api=…&policy=…` in the page URL, or the field in the tab.
+
 ## Hide the panels
 
 **Hide UI** (or key **H**) keeps only the map and the play bar. The small **›** tab on the right edge of the map folds the side
