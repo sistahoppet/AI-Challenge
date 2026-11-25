@@ -176,7 +176,7 @@ python3 build.py
 - **CD**: when CI is green on `main`, the workflow moves branch `live` to that commit. The server (valencia) pulls
   `live` every minute (`deploy/deploy.sh`, systemd `frontend-deploy.timer`), and the `verify` job waits until
   https://dev.nsrddyn.com serves the new files. A red `main` never goes live. Roll back: push an older commit to `live`.
-- Server setup (once): `cd ~/frontend && git fetch origin live && git checkout -B live FETCH_HEAD`, then
+- Server setup (once): `cd ~/fari-flood-simulator/frontend && git fetch origin live && git checkout -B live FETCH_HEAD`, then
   `sudo cp deploy/frontend-deploy.{service,timer} /etc/systemd/system/ && sudo systemctl enable --now frontend-deploy.timer`.
   Log: `journalctl -u frontend-deploy`.
 

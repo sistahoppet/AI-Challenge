@@ -16,11 +16,11 @@ Only `grid.geojson` is required; every other file is optional and the app says w
 | `weather.json` | – | `scripts/export_weather.py` | ERA5 48 h rain levels (Gumbel) + July 2021 replay | ready |
 | `summary.json` | – | `scripts/export_area.py` | sanity-check totals | ready |
 | `params.json` | – | by hand (team) | **parameter registry**: `{key: {value, unit, status: sourced/assumption/placeholder, source, note}}` for every number of the model (follow rate, speeds, depths, rescue, shelter share, riverbank distance, Impact values). Shown in the Data tab | ready (values to source) |
-| `rivers.geojson` | – | `scripts/export_rivers.py` | OSM waterways: `class` (river/stream/canal), `name`. Used for riverbank homes (“upstairs unreliable, evacuate early”, distance `riverbankM` in params.json). Without it the app uses the river channel cells as a proxy | **missing** (tile server blocked from our machines: run the script where it is reachable) |
+| `rivers.geojson` | – | `scripts/export_rivers.py` | OSM waterways: `class` (river/stream/canal), `name`. Used for riverbank homes (“upstairs unreliable, evacuate early”, distance `riverbankM` in params.json). Without it the app uses the river channel cells as a proxy | ready |
 | `shelter_capacity.csv` | – | by hand (Researcher): commune emergency plans, governor's planning service, Red Cross | `name, lon, lat, capacity, source` — matched to the OSM shelter within 75 m; replaces the floor-area estimate | **missing** |
 | `q2_measures.json` | – | by hand (Researcher), from the Drive doc “Policies since the flood 2021” | array of `{area, measure, type (defence/rebuild/abandoned/warning/plan/campaign/infrastructure), date, source, url, verified (true/false), lon?, lat?}` | **missing** |
 | `prm.csv` | – | Statbel (age per statistical sector) or commune registers | `name, lon, lat, residents_65plus, residents_80plus, source` — people with reduced mobility, for priority evacuation | **missing (gap: no PRM database found yet)** |
-| `municipalities.geojson` | – | Statbel / IGN municipal boundaries | polygons with `name` — municipality as unit of analysis | **missing (next step)** |
+| `municipalities.geojson` | – | `scripts/export_municipalities.py` (OSM / Statbel / IGN municipal boundaries) | polygons with `name` — municipality as unit of analysis | ready |
 
 Rules: never put an invented number in a data file; if a value is an assumption, write it in `params.json` with status `assumption`.
 
